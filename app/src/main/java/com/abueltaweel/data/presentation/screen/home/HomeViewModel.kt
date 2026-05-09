@@ -12,7 +12,6 @@ import com.abueltaweel.domain.repository.quran.ReadingProgressRepository
 import com.abueltaweel.domain.repository.settings.SettingsRepository
 import com.abueltaweel.presentation.base.BaseViewModel
 import com.abueltaweel.presentation.base.toLocalizedDigits
-import com.abueltaweel.presentation.utils.AnalyticsHelper
 import com.abueltaweel.presentation.utils.convertMillisToHMS
 import com.abueltaweel.presentation.utils.getTimeDifference
 import kotlinx.coroutines.Dispatchers

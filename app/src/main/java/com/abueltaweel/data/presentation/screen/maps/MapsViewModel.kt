@@ -6,7 +6,6 @@ import com.abueltaweel.domain.entity.location.Location
 import com.abueltaweel.domain.repository.location.LocationRepository
 import com.abueltaweel.domain.repository.settings.SettingsRepository
 import com.abueltaweel.presentation.base.BaseViewModel
-import com.abueltaweel.presentation.utils.AnalyticsHelper
 
 class MapsViewModel(
     private val settingsRepository: SettingsRepository,
