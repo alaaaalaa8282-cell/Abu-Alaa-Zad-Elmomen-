@@ -14,8 +14,8 @@ import com.abueltaweel.design_system.component.BottomNavigationBar
 import com.abueltaweel.design_system.component.NavItem
 import com.abueltaweel.design_system.theme.Theme
 import com.abueltaweel.presentation.base.localizedString
-import com.abueltaweel.presentation.screen.audioazkar.AudioAzkarScreen
 import com.abueltaweel.presentation.screen.azkar.AzkarScreen
+import com.abueltaweel.presentation.screen.dhikr.DhikrScreen
 import com.abueltaweel.presentation.screen.home.HomeScreen
 import com.abueltaweel.presentation.screen.prayers.FullPrayerTimesViewScreen
 import com.abueltaweel.presentation.screen.radio.RadioScreen
@@ -33,7 +33,7 @@ fun MainContainer(
         Route.HomeScreen,
         Route.FullPrayerTimeView,
         Route.AzkarScreen,
-        Route.AudioAzkarScreen,
+        Route.DhikrScreen,
         Route.RadioScreen,
         Route.SettingsScreen
     )
@@ -55,9 +55,9 @@ fun MainContainer(
             unselectedIcon = painterResource(R.drawable.ic_azkar_not_selected)
         ),
         NavItem(
-            title = "صوتية",
-            selectedIcon = painterResource(R.drawable.ic_play),
-            unselectedIcon = painterResource(R.drawable.ic_play)
+            title = "أذكاري",
+            selectedIcon = painterResource(R.drawable.ic_tasbih),
+            unselectedIcon = painterResource(R.drawable.ic_tasbih1)
         ),
         NavItem(
             title = localizedString(R.string.radio),
@@ -84,14 +84,12 @@ fun MainContainer(
         NavHost(
             navController = bottomNavController,
             startDestination = Route.HomeScreen.route,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(bottom = 74.dp)
+            modifier = Modifier.fillMaxSize().padding(bottom = 74.dp)
         ) {
             composable(Route.HomeScreen.route)         { HomeScreen(rootNavController) }
             composable(Route.FullPrayerTimeView.route) { FullPrayerTimesViewScreen(rootNavController) }
             composable(Route.AzkarScreen.route)        { AzkarScreen(rootNavController) }
-            composable(Route.AudioAzkarScreen.route)   { AudioAzkarScreen() }
+            composable(Route.DhikrScreen.route)        { DhikrScreen() }
             composable(Route.RadioScreen.route)        { RadioScreen(rootNavController) }
             composable(Route.SettingsScreen.route)     { SettingsScreen(rootNavController) }
         }

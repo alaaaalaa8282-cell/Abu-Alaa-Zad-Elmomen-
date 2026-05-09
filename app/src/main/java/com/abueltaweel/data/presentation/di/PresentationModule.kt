@@ -6,6 +6,7 @@ import com.abueltaweel.presentation.screen.SearchAyah.SearchAyahViewModel
 import com.abueltaweel.presentation.screen.SurahAyat.SurahAyatViewModel
 import com.abueltaweel.presentation.screen.azkar.AzkarViewModel
 import com.abueltaweel.presentation.screen.audioazkar.AudioAzkarViewModel
+import com.abueltaweel.presentation.screen.dhikr.DhikrViewModel
 import com.abueltaweel.presentation.screen.batteryOptimization.BatteryOptimizationViewModel
 import com.abueltaweel.presentation.screen.bookmarks.BookMarkListViewModel
 import com.abueltaweel.presentation.screen.calculation_method.CalculationMethodViewModel
@@ -20,7 +21,6 @@ import com.abueltaweel.presentation.screen.radio.player.AudioPlayerManager
 import com.abueltaweel.presentation.screen.radio.player.PlayerController
 import com.abueltaweel.presentation.screen.radio.RadioChannelsViewModel
 import com.abueltaweel.presentation.screen.settings.SettingsViewModel
-import com.abueltaweel.presentation.utils.AnalyticsHelper
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
@@ -44,6 +44,6 @@ val presentationModule = module {
     viewModelOf(::RadioChannelsViewModel)
     viewModelOf(::BatteryOptimizationViewModel)
     viewModelOf(::AudioAzkarViewModel)
+    viewModelOf(::DhikrViewModel)
     single<PlayerController> { AudioPlayerManager(androidContext()) }
-     single { AnalyticsHelper() }
 }

@@ -79,6 +79,9 @@ sealed interface Route {
 
 
     @Serializable
+    data object DhikrScreen : Route { override val route = "dhikr_screen" }
+
+    @Serializable
     data object AudioAzkarScreen : Route { override val route = "audio_azkar_screen" }
 
     @Serializable
