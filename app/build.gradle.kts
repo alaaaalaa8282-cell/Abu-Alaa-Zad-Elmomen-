@@ -45,10 +45,7 @@ android {
         debug {
             isMinifyEnabled = false
             isShrinkResources = false
-            firebaseCrashlytics {
-                mappingFileUploadEnabled = false
-                nativeSymbolUploadEnabled = false
-            }
+           
         }
         release {
             isMinifyEnabled = false
@@ -57,10 +54,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            firebaseCrashlytics {
-                mappingFileUploadEnabled = true
-                nativeSymbolUploadEnabled = true
-            }
+            
         }
     }
 
