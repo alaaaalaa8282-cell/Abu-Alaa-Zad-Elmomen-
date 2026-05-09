@@ -8,7 +8,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
@@ -20,41 +19,6 @@ jobs:
 
       - name: Make gradlew executable
         run: chmod +x gradlew
-
-      - name: Create google-services.json
-        run: |
-          mkdir -p app/
-          cat > app/google-services.json << 'GEOF'
-          {
-            "project_info": {
-              "project_number": "000000000000",
-              "project_id": "abueltaweel-placeholder",
-              "storage_bucket": "abueltaweel-placeholder.appspot.com"
-            },
-            "client": [
-              {
-                "client_info": {
-                  "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
-                  "android_client_info": {
-                    "package_name": "com.abueltaweel"
-                  }
-                },
-                "oauth_client": [],
-                "api_key": [
-                  {
-                    "current_key": "AIzaSyPlaceholderKeyForBuildOnly00000000"
-                  }
-                ],
-                "services": {
-                  "appinvite_service": {
-                    "other_platform_oauth_client": []
-                  }
-                }
-              }
-            ],
-            "configuration_version": "1"
-          }
-          GEOF
 
       - name: Build Debug APK
         env:
