@@ -1,6 +1,6 @@
 package com.abueltaweel.presentation.screen.settings
 
-import SettingsUiState
+import com.abueltaweel.presentation.screen.settings.SettingsUiState
 import android.content.Context
 import android.media.MediaPlayer
 import androidx.lifecycle.viewModelScope
