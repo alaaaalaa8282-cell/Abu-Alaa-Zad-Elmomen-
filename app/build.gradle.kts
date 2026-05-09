@@ -13,12 +13,6 @@ android {
     namespace = "com.abueltaweel"
     compileSdk = 36
 
-    bundle {
-        language { enableSplit = false }
-        density  { enableSplit = true  }
-        abi      { enableSplit = true  }
-    }
-
     defaultConfig {
         applicationId = "com.abueltaweel"
         minSdk = 26
@@ -33,7 +27,7 @@ android {
             localPropertiesFile.inputStream().use { localProperties.load(it) }
         }
         fun getProp(key: String): String =
-            localProperties.getProperty(key) ?: System.getenv(key) ?: "placeholder_$key"
+            localProperties.getProperty(key) ?: System.getenv(key) ?: ""
 
         buildConfigField("String", "SUPABASE_URL", "\"${getProp("SUPABASE_URL")}\"")
         buildConfigField("String", "SUPABASE_KEY", "\"${getProp("SUPABASE_KEY")}\"")
