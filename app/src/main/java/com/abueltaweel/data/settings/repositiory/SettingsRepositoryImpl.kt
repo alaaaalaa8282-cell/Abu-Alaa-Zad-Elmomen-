@@ -12,14 +12,13 @@ import com.abueltaweel.domain.entity.prayer.Prayer
 import com.abueltaweel.domain.entity.prayer.PrayerSettings
 import com.abueltaweel.domain.model.AppSettings
 import com.abueltaweel.domain.repository.settings.SettingsRepository
+import com.abueltaweel.presentation.screen.settings.SettingsUiState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 class SettingsRepositoryImpl(
     private val dataStore: DataStore<Preferences>
 ) : SettingsRepository {
-
-    private val defaultMoazenFileName = "azan_makkah.mp3"
 
     override suspend fun saveMadhab(madhab: Madhab) {
         dataStore.edit { it[SettingsKeys.MADHAB] = madhab.name }
@@ -91,7 +90,7 @@ class SettingsRepositoryImpl(
     }
 
     override fun observeSelectedMoazen(): Flow<String> =
-        dataStore.data.map { it[SELECTED_MOAZEN] ?: defaultMoazenFileName }
+        dataStore.data.map { it[SELECTED_MOAZEN] ?: SettingsUiState.Moazen.AZAN_MAKKAH.fileName }
 
     override suspend fun saveTafseer(type: String) {
         dataStore.edit { it[SettingsKeys.TAFSEER_TYPE] = type }
@@ -125,17 +124,20 @@ class SettingsRepositoryImpl(
             )
         }
 
+    // ---- مؤذن مستقل لكل صلاة ----
+    private val defaultMoazen = SettingsUiState.Moazen.AZAN_MAKKAH.fileName
+
     override suspend fun saveSelectedMoazenForPrayer(prayer: Prayer.PrayerName, fileName: String) {
         dataStore.edit { it[SettingsKeys.moazenKeyForPrayer(prayer)] = fileName }
     }
 
     override fun observeSelectedMoazenForPrayer(prayer: Prayer.PrayerName): Flow<String> =
-        dataStore.data.map { it[SettingsKeys.moazenKeyForPrayer(prayer)] ?: defaultMoazenFileName }
+        dataStore.data.map { it[SettingsKeys.moazenKeyForPrayer(prayer)] ?: defaultMoazen }
 
     override fun observeAllPrayerMoazens(): Flow<Map<Prayer.PrayerName, String>> =
         dataStore.data.map { prefs ->
             Prayer.PrayerName.entries.associateWith { prayer ->
-                prefs[SettingsKeys.moazenKeyForPrayer(prayer)] ?: defaultMoazenFileName
+                prefs[SettingsKeys.moazenKeyForPrayer(prayer)] ?: defaultMoazen
             }
         }
 }
