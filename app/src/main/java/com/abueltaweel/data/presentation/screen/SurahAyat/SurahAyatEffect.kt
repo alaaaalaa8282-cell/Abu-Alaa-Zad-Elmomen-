@@ -1,0 +1,15 @@
+package com.abueltaweel.presentation.screen.SurahAyat
+
+import com.abueltaweel.design_system.component.ToastDetails
+
+sealed interface SurahAyatEffect {
+    data class CopyAya(val text: String) : SurahAyatEffect
+    data object NavigateToBack : SurahAyatEffect
+    data class NavigateToSearch(
+        val surahId: Int,
+        val arabicName: String,
+        val englishName: String,
+    ) : SurahAyatEffect
+
+    data class ShowToast(val toast: ToastDetails) : SurahAyatEffect
+}
