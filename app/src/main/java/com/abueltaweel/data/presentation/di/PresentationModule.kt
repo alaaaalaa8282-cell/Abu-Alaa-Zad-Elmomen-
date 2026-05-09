@@ -45,5 +45,5 @@ val presentationModule = module {
     viewModelOf(::BatteryOptimizationViewModel)
     viewModelOf(::AudioAzkarViewModel)
     single<PlayerController> { AudioPlayerManager(androidContext()) }
-     single { AnalyticsHelper(get()) }
+     single { AnalyticsHelper() }
 }
