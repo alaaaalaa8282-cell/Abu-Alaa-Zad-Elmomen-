@@ -51,7 +51,7 @@ class AudioAzkarViewModel(
                 isPlaying = true,
                 isLoading = true
             )
-            playerController.play(track.url, track.titleAr)
+            playerController.play(track.url)
             _uiState.value = _uiState.value.copy(isLoading = false)
         }
     }
@@ -68,7 +68,6 @@ class AudioAzkarViewModel(
 
     companion object {
         val allTracks = listOf(
-            // أذكار الصباح
             AzkarTrack(1, "أذكار الصباح", "مشاري العفاسي",
                 "https://server8.mp3quran.net/afs/Rewayat-Hafs-A-n-Asim/024.mp3",
                 AzkarCategory.MORNING),
@@ -78,40 +77,30 @@ class AudioAzkarViewModel(
             AzkarTrack(3, "أذكار الصباح والمساء", "سعد الغامدي",
                 "https://server7.mp3quran.net/s_gmd/001.mp3",
                 AzkarCategory.MORNING),
-
-            // أذكار المساء
             AzkarTrack(4, "أذكار المساء", "مشاري العفاسي",
                 "https://server8.mp3quran.net/afs/Rewayat-Hafs-A-n-Asim/001.mp3",
                 AzkarCategory.EVENING),
             AzkarTrack(5, "أذكار المساء", "ماهر المعيقلي",
                 "https://server12.mp3quran.net/maher/Rewayat-Hafs-A-n-Asim/002.mp3",
                 AzkarCategory.EVENING),
-
-            // أذكار النوم
             AzkarTrack(6, "أذكار النوم", "مشاري العفاسي",
                 "https://server8.mp3quran.net/afs/Rewayat-Hafs-A-n-Asim/067.mp3",
                 AzkarCategory.SLEEP),
             AzkarTrack(7, "سورة البقرة - للنوم", "ماهر المعيقلي",
                 "https://server12.mp3quran.net/maher/Rewayat-Hafs-A-n-Asim/002.mp3",
                 AzkarCategory.SLEEP),
-
-            // أذكار الاستيقاظ
             AzkarTrack(8, "أذكار الاستيقاظ", "سعد الغامدي",
                 "https://server7.mp3quran.net/s_gmd/036.mp3",
                 AzkarCategory.WAKE),
             AzkarTrack(9, "دعاء الاستيقاظ", "مشاري العفاسي",
                 "https://server8.mp3quran.net/afs/Rewayat-Hafs-A-n-Asim/036.mp3",
                 AzkarCategory.WAKE),
-
-            // أذكار بعد الصلاة
             AzkarTrack(10, "أذكار بعد الصلاة", "ماهر المعيقلي",
                 "https://server12.mp3quran.net/maher/Rewayat-Hafs-A-n-Asim/036.mp3",
                 AzkarCategory.AFTER_PRAYER),
             AzkarTrack(11, "تسبيح وتحميد وتكبير", "مشاري العفاسي",
                 "https://server8.mp3quran.net/afs/Rewayat-Hafs-A-n-Asim/055.mp3",
                 AzkarCategory.AFTER_PRAYER),
-
-            // أذكار عامة
             AzkarTrack(12, "آية الكرسي", "مشاري العفاسي",
                 "https://server8.mp3quran.net/afs/Rewayat-Hafs-A-n-Asim/002.mp3",
                 AzkarCategory.GENERAL),
