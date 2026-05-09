@@ -11,7 +11,7 @@ plugins {
 
 android {
     namespace = "com.abueltaweel"
-    compileSdk { version = release(36) }
+    compileSdk = 36
 
     bundle {
         language { enableSplit = false }
@@ -45,7 +45,6 @@ android {
         debug {
             isMinifyEnabled = false
             isShrinkResources = false
-           
         }
         release {
             isMinifyEnabled = false
@@ -54,7 +53,6 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            
         }
     }
 
@@ -79,7 +77,6 @@ dependencies {
     implementation(platform(libs.bom))
     implementation(libs.bundles.supabase)
     implementation(libs.androidx.compose.foundation)
-    
 
     val room_version = "2.8.4"
     implementation("androidx.room:room-runtime:$room_version")
