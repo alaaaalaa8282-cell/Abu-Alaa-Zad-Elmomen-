@@ -59,13 +59,6 @@
             android:enabled="true"
             android:exported="true" />
         <service
-            android:name=".presentation.service.MyFirebaseMessagingService"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT" />
-            </intent-filter>
-        </service>
-        <service
             android:name=".presentation.screen.radio.player.AudioPlayerService"
             android:foregroundServiceType="mediaPlayback"
             android:exported="false" />
@@ -80,6 +73,11 @@
             android:turnScreenOn="true"
             android:theme="@style/Theme.AppCompat.NoActionBar"
             android:launchMode="singleTask" />
+
+        <service
+            android:name=".presentation.service.DhikrService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
 </application>
 
 </manifest>
