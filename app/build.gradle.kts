@@ -5,9 +5,6 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     kotlin("plugin.serialization") version "2.0.21"
-    alias(libs.plugins.google.gms.google.services)
-    alias(libs.plugins.google.firebase.crashlytics)
-    alias(libs.plugins.google.firebase.firebase.perf)
     id("androidx.room")
     id("com.google.devtools.ksp")
 }
@@ -87,10 +84,8 @@ dependencies {
     implementation(libs.bundles.koin)
     implementation(platform(libs.bom))
     implementation(libs.bundles.supabase)
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.bundles.firebase)
     implementation(libs.androidx.compose.foundation)
-    implementation(libs.firebase.analytics)
+    
 
     val room_version = "2.8.4"
     implementation("androidx.room:room-runtime:$room_version")
@@ -104,7 +99,6 @@ dependencies {
     implementation(libs.bundles.maps.location)
     implementation(libs.bundles.image.loading)
     implementation(libs.bundles.others)
-    implementation(libs.firebase.messaging)
     implementation(libs.androidx.media3.exoplayer)
     debugImplementation(libs.bundles.compose.debug)
 }
