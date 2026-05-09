@@ -2,7 +2,6 @@ package com.abueltaweel.presentation.screen.azkar
 
 import com.abueltaweel.domain.repository.azkar.AzkarRepository
 import com.abueltaweel.presentation.base.BaseViewModel
-import com.abueltaweel.presentation.utils.AnalyticsHelper
 
 class AzkarViewModel(
     private val repository: AzkarRepository,

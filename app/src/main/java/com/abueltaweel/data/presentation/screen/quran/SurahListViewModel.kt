@@ -3,7 +3,6 @@ package com.abueltaweel.presentation.screen.quran
 import android.annotation.SuppressLint
 import com.abueltaweel.domain.repository.quran.QuranRepository
 import com.abueltaweel.presentation.base.BaseViewModel
-import com.abueltaweel.presentation.utils.AnalyticsHelper
 import kotlinx.coroutines.delay
 
 class SurahListViewModel(

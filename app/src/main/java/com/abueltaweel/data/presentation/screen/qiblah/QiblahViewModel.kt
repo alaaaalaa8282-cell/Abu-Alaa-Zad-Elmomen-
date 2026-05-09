@@ -5,7 +5,6 @@ import com.abueltaweel.domain.repository.location.LocationRepository
 import com.abueltaweel.domain.repository.qiblah.QiblahRepository
 import com.abueltaweel.domain.repository.settings.SettingsRepository
 import com.abueltaweel.presentation.base.BaseViewModel
-import com.abueltaweel.presentation.utils.AnalyticsHelper
 import kotlinx.coroutines.flow.first
 
 class QiblahViewModel(

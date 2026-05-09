@@ -17,7 +17,6 @@ import com.abueltaweel.domain.repository.settings.SettingsRepository
 import com.abueltaweel.domain.usecase.PrayerSchedulingUseCase
 import com.abueltaweel.presentation.base.BaseViewModel
 import com.abueltaweel.presentation.screen.prayers.component.toPrayerName
-import com.abueltaweel.presentation.utils.AnalyticsHelper
 import com.abueltaweel.presentation.utils.convertMillisToHMS
 import com.abueltaweel.presentation.utils.getTimeDifference
 import com.abueltaweel.presentation.utils.isIgnoringBatteryOptimizations

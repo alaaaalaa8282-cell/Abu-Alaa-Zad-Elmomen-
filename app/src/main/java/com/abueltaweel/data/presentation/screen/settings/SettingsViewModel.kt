@@ -1,6 +1,6 @@
 package com.abueltaweel.presentation.screen.settings
 
-import com.abueltaweel.presentation.screen.settings.SettingsUiState
+import SettingsUiState
 import android.content.Context
 import android.media.MediaPlayer
 import androidx.lifecycle.viewModelScope
@@ -285,13 +285,13 @@ class SettingsViewModel(
 
     // ---- helpers ----
     private fun getMoazenNameRes(moazen: SettingsUiState.Moazen): Int = when (moazen) {
-        SettingsUiState.Moazen.AZAN_ABED_ALBASET      -> R.string.moazen_abed_albaset
-        SettingsUiState.Moazen.AZAN_MAKKAH             -> R.string.moazen_makkah
-        SettingsUiState.Moazen.AZAN_MANSOOR_AL_ZAHRANI -> R.string.moazen_mansoor
-        SettingsUiState.Moazen.AZAN_MISHARY_ALAFASI    -> R.string.moazen_mishary
-        SettingsUiState.Moazen.AZAN_MOHAMMED_ALMENSHWY -> R.string.moazen_menshawy
-        SettingsUiState.Moazen.AZAN_NASSER_ALQATAMI    -> R.string.moazen_nasser
-        SettingsUiState.Moazen.AZAN_SUHAIB_KHATBA      -> R.string.moazen_suhaib
+        SettingsUiState.Moazen.AZAN_ABED_ALBASET      -> R.string.mozan_abed_albaset
+        SettingsUiState.Moazen.AZAN_MAKKAH             -> R.string.mozan_makkah
+        SettingsUiState.Moazen.AZAN_MANSOOR_AL_ZAHRANI -> R.string.mozan_mansoor_alzahrani
+        SettingsUiState.Moazen.AZAN_MISHARY_ALAFASI    -> R.string.mozan_mishary_alafasi
+        SettingsUiState.Moazen.AZAN_MOHAMMED_ALMENSHWY -> R.string.mozan_mohammed_almenshawy
+        SettingsUiState.Moazen.AZAN_NASSER_ALQATAMI    -> R.string.mozan_nasser_alqatami
+        SettingsUiState.Moazen.AZAN_SUHAIB_KHATBA      -> R.string.mozan_suhaib_khatba
     }
 
     private fun getTafseerNameRes(type: SettingsUiState.TafseerType): Int = when (type) {
