@@ -1,6 +1,5 @@
 package com.abueltaweel.presentation.di
 
-import com.google.firebase.analytics.FirebaseAnalytics
 import com.abueltaweel.presentation.screen.AzkarDetails.AzkarDetailViewModel
 import com.abueltaweel.presentation.screen.ReportBug.ReportBugViewModel
 import com.abueltaweel.presentation.screen.SearchAyah.SearchAyahViewModel
@@ -46,6 +45,5 @@ val presentationModule = module {
     viewModelOf(::BatteryOptimizationViewModel)
     viewModelOf(::AudioAzkarViewModel)
     single<PlayerController> { AudioPlayerManager(androidContext()) }
-    single { FirebaseAnalytics.getInstance(get()) }
-    single { AnalyticsHelper(get()) }
+     single { AnalyticsHelper(get()) }
 }
