@@ -1,6 +1,7 @@
+package com.abueltaweel.presentation.screen.settings
+
 import com.abueltaweel.R
 import com.abueltaweel.domain.entity.prayer.Prayer
-import com.abueltaweel.presentation.screen.settings.SelectionItem
 
 data class SettingsUiState(
     val sections: List<SettingsSectionUiState> = emptyList(),
@@ -11,7 +12,6 @@ data class SettingsUiState(
     val location: LocationUiState = LocationUiState(),
     val dialog: SelectionDialogUiState? = null,
     val selectedFontSize: QuranFontSize = QuranFontSize.SMALL,
-    // مؤذن مستقل لكل صلاة
     val prayerMoazens: Map<Prayer.PrayerName, Moazen> = Prayer.PrayerName.entries
         .associateWith { Moazen.AZAN_MAKKAH },
     val activeMoazenPrayer: Prayer.PrayerName? = null,
