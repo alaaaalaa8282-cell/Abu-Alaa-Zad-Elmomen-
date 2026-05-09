@@ -1,21 +1,12 @@
 package com.abueltaweel.presentation.utils
 
-import com.google.firebase.analytics.FirebaseAnalytics
-import com.google.firebase.analytics.logEvent
-
-class AnalyticsHelper(
-    private val firebaseAnalytics: FirebaseAnalytics
-) {
+class AnalyticsHelper {
 
     fun logEvent(
         name: String,
         params: Map<String, String> = emptyMap()
     ) {
-        firebaseAnalytics.logEvent(name) {
-            params.forEach { (key, value) ->
-                param(key, value)
-            }
-        }
+        // Analytics removed
     }
 
     fun logScreen(screenName: String) {
