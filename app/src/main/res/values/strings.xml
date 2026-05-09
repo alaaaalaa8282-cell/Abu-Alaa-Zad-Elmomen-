@@ -255,13 +255,13 @@
     <string name="choose_moazen">Choose Moazen</string>
     <string name="moazen_description">Select the Adhan voice you want to use</string>
 
-    <string name="mozan_abed_albaset">Abed Al-Baset</string>
-    <string name="mozan_makkah">Makkah</string>
-    <string name="mozan_mansoor_alzahrani">Mansoor Al-Zahrani</string>
-    <string name="mozan_mishary_alafasi">Mishary Alafasy</string>
-    <string name="mozan_mohammed_almenshawy">Mohammed Al-Menshawy</string>
-    <string name="mozan_nasser_alqatami">Nasser Al-Qatami</string>
-    <string name="mozan_suhaib_khatba">Suhaib Khatba</string>
+    <string name="moazen_abed_albaset">Abed Al-Baset</string>
+    <string name="moazen_makkah">Makkah</string>
+    <string name="moazen_mansoor_alzahrani">Mansoor Al-Zahrani</string>
+    <string name="moazen_mishary_alafasi">Mishary Alafasy</string>
+    <string name="moazen_mohammed_almenshawy">Mohammed Al-Menshawy</string>
+    <string name="moazen_nasser_alqatami">Nasser Al-Qatami</string>
+    <string name="moazen_suhaib_khatba">Suhaib Khatba</string>
     <string name="tafseer_mokhtasar">The Concise Interpretation of the Quran</string>
     <string name="tafseer_moyasser">The Simplified</string>
     <string name="choose_tafseer">Choose Tafseer</string>
