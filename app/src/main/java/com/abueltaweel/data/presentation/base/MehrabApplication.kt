@@ -2,9 +2,6 @@ package com.abueltaweel.presentation.base
 
 import android.app.Application
 import android.os.StrictMode
-import com.google.firebase.Firebase
-import com.google.firebase.messaging.messaging
-import com.google.firebase.perf.performance
 import com.abueltaweel.BuildConfig
 import com.abueltaweel.data.di.dataModule
 import com.abueltaweel.domain.di.domainModule
@@ -21,17 +18,9 @@ class MehrabApplication : Application() {
             androidContext(this@MehrabApplication)
             modules(presentationModule, domainModule, *dataModule.toTypedArray())
         }
-        val language = Locale.getDefault().language
-        Firebase.messaging.subscribeToTopic("lang_$language")
         MapLibre.getInstance(this)
-        if (BuildConfig.DEBUG) {
-        //    setupStrictMode()
-            Firebase.performance.isPerformanceCollectionEnabled = false
-        } else {
-
-            Firebase.performance.isPerformanceCollectionEnabled = true
-        }
     }
+
     private fun setupStrictMode() {
         StrictMode.setThreadPolicy(
             StrictMode.ThreadPolicy.Builder()
@@ -42,7 +31,6 @@ class MehrabApplication : Application() {
                 .penaltyDeath()
                 .build()
         )
-
         StrictMode.setVmPolicy(
             StrictMode.VmPolicy.Builder()
                 .detectLeakedClosableObjects()
@@ -52,5 +40,4 @@ class MehrabApplication : Application() {
                 .build()
         )
     }
-
 }
