@@ -82,16 +82,6 @@ fun SettingsScreen(
             is SettingsEffect.ShowToast -> toast = effect.toast
         }
     }
-
-            SettingsEffect.NavigateToLocation -> {
-                navController.navigate(Route.MapsScreen)
-            }
-            }
-                is SettingsEffect.ShowToast -> {
-                toast = effect.toast
-            }
-        }
-    }
     LaunchedEffect(toast) {
         toast?.let {
             val current = it
