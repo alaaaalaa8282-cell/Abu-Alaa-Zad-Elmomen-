@@ -4,8 +4,7 @@ import com.abueltaweel.domain.repository.azkar.AzkarRepository
 import com.abueltaweel.presentation.base.BaseViewModel
 
 class AzkarViewModel(
-    private val repository: AzkarRepository,
-    private val analyticsHelper: AnalyticsHelper
+    private val repository: AzkarRepository
 ) : BaseViewModel<AzkarUiState, AzkarEffect>(
     AzkarUiState(isLoading = true)
 ), AzkarInteractionListener {
@@ -14,7 +13,6 @@ class AzkarViewModel(
         loadAzkar()
     }
     fun onScreenOpened() {
-        analyticsHelper.logScreen("azkar")
     }
         private fun loadAzkar() {
         tryToCall(
@@ -35,7 +33,6 @@ class AzkarViewModel(
     }
 
     override fun onClickCategory(type: AzkarType) {
-        analyticsHelper.logEvent(
             name = "azkar",
             params = mapOf(
                 "type" to type.name.lowercase(),
