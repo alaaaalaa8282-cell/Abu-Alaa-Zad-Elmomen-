@@ -40,7 +40,7 @@ class FullPrayerTimesViewModel(
     private val prayerRepository: PrayerRepository,
     private val settingsRepository: SettingsRepository,
     private val notificationsRepository: PrayerNotificationsRepository,
-    private val prayerSchedulingUseCase: PrayerSchedulingUseCase
+    private val prayerSchedulingUseCase: PrayerSchedulingUseCase,
     private val context: Context
 ) : BaseViewModel<FullPrayerTimesUiState, FullPrayerTimesEffect>(FullPrayerTimesUiState()),
     FullPrayerTimeInteractionListener {
