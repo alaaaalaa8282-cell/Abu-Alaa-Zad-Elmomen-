@@ -6,8 +6,7 @@ import com.abueltaweel.presentation.base.BaseViewModel
 import kotlinx.coroutines.delay
 
 class SurahListViewModel(
-    private val quranRepository: QuranRepository,
-    private val analyticsHelper: AnalyticsHelper
+    private val quranRepository: QuranRepository
 ) : BaseViewModel<SurahListUiState, SurahListEffect>(
     SurahListUiState()
 ), SurahListInteractionListener {
@@ -34,10 +33,8 @@ class SurahListViewModel(
         )
     }
     fun onScreenOpened() {
-        analyticsHelper.logScreen("surah list")
     }
     override fun onSurahClick(surahId: Int, arabicName: String, englishName: String) {
-        analyticsHelper.logEvent(
             name = "on click surah",
             params = mapOf(
                 "surah_id" to surahId.toString(),
@@ -48,14 +45,12 @@ class SurahListViewModel(
     }
 
     override fun onSearchClick() {
-        analyticsHelper.logEvent(
             name = "on click search"
         )
         sendEffect(SurahListEffect.NavigateToQuranSearch)
     }
 
     override fun onBookmarksClick() {
-        analyticsHelper.logEvent(
             name = "on click bookmarks"
         )
         sendEffect(SurahListEffect.NavigateToBookmarksList)
