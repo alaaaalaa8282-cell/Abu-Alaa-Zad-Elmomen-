@@ -1,3 +1,5 @@
+package com.abueltaweel.presentation.screen.settings
+
 import com.abueltaweel.R
 import com.abueltaweel.domain.entity.prayer.Prayer
 import com.abueltaweel.presentation.screen.settings.SelectionItem
@@ -95,9 +97,6 @@ data class SettingsUiState(
         TEXT_FONT,
         TAFSEER,
         MADHAB,
-        HELP_FEEDBACK,
-        RATE_APP,
-        ABOUT
     }
 
     enum class QuranFontSize(val value: Int, val sizeSp: Int) {
