@@ -15,8 +15,7 @@ import kotlinx.coroutines.launch
 
 class RadioChannelsViewModel(
     private val radioRepository: RadioRepository,
-    private val playerController: PlayerController,
-    private val analyticsHelper: AnalyticsHelper
+    private val playerController: PlayerController
 ) : BaseViewModel<RadioUiState, RadioChannelsEffect>(RadioUiState()),
     RadioChannelsInteractionListener {
 
@@ -107,7 +106,6 @@ class RadioChannelsViewModel(
     }
 
     private fun getChannelsByCategory(categoryId: String) {
-        analyticsHelper.logEvent(
             name = "on click category",
             params = mapOf(
                 "category_id" to categoryId
@@ -167,7 +165,6 @@ class RadioChannelsViewModel(
 
     override fun onPlayClick(id: Int) {
         val channel = screenState.value.channels.firstOrNull { it.id == id } ?: return
-        analyticsHelper.logEvent(
             name = "on click play",
             params = mapOf(
                 "channel_name" to channel.nameAr
