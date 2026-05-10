@@ -12,7 +12,6 @@ import com.abueltaweel.domain.entity.prayer.Prayer
 import com.abueltaweel.domain.entity.prayer.PrayerSettings
 import com.abueltaweel.domain.model.AppSettings
 import com.abueltaweel.domain.repository.settings.SettingsRepository
-import com.abueltaweel.presentation.screen.settings.SettingsUiState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -90,7 +89,7 @@ class SettingsRepositoryImpl(
     }
 
     override fun observeSelectedMoazen(): Flow<String> =
-        dataStore.data.map { it[SELECTED_MOAZEN] ?: SettingsUiState.Moazen.AZAN_MAKKAH.fileName }
+        dataStore.data.map { it[SELECTED_MOAZEN] ?: "azan_makkah.mp3" }
 
     override suspend fun saveTafseer(type: String) {
         dataStore.edit { it[SettingsKeys.TAFSEER_TYPE] = type }
@@ -125,7 +124,7 @@ class SettingsRepositoryImpl(
         }
 
     // ---- مؤذن مستقل لكل صلاة ----
-    private val defaultMoazen = SettingsUiState.Moazen.AZAN_MAKKAH.fileName
+    private val defaultMoazen = "azan_makkah.mp3"
 
     override suspend fun saveSelectedMoazenForPrayer(prayer: Prayer.PrayerName, fileName: String) {
         dataStore.edit { it[SettingsKeys.moazenKeyForPrayer(prayer)] = fileName }
