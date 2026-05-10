@@ -308,14 +308,10 @@ class HomeViewModel(
     }
 
     override fun onClickQuran() {
-            name = "on click surah list"
-        )
         sendEffect(HomeEffect.NavigateToQuran)
     }
 
     override fun onClickTilawah() {
-            name = "on click continue to tilawah"
-        )
         sendEffect(HomeEffect.NavigateToTilawah)
     }
 
