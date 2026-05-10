@@ -9,14 +9,12 @@ import com.abueltaweel.presentation.base.BaseViewModel
 
 class MapsViewModel(
     private val settingsRepository: SettingsRepository,
-    private val locationRepository: LocationRepository,
-    private val analyticsHelper: AnalyticsHelper
+    private val locationRepository: LocationRepository
 ) : BaseViewModel<MapsUiState, MapsEffect>(MapsUiState()), MapsInteractionListener {
     init {
         loadUserCurrentLocation()
     }
     fun onScreenOpened() {
-        analyticsHelper.logScreen("maps")
     }
     private fun loadUserCurrentLocation() {
         tryToCall(
