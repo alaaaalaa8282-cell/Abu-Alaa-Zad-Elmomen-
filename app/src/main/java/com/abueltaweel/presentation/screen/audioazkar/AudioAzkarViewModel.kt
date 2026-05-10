@@ -51,7 +51,7 @@ class AudioAzkarViewModel(
                 isPlaying = true,
                 isLoading = true
             )
-            playerController.play(track.url, track.titleAr)
+            playerController.play(track.url)
             _uiState.value = _uiState.value.copy(isLoading = false)
         }
     }
