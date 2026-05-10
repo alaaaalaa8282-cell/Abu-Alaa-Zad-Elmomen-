@@ -71,7 +71,7 @@
             android:exported="false"
             android:showOnLockScreen="true"
             android:turnScreenOn="true"
-            android:theme="@style/Theme.AppCompat.NoActionBar"
+            android:theme="@style/Theme.MehrabAlMomen"
             android:launchMode="singleTask" />
 
         <service
