@@ -78,9 +78,10 @@ fun SettingsScreen(
     val versionNumber = BuildConfig.VERSION_NAME
     CollectEffect(settingsViewModel.effect) { effect ->
         when (effect) {
-
-            }
-            }
+            SettingsEffect.NavigateToLocation -> navController.navigate(Route.MapsScreen)
+            is SettingsEffect.ShowToast -> toast = effect.toast
+        }
+    }
 
             SettingsEffect.NavigateToLocation -> {
                 navController.navigate(Route.MapsScreen)
