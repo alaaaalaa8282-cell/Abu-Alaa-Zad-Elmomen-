@@ -40,8 +40,7 @@ class FullPrayerTimesViewModel(
     private val prayerRepository: PrayerRepository,
     private val settingsRepository: SettingsRepository,
     private val notificationsRepository: PrayerNotificationsRepository,
-    private val prayerSchedulingUseCase: PrayerSchedulingUseCase,
-    private val analyticsHelper: AnalyticsHelper,
+    private val prayerSchedulingUseCase: PrayerSchedulingUseCase
     private val context: Context
 ) : BaseViewModel<FullPrayerTimesUiState, FullPrayerTimesEffect>(FullPrayerTimesUiState()),
     FullPrayerTimeInteractionListener {
@@ -82,7 +81,6 @@ class FullPrayerTimesViewModel(
         }
     }
     fun onScreenOpened() {
-        analyticsHelper.logScreen("Prayer times")
     }
     private fun getDailyPrayers() {
         tryToCall(
