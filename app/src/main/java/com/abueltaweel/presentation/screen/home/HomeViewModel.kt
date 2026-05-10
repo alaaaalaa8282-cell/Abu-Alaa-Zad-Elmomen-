@@ -32,8 +32,7 @@ class HomeViewModel(
     private val prayerRepository: PrayerRepository,
     private val readingProgressRepository: ReadingProgressRepository,
     private val settingsRepository: SettingsRepository,
-    private val quranRepository: QuranRepository,
-    private val analyticsHelper: AnalyticsHelper
+    private val quranRepository: QuranRepository
 ) : BaseViewModel<HomeUiState, HomeEffect>(HomeUiState()), HomeInteractionListener {
     private var countdownJob: Job? = null
     private val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
@@ -309,14 +308,12 @@ class HomeViewModel(
     }
 
     override fun onClickQuran() {
-        analyticsHelper.logEvent(
             name = "on click surah list"
         )
         sendEffect(HomeEffect.NavigateToQuran)
     }
 
     override fun onClickTilawah() {
-        analyticsHelper.logEvent(
             name = "on click continue to tilawah"
         )
         sendEffect(HomeEffect.NavigateToTilawah)
