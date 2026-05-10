@@ -367,7 +367,11 @@ fun SettingsItem(
                         item.action
                     )
 
-                    SettingsUiState.SettingsAction.MOAZEN -> listener.onItemClick(item.action)
+                    SettingsUiState.SettingsAction.MOAZEN_FAJR,
+                    SettingsUiState.SettingsAction.MOAZEN_ZUHR,
+                    SettingsUiState.SettingsAction.MOAZEN_ASR,
+                    SettingsUiState.SettingsAction.MOAZEN_MAGHRIB,
+                    SettingsUiState.SettingsAction.MOAZEN_ISHA -> listener.onItemClick(item.action)
                     SettingsUiState.SettingsAction.LOCATION -> listener.onLocationClick()
                     SettingsUiState.SettingsAction.HELP_FEEDBACK -> listener.onHelpFeedbackClick()
                     SettingsUiState.SettingsAction.RATE_APP -> listener.onRateAppClick()
