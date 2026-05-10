@@ -35,24 +35,14 @@ class SurahListViewModel(
     fun onScreenOpened() {
     }
     override fun onSurahClick(surahId: Int, arabicName: String, englishName: String) {
-            name = "on click surah",
-            params = mapOf(
-                "surah_id" to surahId.toString(),
-                "surah_name" to arabicName,
-            )
-        )
         sendEffect(SurahListEffect.NavigateToSurahAyat(surahId, arabicName,englishName))
     }
 
     override fun onSearchClick() {
-            name = "on click search"
-        )
         sendEffect(SurahListEffect.NavigateToQuranSearch)
     }
 
     override fun onBookmarksClick() {
-            name = "on click bookmarks"
-        )
         sendEffect(SurahListEffect.NavigateToBookmarksList)
     }
 }
