@@ -8,8 +8,10 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.media.MediaPlayer
+import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
+import android.provider.Settings
 import androidx.core.app.NotificationCompat
 import com.abueltaweel.R
 import com.abueltaweel.domain.entity.prayer.Prayer
@@ -47,12 +49,38 @@ class PrayerAlarmService : Service() {
 
         startForeground(1, createNotification(prayerEnum))
 
-        // إطلاق شاشة الأذان الـ Full Screen
-        startActivity(AzanFullScreenActivity.newIntent(this, prayerEnum.getArabicName()))
+        // فتح شاشة الأذان
+        if (canShowOverlay()) {
+            // عندنا إذن - نفتح الشاشة فوق أي تطبيق
+            startActivity(AzanFullScreenActivity.newIntent(this, prayerEnum.getArabicName()))
+        } else {
+            // مفيش إذن - نطلبه من المستخدم
+            requestOverlayPermission()
+        }
 
         playAzanForPrayer(prayerEnum)
 
         return START_NOT_STICKY
+    }
+
+    private fun canShowOverlay(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Settings.canDrawOverlays(this)
+        } else {
+            true
+        }
+    }
+
+    private fun requestOverlayPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val intent = Intent(
+                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:$packageName")
+            ).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            startActivity(intent)
+        }
     }
 
     private fun stopAzan() {
@@ -104,7 +132,6 @@ class PrayerAlarmService : Service() {
     }
 
     private fun playAzanForPrayer(prayer: Prayer.PrayerName) {
-        // قراءة المؤذن المختار لهذه الصلاة تحديداً
         val selectedFileName = runBlocking {
             settingsRepository.observeSelectedMoazenForPrayer(prayer).first()
         }.removeSuffix(".mp3")
