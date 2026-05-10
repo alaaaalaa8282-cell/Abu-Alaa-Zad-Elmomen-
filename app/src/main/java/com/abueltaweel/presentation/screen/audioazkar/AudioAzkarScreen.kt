@@ -18,7 +18,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -95,6 +94,12 @@ fun AudioAzkarScreen(viewModel: AudioAzkarViewModel = koinViewModel()) {
             }
         }
 
+        // Repeat interval selector
+        RepeatIntervalSelector(
+            selected = state.selectedInterval,
+            onSelect = { viewModel.selectInterval(it) }
+        )
+
         // Tracks list
         LazyColumn(
             modifier = Modifier.weight(1f),
@@ -108,7 +113,7 @@ fun AudioAzkarScreen(viewModel: AudioAzkarViewModel = koinViewModel()) {
                     isPlaying = isCurrentlyPlaying,
                     isLoading = isCurrentlyPlaying && state.isLoading,
                     onClick = {
-                        if (isCurrentlyPlaying) viewModel.stopTrack()
+                        if (isCurrentlyPlaying) viewModel.pauseTrack()
                         else viewModel.playTrack(track)
                     }
                 )
@@ -120,8 +125,68 @@ fun AudioAzkarScreen(viewModel: AudioAzkarViewModel = koinViewModel()) {
             MiniPlayer(
                 track = state.currentTrack!!,
                 isPlaying = state.isPlaying,
+                interval = state.selectedInterval,
                 onStop = { viewModel.stopTrack() }
             )
+        }
+    }
+}
+
+@Composable
+private fun RepeatIntervalSelector(
+    selected: RepeatInterval,
+    onSelect: (RepeatInterval) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "التكرار:",
+            color = Color(0xFFC9A84C),
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(Modifier.width(8.dp))
+        Box {
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color(0xFF1B3A4B))
+                    .clickable { expanded = true }
+                    .padding(horizontal = 14.dp, vertical = 8.dp)
+            ) {
+                Text(
+                    text = selected.labelAr,
+                    color = Color.White,
+                    fontSize = 13.sp
+                )
+            }
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                modifier = Modifier.background(Color(0xFF1B3A4B))
+            ) {
+                RepeatInterval.entries.forEach { interval ->
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = interval.labelAr,
+                                color = if (interval == selected) Color(0xFFC9A84C) else Color.White,
+                                fontWeight = if (interval == selected) FontWeight.Bold else FontWeight.Normal
+                            )
+                        },
+                        onClick = {
+                            onSelect(interval)
+                            expanded = false
+                        }
+                    )
+                }
+            }
         }
     }
 }
@@ -196,7 +261,12 @@ private fun TrackItem(
 }
 
 @Composable
-private fun MiniPlayer(track: AzkarTrack, isPlaying: Boolean, onStop: () -> Unit) {
+private fun MiniPlayer(
+    track: AzkarTrack,
+    isPlaying: Boolean,
+    interval: RepeatInterval,
+    onStop: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -213,11 +283,16 @@ private fun MiniPlayer(track: AzkarTrack, isPlaying: Boolean, onStop: () -> Unit
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            Text(text = track.reciter, color = Color(0xFFC9A84C), fontSize = 12.sp)
+            Text(
+                text = if (interval == RepeatInterval.ONCE) track.reciter
+                       else "${track.reciter} · ${interval.labelAr}",
+                color = Color(0xFFC9A84C),
+                fontSize = 12.sp
+            )
         }
         IconButton(onClick = onStop) {
             Icon(
-                painter = painterResource(R.drawable.ic_pause),
+                painter = painterResource(R.drawable.ic_stop),
                 contentDescription = "إيقاف",
                 tint = Color(0xFFC9A84C),
                 modifier = Modifier.size(28.dp)
