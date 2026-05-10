@@ -10,8 +10,7 @@ import kotlinx.coroutines.flow.first
 class QiblahViewModel(
     private val qiblahRepository: QiblahRepository,
     private val settingsRepository: SettingsRepository,
-    private val locationRepository: LocationRepository,
-    private val analyticsHelper: AnalyticsHelper
+    private val locationRepository: LocationRepository
 ) :
     BaseViewModel<QiblahUiState, QiblahEffect>(QiblahUiState()) {
     var fixedQiblaDirection: Float = Float.NaN
@@ -22,7 +21,6 @@ class QiblahViewModel(
         getLocation()
     }
     fun onScreenOpened() {
-        analyticsHelper.logScreen("qiblah")
     }
     private fun getQiblahDirection() {
         tryToCall(
