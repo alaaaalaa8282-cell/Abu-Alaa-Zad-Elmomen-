@@ -341,7 +341,7 @@ class SettingsViewModel(
 
     override fun onLocationClick()          { sendEffect(SettingsEffect.NavigateToLocation) }
     override fun onCalculationMethodClick() {}
-    override fun onHelpFeedbackClick()      { sendEffect(SettingsEffect.NavigateToHelpFeedback) }
-    override fun onRateAppClick()           { sendEffect(SettingsEffect.NavigateToRateApp) }
-    override fun onAboutClick()             { sendEffect(SettingsEffect.NavigateToAbout) }
+    override fun onHelpFeedbackClick()      {
+    override fun onRateAppClick()           {
+    override fun onAboutClick()             {
 }

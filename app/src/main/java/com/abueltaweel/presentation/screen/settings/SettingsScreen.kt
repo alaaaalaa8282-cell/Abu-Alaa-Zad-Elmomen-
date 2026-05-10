@@ -1,6 +1,6 @@
 package com.abueltaweel.presentation.screen.settings
 
-import SettingsUiState
+import com.abueltaweel.presentation.screen.settings.SettingsUiState
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
@@ -78,20 +78,13 @@ fun SettingsScreen(
     val versionNumber = BuildConfig.VERSION_NAME
     CollectEffect(settingsViewModel.effect) { effect ->
         when (effect) {
-            SettingsEffect.NavigateToAbout -> {
 
             }
-
-            SettingsEffect.NavigateToHelpFeedback -> {
-                navController.navigate(Route.ReportBugScreen)
             }
 
             SettingsEffect.NavigateToLocation -> {
                 navController.navigate(Route.MapsScreen)
             }
-
-            SettingsEffect.NavigateToRateApp -> {
-                openStoreReview(context)
             }
                 is SettingsEffect.ShowToast -> {
                 toast = effect.toast
@@ -373,9 +366,6 @@ fun SettingsItem(
                     SettingsUiState.SettingsAction.MOAZEN_MAGHRIB,
                     SettingsUiState.SettingsAction.MOAZEN_ISHA -> listener.onItemClick(item.action)
                     SettingsUiState.SettingsAction.LOCATION -> listener.onLocationClick()
-                    SettingsUiState.SettingsAction.HELP_FEEDBACK -> listener.onHelpFeedbackClick()
-                    SettingsUiState.SettingsAction.RATE_APP -> listener.onRateAppClick()
-                    SettingsUiState.SettingsAction.ABOUT -> listener.onAboutClick()
                     SettingsUiState.SettingsAction.TEXT_FONT -> listener.onItemClick(item.action)
                     SettingsUiState.SettingsAction.TAFSEER -> listener.onItemClick(item.action)
                 }
