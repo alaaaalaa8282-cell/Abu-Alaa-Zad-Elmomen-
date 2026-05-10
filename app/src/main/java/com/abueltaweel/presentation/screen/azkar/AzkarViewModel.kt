@@ -33,11 +33,6 @@ class AzkarViewModel(
     }
 
     override fun onClickCategory(type: AzkarType) {
-            name = "azkar",
-            params = mapOf(
-                "type" to type.name.lowercase(),
-            )
-        )
         sendEffect(AzkarEffect.NavigateToDetails(type))
     }
 
