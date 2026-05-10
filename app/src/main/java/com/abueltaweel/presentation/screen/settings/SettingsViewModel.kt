@@ -1,6 +1,6 @@
 package com.abueltaweel.presentation.screen.settings
 
-import SettingsUiState
+import com.abueltaweel.presentation.screen.settings.SettingsUiState
 import android.content.Context
 import android.media.MediaPlayer
 import androidx.lifecycle.viewModelScope
@@ -22,13 +22,13 @@ class SettingsViewModel(
     SettingsInteractionListener {
 
     private val moazenResMap = mapOf(
-        SettingsUiState.Moazen.AZAN_ABED_ALBASET    to R.raw.azan_abed_albaset,
-        SettingsUiState.Moazen.AZAN_MAKKAH           to R.raw.azan_makkah,
+        SettingsUiState.Moazen.AZAN_ABED_ALBASET      to R.raw.azan_abed_albaset,
+        SettingsUiState.Moazen.AZAN_MAKKAH             to R.raw.azan_makkah,
         SettingsUiState.Moazen.AZAN_MANSOOR_AL_ZAHRANI to R.raw.azan_mansoor_al_zahrani,
-        SettingsUiState.Moazen.AZAN_MISHARY_ALAFASI  to R.raw.azan_mishary_alafasi,
+        SettingsUiState.Moazen.AZAN_MISHARY_ALAFASI    to R.raw.azan_mishary_alafasi,
         SettingsUiState.Moazen.AZAN_MOHAMMED_ALMENSHWY to R.raw.azan_mohammed_almenshawy,
-        SettingsUiState.Moazen.AZAN_NASSER_ALQATAMI  to R.raw.azan_nasser_alqatami,
-        SettingsUiState.Moazen.AZAN_SUHAIB_KHATBA    to R.raw.azan_suhaib_khatba
+        SettingsUiState.Moazen.AZAN_NASSER_ALQATAMI    to R.raw.azan_nasser_alqatami,
+        SettingsUiState.Moazen.AZAN_SUHAIB_KHATBA      to R.raw.azan_suhaib_khatba
     )
 
     private var previewPlayer: MediaPlayer? = null
@@ -40,7 +40,6 @@ class SettingsViewModel(
         observeAllPrayerMoazens()
     }
 
-    // ---- Preview ----
     fun playPreview(index: Int, context: Context) {
         stopPreview()
         val moazen = SettingsUiState.Moazen.entries.getOrNull(index) ?: return
@@ -57,7 +56,6 @@ class SettingsViewModel(
         previewPlayer = null
     }
 
-    // ---- Observers ----
     private fun observeSettings() {
         viewModelScope.launch {
             settingsRepository.observeAppSettings().collect { appSettings ->
@@ -114,7 +112,6 @@ class SettingsViewModel(
         }
     }
 
-    // ---- Sections ----
     private fun rebuildSections() {
         val state = screenState.value
 
@@ -135,11 +132,12 @@ class SettingsViewModel(
             )
         }
 
+        // قسم الدعم اتشال
         val sections = listOf(
             SettingsUiState.SettingsSectionUiState(
                 titleRes = R.string.general,
                 items = listOf(
-                    SettingsUiState.SettingsItemUiState(R.drawable.ic_language,  R.string.language,
+                    SettingsUiState.SettingsItemUiState(R.drawable.ic_language, R.string.language,
                         description = state.selectedLanguage.nameRes, action = SettingsUiState.SettingsAction.LANGUAGE),
                     SettingsUiState.SettingsItemUiState(R.drawable.ic_theme, R.string.theme,
                         description = state.selectedTheme.value, action = SettingsUiState.SettingsAction.THEME),
@@ -157,7 +155,6 @@ class SettingsViewModel(
                         description = state.selectedMadhab.value, action = SettingsUiState.SettingsAction.MADHAB)
                 )
             ),
-            // قسم مؤذن كل صلاة
             SettingsUiState.SettingsSectionUiState(
                 titleRes = R.string.moazen,
                 items = listOf(
@@ -176,42 +173,30 @@ class SettingsViewModel(
                     SettingsUiState.SettingsItemUiState(R.drawable.ic_tafseer, R.string.al_tafseer,
                         description = getTafseerNameRes(state.selectedTafseer), action = SettingsUiState.SettingsAction.TAFSEER)
                 )
-            ),
-            SettingsUiState.SettingsSectionUiState(
-                titleRes = R.string.support,
-                items = listOf(
-                    SettingsUiState.SettingsItemUiState(R.drawable.ic_bug,       R.string.help_feedback, action = SettingsUiState.SettingsAction.HELP_FEEDBACK),
-                    SettingsUiState.SettingsItemUiState(R.drawable.ic_star_rate, R.string.rate_app,      action = SettingsUiState.SettingsAction.RATE_APP)
-                )
             )
         )
         updateState { it.copy(sections = sections) }
     }
 
-    // ---- Dialog openers ----
     override fun onItemClick(action: SettingsUiState.SettingsAction) {
         when (action) {
-            SettingsUiState.SettingsAction.LOCATION        -> sendEffect(SettingsEffect.NavigateToLocation)
-            SettingsUiState.SettingsAction.HELP_FEEDBACK   -> sendEffect(SettingsEffect.NavigateToHelpFeedback)
-            SettingsUiState.SettingsAction.RATE_APP        -> sendEffect(SettingsEffect.NavigateToRateApp)
-            SettingsUiState.SettingsAction.LANGUAGE        -> openLanguageDialog()
-            SettingsUiState.SettingsAction.THEME           -> openThemeDialog()
-            SettingsUiState.SettingsAction.MADHAB          -> openMadhabDialog()
+            SettingsUiState.SettingsAction.LOCATION           -> sendEffect(SettingsEffect.NavigateToLocation)
+            SettingsUiState.SettingsAction.LANGUAGE           -> openLanguageDialog()
+            SettingsUiState.SettingsAction.THEME              -> openThemeDialog()
+            SettingsUiState.SettingsAction.MADHAB             -> openMadhabDialog()
             SettingsUiState.SettingsAction.CALCULATION_METHOD -> openCalculationMethodDialog()
-            SettingsUiState.SettingsAction.TEXT_FONT       -> openFontSizeDialog()
-            SettingsUiState.SettingsAction.TAFSEER         -> openTafseerDialog()
-            SettingsUiState.SettingsAction.MOAZEN_FAJR    -> openMoazenDialog(Prayer.PrayerName.FAJR)
-            SettingsUiState.SettingsAction.MOAZEN_ZUHR    -> openMoazenDialog(Prayer.PrayerName.ZUHR)
-            SettingsUiState.SettingsAction.MOAZEN_ASR     -> openMoazenDialog(Prayer.PrayerName.ASR)
-            SettingsUiState.SettingsAction.MOAZEN_MAGHRIB -> openMoazenDialog(Prayer.PrayerName.MAGHRIB)
-            SettingsUiState.SettingsAction.MOAZEN_ISHA    -> openMoazenDialog(Prayer.PrayerName.ISHA)
+            SettingsUiState.SettingsAction.TEXT_FONT          -> openFontSizeDialog()
+            SettingsUiState.SettingsAction.TAFSEER            -> openTafseerDialog()
+            SettingsUiState.SettingsAction.MOAZEN_FAJR        -> openMoazenDialog(Prayer.PrayerName.FAJR)
+            SettingsUiState.SettingsAction.MOAZEN_ZUHR        -> openMoazenDialog(Prayer.PrayerName.ZUHR)
+            SettingsUiState.SettingsAction.MOAZEN_ASR         -> openMoazenDialog(Prayer.PrayerName.ASR)
+            SettingsUiState.SettingsAction.MOAZEN_MAGHRIB     -> openMoazenDialog(Prayer.PrayerName.MAGHRIB)
+            SettingsUiState.SettingsAction.MOAZEN_ISHA        -> openMoazenDialog(Prayer.PrayerName.ISHA)
             else -> {}
         }
     }
 
-    override fun onPrayerMoazenClick(prayer: Prayer.PrayerName) {
-        openMoazenDialog(prayer)
-    }
+    override fun onPrayerMoazenClick(prayer: Prayer.PrayerName) { openMoazenDialog(prayer) }
 
     private fun openMoazenDialog(prayer: Prayer.PrayerName) {
         val state = screenState.value
@@ -228,7 +213,6 @@ class SettingsViewModel(
         )
     }
 
-    // ---- Dialog confirm ----
     override fun onDialogConfirm(index: Int) {
         val dialog = screenState.value.dialog ?: return
         when (dialog.type) {
@@ -257,9 +241,7 @@ class SettingsViewModel(
                 val prayer   = screenState.value.activeMoazenPrayer ?: return
                 val newMap   = screenState.value.prayerMoazens.toMutableMap().also { it[prayer] = selected }
                 updateState { it.copy(prayerMoazens = newMap, activeMoazenPrayer = null) }
-                viewModelScope.launch {
-                    settingsRepository.saveSelectedMoazenForPrayer(prayer, selected.fileName)
-                }
+                viewModelScope.launch { settingsRepository.saveSelectedMoazenForPrayer(prayer, selected.fileName) }
             }
             SettingsUiState.SelectionDialogType.FONT_SIZE -> {
                 val selected = SettingsUiState.QuranFontSize.entries[index]
@@ -283,7 +265,6 @@ class SettingsViewModel(
         updateState { it.copy(dialog = null, activeMoazenPrayer = null) }
     }
 
-    // ---- helpers ----
     private fun getMoazenNameRes(moazen: SettingsUiState.Moazen): Int = when (moazen) {
         SettingsUiState.Moazen.AZAN_ABED_ALBASET      -> R.string.mozan_abed_albaset
         SettingsUiState.Moazen.AZAN_MAKKAH             -> R.string.mozan_makkah
@@ -347,7 +328,7 @@ class SettingsViewModel(
 
     override fun onLocationClick()          { sendEffect(SettingsEffect.NavigateToLocation) }
     override fun onCalculationMethodClick() {}
-    override fun onHelpFeedbackClick()      { sendEffect(SettingsEffect.NavigateToHelpFeedback) }
-    override fun onRateAppClick()           { sendEffect(SettingsEffect.NavigateToRateApp) }
-    override fun onAboutClick()             { sendEffect(SettingsEffect.NavigateToAbout) }
+    override fun onHelpFeedbackClick()      {}
+    override fun onRateAppClick()           {}
+    override fun onAboutClick()             {}
 }
