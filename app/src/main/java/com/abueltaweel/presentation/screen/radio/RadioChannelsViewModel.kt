@@ -106,11 +106,6 @@ class RadioChannelsViewModel(
     }
 
     private fun getChannelsByCategory(categoryId: String) {
-            name = "on click category",
-            params = mapOf(
-                "category_id" to categoryId
-            )
-        )
         tryToCall(
             onStart = { updateState { it.copy(isLoading = true) } },
             block = { radioRepository.getChannelsByCategory(categoryId) },
@@ -165,11 +160,6 @@ class RadioChannelsViewModel(
 
     override fun onPlayClick(id: Int) {
         val channel = screenState.value.channels.firstOrNull { it.id == id } ?: return
-            name = "on click play",
-            params = mapOf(
-                "channel_name" to channel.nameAr
-            )
-        )
         sendEffect(RadioChannelsEffect.PlaySound(channel.streamUrl, channel.nameAr))
     }
 
