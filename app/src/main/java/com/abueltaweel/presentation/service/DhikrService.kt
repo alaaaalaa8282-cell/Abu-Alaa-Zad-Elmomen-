@@ -20,95 +20,146 @@ class DhikrService : Service() {
     private var wakeLock: PowerManager.WakeLock? = null
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
-    private var dhikrText    = ""
-    private var rawResId     = 0
-    private var totalCount   = 33
-    private var intervalMs   = 3000L
-    private var currentCount = 0
-    private var isRunning    = false
+    private var dhikrResIds   = intArrayOf()
+    private var dhikrTexts    = arrayOf<String>()
+    private var intervalMs    = 5 * 60 * 1000L
+    private var volume        = 1f
+    private var currentIndex  = 0
+    private var isRunning     = false
 
     override fun onBind(intent: Intent?) = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == ACTION_STOP) { stopDhikr(); return START_NOT_STICKY }
+        if (intent?.action == ACTION_STOP) {
+            stopDhikr()
+            return START_NOT_STICKY
+        }
 
-        dhikrText  = intent?.getStringExtra(EXTRA_TEXT)     ?: return START_NOT_STICKY
-        rawResId   = intent.getIntExtra(EXTRA_RES_ID, 0).also { if (it == 0) return START_NOT_STICKY }
-        totalCount = intent.getIntExtra(EXTRA_COUNT, 33)
-        intervalMs = intent.getLongExtra(EXTRA_INTERVAL_MS, 3000L)
-        currentCount = 0
+        dhikrResIds  = intent?.getIntArrayExtra(EXTRA_RES_IDS) ?: return START_NOT_STICKY
+        dhikrTexts   = intent.getStringArrayExtra(EXTRA_TEXTS) ?: arrayOf()
+        intervalMs   = intent.getLongExtra(EXTRA_INTERVAL_MS, 5 * 60 * 1000L)
+        volume       = intent.getFloatExtra(EXTRA_VOLUME, 1f)
+        currentIndex = 0
         isRunning    = true
 
         acquireWakeLock()
         createChannel()
-        startForeground(NOTIF_ID, buildNotification())
-        playNext()
+        startForeground(NOTIF_ID, buildNotification(currentIndex))
+        playCurrentDhikr()
 
-        return START_NOT_STICKY
+        return START_STICKY
     }
 
-    private fun playNext() {
-        if (!isRunning || currentCount >= totalCount) { stopDhikr(); return }
+    private fun playCurrentDhikr() {
+        if (!isRunning || dhikrResIds.isEmpty()) return
 
-        mediaPlayer?.release()
-        mediaPlayer = MediaPlayer.create(this, rawResId)?.apply {
-            setWakeMode(this@DhikrService, PowerManager.PARTIAL_WAKE_LOCK)
-            setOnCompletionListener {
-                currentCount++
-                updateNotification()
-                if (currentCount >= totalCount) {
-                    stopDhikr()
-                } else {
+        val resId = dhikrResIds[currentIndex]
+        val logVol = if (volume <= 0f) 0f
+            else (1 - (Math.log((1 + (1 - volume) * 99).toDouble()) / Math.log(100.0))).toFloat()
+
+        updateNotification(currentIndex)
+
+        try {
+            mediaPlayer?.release()
+            mediaPlayer = MediaPlayer.create(this, resId)?.apply {
+                setVolume(logVol, logVol)
+                setWakeMode(this@DhikrService, PowerManager.PARTIAL_WAKE_LOCK)
+                setOnCompletionListener {
+                    // بعد ما الذكر يخلص ننتظر الـ interval وبعدين نشغل الي بعده
                     scope.launch {
                         delay(intervalMs)
-                        if (isRunning) playNext()
+                        if (isRunning) {
+                            currentIndex = (currentIndex + 1) % dhikrResIds.size
+                            playCurrentDhikr()
+                        }
                     }
                 }
+                setOnErrorListener { _, _, _ ->
+                    // لو في error ننتقل للذكر التالي
+                    scope.launch {
+                        delay(intervalMs)
+                        if (isRunning) {
+                            currentIndex = (currentIndex + 1) % dhikrResIds.size
+                            playCurrentDhikr()
+                        }
+                    }
+                    true
+                }
+                start()
             }
-            start()
+        } catch (e: Exception) {
+            // لو في مشكلة في الملف انتقل للتالي
+            scope.launch {
+                delay(intervalMs)
+                if (isRunning) {
+                    currentIndex = (currentIndex + 1) % dhikrResIds.size
+                    playCurrentDhikr()
+                }
+            }
         }
     }
 
     private fun stopDhikr() {
         isRunning = false
         scope.cancel()
-        mediaPlayer?.stop()
-        mediaPlayer?.release()
+        try {
+            mediaPlayer?.stop()
+            mediaPlayer?.release()
+        } catch (_: Exception) {}
         mediaPlayer = null
-        wakeLock?.release()
-        stopForeground(true)
+        releaseWakeLock()
+        try { stopForeground(true) } catch (_: Exception) {}
         stopSelf()
-        sendBroadcast(Intent(ACTION_DONE).setPackage(packageName))
     }
 
     private fun acquireWakeLock() {
-        wakeLock = (getSystemService(POWER_SERVICE) as PowerManager)
-            .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "AbuEltaweel:DhikrLock")
-            .also { it.acquire(2 * 60 * 60 * 1000L) }
+        try {
+            val pm = getSystemService(POWER_SERVICE) as PowerManager
+            wakeLock = pm.newWakeLock(
+                PowerManager.PARTIAL_WAKE_LOCK, "AbuEltaweel:DhikrWakeLock"
+            ).also { it.acquire(6 * 60 * 60 * 1000L) } // 6 ساعات max
+        } catch (_: Exception) {}
+    }
+
+    private fun releaseWakeLock() {
+        try {
+            if (wakeLock?.isHeld == true) wakeLock?.release()
+        } catch (_: Exception) {}
+        wakeLock = null
     }
 
     private fun createChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            getSystemService(NotificationManager::class.java).createNotificationChannel(
-                NotificationChannel(CHANNEL_ID, "الأذكار الصوتية", NotificationManager.IMPORTANCE_LOW)
-                    .apply { setSound(null, null); enableVibration(false) }
-            )
+            val nm = getSystemService(NotificationManager::class.java)
+            if (nm.getNotificationChannel(CHANNEL_ID) == null) {
+                nm.createNotificationChannel(
+                    NotificationChannel(
+                        CHANNEL_ID, "الأذكار الصوتية",
+                        NotificationManager.IMPORTANCE_LOW
+                    ).apply { setSound(null, null); enableVibration(false) }
+                )
+            }
         }
     }
 
-    private fun buildNotification(): Notification {
-        val stopPi = PendingIntent.getService(this, 0,
-            Intent(this, DhikrService::class.java).apply { action = ACTION_STOP },
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-        val openPi = PendingIntent.getActivity(this, 1,
-            Intent(this, MainActivity::class.java),
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+    private fun buildNotification(index: Int): Notification {
+        val text = if (dhikrTexts.isNotEmpty() && index < dhikrTexts.size)
+            dhikrTexts[index] else "جارٍ التشغيل..."
 
+        val stopPi = PendingIntent.getService(
+            this, 0,
+            Intent(this, DhikrService::class.java).apply { action = ACTION_STOP },
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+        val openPi = PendingIntent.getActivity(
+            this, 1,
+            Intent(this, MainActivity::class.java),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_azkar)
-            .setContentTitle(dhikrText)
-            .setContentText("${currentCount} / ${totalCount}")
-            .setProgress(totalCount, currentCount, false)
+            .setContentTitle("أذكاري — ${index + 1}/${dhikrResIds.size}")
+            .setContentText(text)
             .setContentIntent(openPi)
             .setOngoing(true)
             .addAction(R.drawable.ic_close_circle, "إيقاف", stopPi)
@@ -116,20 +167,29 @@ class DhikrService : Service() {
             .build()
     }
 
-    private fun updateNotification() {
-        getSystemService(NotificationManager::class.java).notify(NOTIF_ID, buildNotification())
+    private fun updateNotification(index: Int) {
+        try {
+            val nm = getSystemService(NotificationManager::class.java)
+            nm.notify(NOTIF_ID, buildNotification(index))
+        } catch (_: Exception) {}
     }
 
-    override fun onDestroy() { stopDhikr(); super.onDestroy() }
+    override fun onDestroy() {
+        isRunning = false
+        scope.cancel()
+        try { mediaPlayer?.release() } catch (_: Exception) {}
+        mediaPlayer = null
+        releaseWakeLock()
+        super.onDestroy()
+    }
 
     companion object {
         const val CHANNEL_ID       = "dhikr_channel"
         const val NOTIF_ID         = 42
         const val ACTION_STOP      = "com.abueltaweel.STOP_DHIKR"
-        const val ACTION_DONE      = "com.abueltaweel.DHIKR_DONE"
-        const val EXTRA_TEXT       = "dhikr_text"
-        const val EXTRA_RES_ID     = "dhikr_res_id"
-        const val EXTRA_COUNT      = "dhikr_count"
+        const val EXTRA_RES_IDS    = "dhikr_res_ids"
+        const val EXTRA_TEXTS      = "dhikr_texts"
         const val EXTRA_INTERVAL_MS= "dhikr_interval_ms"
+        const val EXTRA_VOLUME     = "dhikr_volume"
     }
 }
