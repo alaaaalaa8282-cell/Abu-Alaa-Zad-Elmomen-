@@ -9,63 +9,72 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-data class DhikrItem(
-    val id: Int,
-    val textAr: String,
-    val rawResId: Int
+data class DhikrItem(val id: Int, val textAr: String, val rawResId: Int)
+
+data class IntervalOption(val label: String, val minutes: Long)
+
+val allDhikrs = listOf(
+    DhikrItem(1, "الحمد لله",                 R.raw.alhamdo_lelah),
+    DhikrItem(2, "اللهم لك الحمد",            R.raw.allahom_lk_alhamd),
+    DhikrItem(3, "آية الأحزاب",               R.raw.ayah_elahzab),
+    DhikrItem(4, "لا حول ولا قوة إلا بالله",  R.raw.lahawla_wlaqowat),
+    DhikrItem(5, "الصلاة على النبي",           R.raw.nozaker_salt_ala_habib),
+    DhikrItem(6, "ربنا اغفر لي",              R.raw.rbna_ighfer_li),
+    DhikrItem(7, "سبحان الله وبحمده",          R.raw.sobhanallah_wabehamdeh)
+)
+
+val intervalOptions = listOf(
+    IntervalOption("1 دقيقة",   1L),
+    IntervalOption("5 دقائق",   5L),
+    IntervalOption("10 دقائق",  10L),
+    IntervalOption("30 دقيقة",  30L),
+    IntervalOption("ساعة",      60L),
+    IntervalOption("ساعتين",    120L),
+    IntervalOption("3 ساعات",   180L)
 )
 
 data class DhikrUiState(
-    val dhikrList: List<DhikrItem> = allDhikrs,
-    val selectedDhikr: DhikrItem = allDhikrs.first(),
-    val count: Int = 33,
-    val intervalSec: Int = 3,
-    val isRunning: Boolean = false
-)
-
-val allDhikrs = listOf(
-    DhikrItem(1,  "الحمد لله",                     R.raw.alhamdo_lelah),
-    DhikrItem(2,  "اللهم لك الحمد",                R.raw.allahom_lk_alhamd),
-    DhikrItem(3,  "آية الأحزاب",                   R.raw.ayah_elahzab),
-    DhikrItem(4,  "لا حول ولا قوة إلا بالله",      R.raw.lahawla_wlaqowat),
-    DhikrItem(5,  "الصلاة على النبي",               R.raw.nozaker_salt_ala_habib),
-    DhikrItem(6,  "ربنا اغفر لي",                  R.raw.rbna_ighfer_li),
-    DhikrItem(7,  "سبحان الله وبحمده",              R.raw.sobhanallah_wabehamdeh)
+    val selectedInterval: IntervalOption = intervalOptions[1],
+    val volume: Float = 0.8f,
+    val isRunning: Boolean = false,
+    val currentDhikrIndex: Int = 0
 )
 
 class DhikrViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(DhikrUiState())
     val uiState: StateFlow<DhikrUiState> = _uiState.asStateFlow()
 
-    fun selectDhikr(item: DhikrItem) {
-        _uiState.value = _uiState.value.copy(selectedDhikr = item)
+    fun selectInterval(option: IntervalOption) {
+        _uiState.value = _uiState.value.copy(selectedInterval = option)
     }
 
-    fun setCount(count: Int) {
-        _uiState.value = _uiState.value.copy(count = count.coerceIn(1, 1000))
-    }
-
-    fun setInterval(sec: Int) {
-        _uiState.value = _uiState.value.copy(intervalSec = sec.coerceIn(1, 60))
+    fun setVolume(v: Float) {
+        _uiState.value = _uiState.value.copy(volume = v)
     }
 
     fun start(context: Context) {
         val state = _uiState.value
-        context.startForegroundService(
-            Intent(context, DhikrService::class.java).apply {
-                putExtra(DhikrService.EXTRA_TEXT,        state.selectedDhikr.textAr)
-                putExtra(DhikrService.EXTRA_RES_ID,      state.selectedDhikr.rawResId)
-                putExtra(DhikrService.EXTRA_COUNT,       state.count)
-                putExtra(DhikrService.EXTRA_INTERVAL_MS, state.intervalSec * 1000L)
-            }
-        )
-        _uiState.value = state.copy(isRunning = true)
+        val intent = Intent(context, DhikrService::class.java).apply {
+            putExtra(DhikrService.EXTRA_RES_IDS,
+                allDhikrs.map { it.rawResId }.toIntArray())
+            putExtra(DhikrService.EXTRA_TEXTS,
+                allDhikrs.map { it.textAr }.toTypedArray())
+            putExtra(DhikrService.EXTRA_INTERVAL_MS,
+                state.selectedInterval.minutes * 60 * 1000L)
+            putExtra(DhikrService.EXTRA_VOLUME, state.volume)
+        }
+        context.startForegroundService(intent)
+        _uiState.value = state.copy(isRunning = true, currentDhikrIndex = 0)
     }
 
     fun stop(context: Context) {
-        context.startService(
-            Intent(context, DhikrService::class.java).apply { action = DhikrService.ACTION_STOP }
-        )
+        try {
+            context.startService(
+                Intent(context, DhikrService::class.java).apply {
+                    action = DhikrService.ACTION_STOP
+                }
+            )
+        } catch (_: Exception) {}
         _uiState.value = _uiState.value.copy(isRunning = false)
     }
 }

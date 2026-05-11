@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,9 +29,13 @@ import androidx.compose.ui.unit.sp
 import com.abueltaweel.R
 import org.koin.androidx.compose.koinViewModel
 
+private val Gold  = Color(0xFFC9A84C)
+private val Dark  = Color(0xFF0D1B2A)
+private val Card  = Color(0xFF1B3A4B)
+
 @Composable
 fun DhikrScreen(viewModel: DhikrViewModel = koinViewModel()) {
-    val state by viewModel.uiState.collectAsState()
+    val state   by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
     val notifLauncher = rememberLauncherForActivityResult(
@@ -38,152 +43,146 @@ fun DhikrScreen(viewModel: DhikrViewModel = koinViewModel()) {
     ) {}
 
     LaunchedEffect(Unit) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
             notifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-        }
     }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFF0D1B2A))
+        modifier = Modifier.fillMaxSize().background(Dark)
     ) {
         // Header
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    Brush.verticalGradient(listOf(Color(0xFF1B3A4B), Color(0xFF0D1B2A)))
-                )
+            modifier = Modifier.fillMaxWidth()
+                .background(Brush.verticalGradient(listOf(Card, Dark)))
                 .padding(20.dp),
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_tasbih),
-                    contentDescription = null,
-                    tint = Color(0xFFC9A84C),
-                    modifier = Modifier.size(48.dp)
+                    painterResource(R.drawable.ic_azkar), null,
+                    tint = Gold, modifier = Modifier.size(48.dp)
                 )
                 Spacer(Modifier.height(8.dp))
                 Text("أذكاري", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                Text("صوت يذكرك بالله", fontSize = 13.sp, color = Color(0xFFB0BEC5))
+                Text(
+                    "تُشغَّل الأذكار بالتسلسل ثم تعيد من الأول",
+                    fontSize = 12.sp, color = Color(0xFFB0BEC5),
+                    textAlign = TextAlign.Center
+                )
             }
         }
 
         LazyColumn(
             modifier = Modifier.weight(1f),
             contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // قائمة الأذكار
+
+            // الترتيب الحالي للأذكار
             item {
-                Text("اختر الذكر", color = Color(0xFFC9A84C),
-                    fontSize = 14.sp, fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 4.dp))
+                Text("ترتيب الأذكار", color = Gold, fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(6.dp))
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    allDhikrs.forEachIndexed { index, dhikr ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Card)
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier.size(28.dp)
+                                    .background(Gold, CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("${index + 1}", color = Color.Black,
+                                    fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+                            Spacer(Modifier.width(10.dp))
+                            Text(dhikr.textAr, color = Color.White, fontSize = 14.sp)
+                        }
+                    }
+                }
             }
-            items(state.dhikrList, key = { it.id }) { item ->
-                val selected = state.selectedDhikr.id == item.id
-                val bg by animateColorAsState(
-                    if (selected) Color(0x44C9A84C) else Color(0xFF1B3A4B), label = "dhikr_bg"
-                )
+
+            // الفترة الزمنية
+            item {
+                Spacer(Modifier.height(4.dp))
+                Text("الفترة بين كل ذكر", color = Gold, fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(8.dp))
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(intervalOptions) { option ->
+                        val selected = state.selectedInterval.minutes == option.minutes
+                        val bg by animateColorAsState(
+                            if (selected) Gold else Card, label = "interval"
+                        )
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(bg)
+                                .clickable(enabled = !state.isRunning) {
+                                    viewModel.selectInterval(option)
+                                }
+                                .padding(horizontal = 14.dp, vertical = 8.dp)
+                        ) {
+                            Text(
+                                option.label,
+                                color = if (selected) Color.Black else Color.White,
+                                fontSize = 13.sp,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                            )
+                        }
+                    }
+                }
+            }
+
+            // سلايد الصوت
+            item {
+                Spacer(Modifier.height(4.dp))
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(bg)
-                        .clickable(enabled = !state.isRunning) { viewModel.selectDhikr(item) }
-                        .padding(14.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (selected) {
-                        Box(
-                            Modifier.size(22.dp).background(Color(0xFFC9A84C), CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(painterResource(R.drawable.check), null,
-                                tint = Color.Black, modifier = Modifier.size(14.dp))
-                        }
-                        Spacer(Modifier.width(10.dp))
-                    }
-                    Text(
-                        text = item.textAr,
-                        color = if (selected) Color(0xFFC9A84C) else Color.White,
-                        fontSize = 16.sp,
-                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
-                    )
+                    Text("مستوى الصوت", color = Gold, fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold)
+                    Text("${(state.volume * 100).toInt()}%", color = Color.White,
+                        fontSize = 13.sp)
                 }
-            }
-
-            // عدد التكرار
-            item {
-                Spacer(Modifier.height(8.dp))
-                Text("عدد التكرار: ${state.count}", color = Color(0xFFC9A84C),
-                    fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 Slider(
-                    value = state.count.toFloat(),
-                    onValueChange = { viewModel.setCount(it.toInt()) },
-                    valueRange = 1f..100f,
-                    steps = 98,
+                    value = state.volume,
+                    onValueChange = { viewModel.setVolume(it) },
                     enabled = !state.isRunning,
                     colors = SliderDefaults.colors(
-                        thumbColor = Color(0xFFC9A84C),
-                        activeTrackColor = Color(0xFFC9A84C)
-                    )
-                )
-                // أزرار سريعة
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf(10, 33, 50, 100).forEach { n ->
-                        OutlinedButton(
-                            onClick = { viewModel.setCount(n) },
-                            enabled = !state.isRunning,
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFC9A84C)),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFC9A84C)),
-                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                            modifier = Modifier.height(32.dp)
-                        ) { Text("$n", fontSize = 12.sp) }
-                    }
-                }
-            }
-
-            // الفترة بين كل ذكر
-            item {
-                Spacer(Modifier.height(8.dp))
-                Text("الفترة بين كل ذكر: ${state.intervalSec} ثانية",
-                    color = Color(0xFFC9A84C), fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                Slider(
-                    value = state.intervalSec.toFloat(),
-                    onValueChange = { viewModel.setInterval(it.toInt()) },
-                    valueRange = 1f..30f,
-                    steps = 28,
-                    enabled = !state.isRunning,
-                    colors = SliderDefaults.colors(
-                        thumbColor = Color(0xFFC9A84C),
-                        activeTrackColor = Color(0xFFC9A84C)
+                        thumbColor = Gold,
+                        activeTrackColor = Gold,
+                        inactiveTrackColor = Card
                     )
                 )
             }
 
             // زرار التشغيل/الإيقاف
             item {
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(8.dp))
                 Button(
                     onClick = {
                         if (state.isRunning) viewModel.stop(context)
                         else viewModel.start(context)
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (state.isRunning) Color(0xFFB00020) else Color(0xFFC9A84C)
+                        containerColor = if (state.isRunning) Color(0xFFB00020) else Gold
                     ),
                     modifier = Modifier.fillMaxWidth().height(54.dp),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Icon(
-                        painter = painterResource(
-                            if (state.isRunning) R.drawable.ic_stop else R.drawable.ic_play
+                        painterResource(
+                            if (state.isRunning) R.drawable.ic_pause else R.drawable.ic_play
                         ),
-                        contentDescription = null,
-                        tint = Color.Black,
+                        null, tint = Color.Black,
                         modifier = Modifier.size(22.dp)
                     )
                     Spacer(Modifier.width(8.dp))
@@ -194,11 +193,10 @@ fun DhikrScreen(viewModel: DhikrViewModel = koinViewModel()) {
                 }
 
                 if (state.isRunning) {
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(10.dp))
                     Text(
-                        "الأذكار تعمل في الخلفية",
-                        color = Color(0xFF4CAF50),
-                        fontSize = 13.sp,
+                        "✓ الأذكار تعمل في الخلفية — كل ${state.selectedInterval.label}",
+                        color = Color(0xFF4CAF50), fontSize = 13.sp,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
                     )
