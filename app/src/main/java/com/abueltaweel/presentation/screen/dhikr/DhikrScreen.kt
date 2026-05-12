@@ -84,7 +84,9 @@ fun DhikrScreen(viewModel: DhikrViewModel = koinViewModel()) {
                 Text("أذكاري", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 Text(
                     "تُشغِّل الأذكار بالتسلسل ثم تعيد من الأول",
-                    fontSize = 13.sp, color = Color(0xFFB0BEC5)
+                    fontSize = 12.sp, color = Color(0xFFB0BEC5),
+                    textAlign = TextAlign.Center
+                )
                 )
             }
         }
