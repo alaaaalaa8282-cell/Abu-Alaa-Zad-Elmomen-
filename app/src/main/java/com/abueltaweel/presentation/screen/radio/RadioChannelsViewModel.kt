@@ -11,10 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/**
- * تم نقل تعريف البيانات هنا لضمان مطابقتها لما تطلبه الشاشات الأخرى
- * ولتجنب خطأ Unresolved reference في ملفات الـ components
- */
+// تعريف البيانات في نفس الملف لضمان عدم حدوث Unresolved reference
 data class RadioChannel(
     val id: Int,
     val name: String,
@@ -32,7 +29,7 @@ data class RadioUiState(
 
 class RadioChannelsViewModel : ViewModel() {
 
-    // تأكد من أن هذا الاسم هو screenState وليس state ليتوافق مع ملف RadioScreen.kt
+    // استخدمنا اسم screenState ليتوافق مع ملف RadioScreen
     private val _screenState = MutableStateFlow(RadioUiState())
     val screenState: StateFlow<RadioUiState> = _screenState.asStateFlow()
 
@@ -47,7 +44,7 @@ class RadioChannelsViewModel : ViewModel() {
         viewModelScope.launch {
             _screenState.update { it.copy(isLoading = true) }
             
-            // قائمة الإذاعات المحدثة والروابط الشغالة تماماً
+            // قائمة إذاعات شغالة ومجربة
             val reliableChannels = listOf(
                 RadioChannel(1, "إذاعة القرآن الكريم - القاهرة", "https://n02.radiojar.com/8s7uar320z4tv"),
                 RadioChannel(2, "إذاعة تلاوات خاشعة", "https://n0a.radiojar.com/0tpy8cr738quv"),
@@ -65,9 +62,6 @@ class RadioChannelsViewModel : ViewModel() {
         }
     }
 
-    /**
-     * هذه الدالة هي التي يتم استدعاؤها عند الضغط على محطة في RadioChannelsGrid
-     */
     fun onChannelClick(channel: RadioChannel) {
         _screenState.update { 
             it.copy(currentChannel = channel, isPlaying = true) 
