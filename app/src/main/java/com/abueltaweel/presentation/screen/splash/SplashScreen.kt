@@ -94,7 +94,7 @@ fun SplashScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "ابو علاء المؤمن",
+                text = "ابو علاء زاد المؤمن",
                 color = Color.White,
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold,
