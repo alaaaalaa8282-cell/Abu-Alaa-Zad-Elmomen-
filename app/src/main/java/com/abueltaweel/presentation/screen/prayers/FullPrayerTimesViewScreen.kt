@@ -39,6 +39,7 @@ import com.abueltaweel.presentation.screen.prayers.component.PrayerItem
 import com.abueltaweel.presentation.utils.CollectEffect
 import org.koin.androidx.compose.koinViewModel
 import kotlin.time.ExperimentalTime
+import androidx.compose.ui.graphics.Color
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @SuppressLint("BatteryLife")
@@ -99,7 +100,7 @@ fun FullPrayerTimesViewScreen(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(Theme.color.surfaces.surface)
+            .background(Color(0xFF0A1A10))
             .windowInsetsPadding(WindowInsets.systemBars)
     ) {
         item {
