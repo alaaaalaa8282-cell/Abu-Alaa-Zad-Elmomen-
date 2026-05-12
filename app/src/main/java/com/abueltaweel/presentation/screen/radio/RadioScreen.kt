@@ -13,15 +13,16 @@ import kotlinx.coroutines.flow.collectLatest
 fun RadioScreen(
     viewModel: RadioChannelsViewModel = viewModel()
 ) {
-    // السطر القادم كان يسبب خطأ بسبب نقص import getValue
+    // تم إضافة الـ imports اللازمة لحل أخطاء التعبير 'by'
     val screenState by viewModel.screenState.collectAsState()
 
     LaunchedEffect(key1 = true) {
         viewModel.effect.collectLatest { effect ->
-            // التعامل مع الأحداث الجانبية مثل التنبيهات
+            // هنا يتم استقبال أي تأثيرات جانبية
         }
     }
 
+    // تمرير البيانات للدالة RadioContent الموجودة في مشروعك
     RadioContent(
         state = screenState,
         onChannelClick = { channel ->
