@@ -1,4 +1,4 @@
- package com.abueltaweel.presentation.screen.dhikr
+package com.abueltaweel.presentation.screen.dhikr
 
 import android.Manifest
 import android.os.Build
@@ -38,7 +38,7 @@ fun DhikrScreen(viewModel: DhikrViewModel = koinViewModel()) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    // ← sync حالة السيرفس لما الشاشة ترجع للـ foreground
+    // sync حالة السيرفس لما الشاشة ترجع
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
@@ -52,7 +52,6 @@ fun DhikrScreen(viewModel: DhikrViewModel = koinViewModel()) {
     val notifLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) {}
-
     LaunchedEffect(Unit) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             notifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -83,8 +82,10 @@ fun DhikrScreen(viewModel: DhikrViewModel = koinViewModel()) {
                 )
                 Spacer(Modifier.height(8.dp))
                 Text("أذكاري", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                Text("تُشغِّل الأذكار بالتسلسل ثم تعيد من الأول",
-                    fontSize = 13.sp, color = Color(0xFFB0BEC5))
+                Text(
+                    "تُشغِّل الأذكار بالتسلسل ثم تعيد من الأول",
+                    fontSize = 13.sp, color = Color(0xFFB0BEC5)
+                )
             }
         }
 
@@ -93,7 +94,8 @@ fun DhikrScreen(viewModel: DhikrViewModel = koinViewModel()) {
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // قائمة الأذكار
+
+            // ─── قائمة الأذكار ───
             item {
                 Text(
                     "اختر الذكر",
@@ -106,8 +108,7 @@ fun DhikrScreen(viewModel: DhikrViewModel = koinViewModel()) {
             items(state.dhikrList, key = { it.id }) { item ->
                 val selected = state.selectedDhikr.id == item.id
                 val bg by animateColorAsState(
-                    if (selected) Color(0x44C9A84C) else Color(0xFF1B3A4B),
-                    label = "dhikr_bg"
+                    if (selected) Color(0x44C9A84C) else Color(0xFF1B3A4B), label = "bg"
                 )
                 Row(
                     modifier = Modifier
@@ -142,62 +143,58 @@ fun DhikrScreen(viewModel: DhikrViewModel = koinViewModel()) {
                 }
             }
 
-            // الفترة بين كل ذكر
+            // ─── الفترة بين كل ذكر ───
             item {
                 Spacer(Modifier.height(8.dp))
-                val minutes = state.intervalSec / 60
-                val seconds = state.intervalSec % 60
-                val label = when {
-                    minutes > 0 && seconds > 0 -> "$minutes د $seconds ث"
-                    minutes > 0 -> "$minutes دقيقة"
-                    else -> "$seconds ثانية"
+                val mins = state.intervalSec / 60
+                val secs = state.intervalSec % 60
+                val intervalLabel = when {
+                    mins > 0 && secs > 0 -> "$mins د $secs ث"
+                    mins > 0             -> "$mins دقيقة"
+                    else                 -> "$secs ثانية"
                 }
                 Text(
-                    "الفترة بين كل ذكر: $label",
+                    "الفترة بين كل ذكر: $intervalLabel",
                     color = Color(0xFFC9A84C),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
                 )
-                Slider(
-                    value = state.intervalSec.toFloat(),
-                    onValueChange = { viewModel.setInterval(it.toInt()) },
-                    valueRange = 10f..3600f,   // 10 ثواني → ساعة
-                    enabled = !state.isRunning,
-                    colors = SliderDefaults.colors(
-                        thumbColor = Color(0xFFC9A84C),
-                        activeTrackColor = Color(0xFFC9A84C)
-                    )
-                )
-                // أزرار سريعة للفترة
+                Spacer(Modifier.height(8.dp))
+                // أزرار سريعة واضحة
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     listOf(
-                        "1د" to 60,
-                        "5د" to 300,
-                        "10د" to 600,
-                        "30د" to 1800
-                    ).forEach { (label2, sec) ->
-                        OutlinedButton(
-                            onClick = { viewModel.setInterval(sec) },
+                        "1 د"  to 60,
+                        "5 د"  to 300,
+                        "10 د" to 600,
+                        "30 د" to 1800
+                    ).forEach { (lbl, sec) ->
+                        val isSelected = state.intervalSec == sec
+                        Button(
+                            onClick = { if (!state.isRunning) viewModel.setInterval(sec) },
                             enabled = !state.isRunning,
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = Color(0xFFC9A84C)
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isSelected) Color(0xFFC9A84C)
+                                else Color(0xFF1B3A4B),
+                                contentColor = if (isSelected) Color.Black else Color(0xFFC9A84C),
+                                disabledContainerColor = if (isSelected) Color(0x99C9A84C)
+                                else Color(0xFF1B3A4B)
                             ),
-                            border = androidx.compose.foundation.BorderStroke(
-                                1.dp, Color(0xFFC9A84C)
-                            ),
-                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
                             modifier = Modifier
                                 .weight(1f)
-                                .height(36.dp)
-                        ) { Text(label2, fontSize = 12.sp) }
+                                .height(40.dp),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Text(lbl, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
             }
 
-            // ← مستوى الصوت - مربوط بالـ ViewModel
+            // ─── مستوى الصوت ───
             item {
                 Spacer(Modifier.height(8.dp))
                 Text(
@@ -206,19 +203,21 @@ fun DhikrScreen(viewModel: DhikrViewModel = koinViewModel()) {
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
                 )
+                Spacer(Modifier.height(4.dp))
                 Slider(
                     value = state.volume,
                     onValueChange = { viewModel.setVolume(it) },
                     valueRange = 0f..1f,
-                    enabled = !state.isRunning,
+                    modifier = Modifier.fillMaxWidth(),
                     colors = SliderDefaults.colors(
                         thumbColor = Color(0xFFC9A84C),
-                        activeTrackColor = Color(0xFFC9A84C)
+                        activeTrackColor = Color(0xFFC9A84C),
+                        inactiveTrackColor = Color(0xFF1B3A4B)
                     )
                 )
             }
 
-            // زرار التشغيل/الإيقاف
+            // ─── زرار التشغيل / الإيقاف ───
             item {
                 Spacer(Modifier.height(16.dp))
                 Button(
