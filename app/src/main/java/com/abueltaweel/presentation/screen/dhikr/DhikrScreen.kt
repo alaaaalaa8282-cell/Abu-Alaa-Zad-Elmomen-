@@ -87,7 +87,6 @@ fun DhikrScreen(viewModel: DhikrViewModel = koinViewModel()) {
                     fontSize = 13.sp, color = Color(0xFFB0BEC5),
                     textAlign = TextAlign.Center
                 )
-                )
             }
         }
 
