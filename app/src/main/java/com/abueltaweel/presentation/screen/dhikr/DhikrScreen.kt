@@ -43,10 +43,10 @@ fun DhikrScreen(viewModel: DhikrViewModel = koinViewModel()) {
     var showStopPicker  by remember { mutableStateOf(false) }
 
     val startTimePickerState = rememberTimePickerState(
-        initialHour = state.startHour, initialMinute = state.startMinute, is24Hour = true
+        initialHour = state.startHour, initialMinute = state.startMinute, is24Hour = false 
     )
     val stopTimePickerState = rememberTimePickerState(
-        initialHour = state.stopHour, initialMinute = state.stopMinute, is24Hour = true
+        initialHour = state.stopHour, initialMinute = state.stopMinute, is24Hour = false 
     )
 
     DisposableEffect(lifecycleOwner) {
@@ -254,7 +254,7 @@ fun DhikrScreen(viewModel: DhikrViewModel = koinViewModel()) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text("بداية", color = Color(0xFFC9A84C), fontSize = 12.sp)
                                 Text(
-                                    "%02d:%02d".format(state.startHour, state.startMinute),
+                                    "%d:%02d %s".format(if (state.startHour % 12 == 0) 12 else state.startHour % 12, state.startMinute, if (state.startHour < 12) "ص" else "م")
                                     color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold
                                 )
                             }
@@ -269,7 +269,7 @@ fun DhikrScreen(viewModel: DhikrViewModel = koinViewModel()) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text("نهاية", color = Color(0xFFC9A84C), fontSize = 12.sp)
                                 Text(
-                                    "%02d:%02d".format(state.stopHour, state.stopMinute),
+                                    "%d:%02d %s".format(if (state.startHour % 12 == 0) 12 else state.startHour % 12, state.startMinute, if (state.startHour < 12) "ص" else "م") 
                                     color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold
                                 )
                             }
