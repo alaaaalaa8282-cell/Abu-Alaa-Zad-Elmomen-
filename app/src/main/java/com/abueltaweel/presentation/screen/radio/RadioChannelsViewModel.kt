@@ -15,7 +15,6 @@ class RadioChannelsViewModel(
     RadioChannelsInteractionListener {
 
     companion object {
-        // جميع الروابط من سيرفر qurango.net الموثوق
         private val QURAN_CHANNELS = listOf(
             RadioUiState.RadioChannelUiState(
                 id = 1,
@@ -95,11 +94,12 @@ class RadioChannelsViewModel(
                 nameEn = "Mahmoud Ali Al-Banna",
                 streamUrl = "https://backup.qurango.net/radio/mahmoud_ali__albanna_mojawwad"
             ),
+            // ✅ الحذيفي بدل مشاري العفاسي
             RadioUiState.RadioChannelUiState(
                 id = 14,
-                nameAr = "إذاعة مشاري العفاسي",
-                nameEn = "Mishary Al-Afasi",
-                streamUrl = "https://backup.qurango.net/radio/mishary_alafasi"
+                nameAr = "إذاعة علي الحذيفي",
+                nameEn = "Ali Al-Hudhaifi",
+                streamUrl = "https://live.mp3quran.net:9844"
             ),
             RadioUiState.RadioChannelUiState(
                 id = 15,
@@ -149,11 +149,12 @@ class RadioChannelsViewModel(
                 nameEn = "Al-Ruqyah Al-Shar'iyyah",
                 streamUrl = "https://backup.qurango.net/radio/roqiah"
             ),
+            // ✅ إذاعة جديدة - سعد الغامدي
             RadioUiState.RadioChannelUiState(
                 id = 23,
-                nameAr = "إذاعة تكبيرات العيد",
-                nameEn = "Eid Takbirat",
-                streamUrl = "https://backup.qurango.net/radio/eid"
+                nameAr = "إذاعة سعد الغامدي",
+                nameEn = "Saad Al-Ghamdi",
+                streamUrl = "https://backup.qurango.net/radio/saad_alghamdi"
             ),
             RadioUiState.RadioChannelUiState(
                 id = 24,
@@ -239,3 +240,4 @@ class RadioChannelsViewModel(
         sendEffect(RadioChannelsEffect.PauseSound)
     }
 }
+
