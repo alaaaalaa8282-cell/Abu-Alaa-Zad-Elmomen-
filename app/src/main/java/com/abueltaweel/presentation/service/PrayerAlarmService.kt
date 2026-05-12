@@ -31,6 +31,10 @@ class PrayerAlarmService : Service() {
     private lateinit var mediaPlayer: MediaPlayer
     private val settingsRepository: SettingsRepository by inject()
 
+    // channel مخصوص للـ foreground بدون ظهور
+    private val SILENT_CHANNEL_ID   = "azan_silent_fg"
+    private val SILENT_CHANNEL_NAME = "أذان (خلفية)"
+
     override fun onBind(intent: Intent?) = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -40,21 +44,20 @@ class PrayerAlarmService : Service() {
         }
         if (::mediaPlayer.isInitialized && mediaPlayer.isPlaying) return START_NOT_STICKY
 
-        createChannel()
+        createChannels()
 
         val prayerNameStr = intent?.getStringExtra(PRAYER_NAME_KEY) ?: return START_NOT_STICKY
         val prayerEnum = runCatching {
             Prayer.PrayerName.valueOf(prayerNameStr)
         }.getOrDefault(Prayer.PrayerName.FAJR)
 
-        startForeground(1, createNotification(prayerEnum))
+        // ← الإشعار الصامت المخفي فقط عشان startForeground يشتغل
+        startForeground(1, createSilentNotification())
 
         // فتح شاشة الأذان
         if (canShowOverlay()) {
-            // عندنا إذن - نفتح الشاشة فوق أي تطبيق
             startActivity(AzanFullScreenActivity.newIntent(this, prayerEnum.getArabicName()))
         } else {
-            // مفيش إذن - نطلبه من المستخدم
             requestOverlayPermission()
         }
 
@@ -89,20 +92,41 @@ class PrayerAlarmService : Service() {
         stopSelf()
     }
 
-    private fun createChannel() {
+    private fun createChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                AZAN_CHANNEL_ID, AZAN_CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                setSound(null, null)
-                enableVibration(false)
+            val nm = getSystemService(NotificationManager::class.java)
+
+            // channel الأصلي للأذان (نحتفظ بيه عشان مش هنحذفه)
+            if (nm.getNotificationChannel(AZAN_CHANNEL_ID) == null) {
+                nm.createNotificationChannel(
+                    NotificationChannel(
+                        AZAN_CHANNEL_ID, AZAN_CHANNEL_NAME,
+                        NotificationManager.IMPORTANCE_HIGH
+                    ).apply {
+                        setSound(null, null)
+                        enableVibration(false)
+                    }
+                )
             }
-            getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+
+            // ← channel صامت ومخفي تماماً للـ foreground
+            if (nm.getNotificationChannel(SILENT_CHANNEL_ID) == null) {
+                nm.createNotificationChannel(
+                    NotificationChannel(
+                        SILENT_CHANNEL_ID, SILENT_CHANNEL_NAME,
+                        NotificationManager.IMPORTANCE_MIN   // ← مخفي من الـ status bar
+                    ).apply {
+                        setSound(null, null)
+                        enableVibration(false)
+                        setShowBadge(false)
+                    }
+                )
+            }
         }
     }
 
-    @SuppressLint("FullScreenIntentPolicy")
-    private fun createNotification(prayer: Prayer.PrayerName): Notification {
+    // ← إشعار صامت ومخفي - فقط عشان startForeground
+    private fun createSilentNotification(): Notification {
         val openIntent = PendingIntent.getActivity(
             this, 0,
             Intent(this, MainActivity::class.java).apply {
@@ -110,24 +134,15 @@ class PrayerAlarmService : Service() {
             },
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
-        val stopIntent = PendingIntent.getService(
-            this, 1,
-            Intent(this, PrayerAlarmService::class.java).apply {
-                action = Constants.ACTION_STOP_AZAN
-            },
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-        return NotificationCompat.Builder(this, AZAN_CHANNEL_ID)
-            .setFullScreenIntent(openIntent, true)
-            .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setContentTitle("أذان ${prayer.getArabicName()}")
-            .setContentText("اضغط هنا لرؤية مواقيت الصلاة")
+        return NotificationCompat.Builder(this, SILENT_CHANNEL_ID)
+            .setContentTitle("أذان")
+            .setContentText("")
             .setSmallIcon(R.drawable.mosque_02)
             .setContentIntent(openIntent)
             .setOngoing(true)
-            .setAutoCancel(false)
-            .addAction(R.drawable.ic_close_circle, "إيقاف", stopIntent)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setPriority(NotificationCompat.PRIORITY_MIN)   // ← أدنى أولوية
+            .setSilent(true)                                // ← صامت
+            .setVisibility(NotificationCompat.VISIBILITY_SECRET) // ← مخفي من شاشة القفل
             .build()
     }
 
