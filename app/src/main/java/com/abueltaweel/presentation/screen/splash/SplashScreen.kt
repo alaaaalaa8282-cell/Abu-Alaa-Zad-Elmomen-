@@ -2,6 +2,7 @@ package com.abueltaweel.presentation.screen.splash
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,30 +25,29 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
 import com.abueltaweel.R
 import com.abueltaweel.presentation.navigation.Route
 import kotlinx.coroutines.delay
 
 @Composable
-fun SplashScreen(navController: NavController, startDestination: Route) {
-
+fun SplashScreen(
+    navController: NavController,
+    startDestination: Route
+) {
     val alpha = remember { Animatable(0f) }
     val scale = remember { Animatable(0.85f) }
 
     LaunchedEffect(Unit) {
-        // fade + scale in
         alpha.animateTo(1f, animationSpec = tween(900))
         scale.animateTo(1f, animationSpec = tween(900))
         delay(2500)
         navController.navigate(startDestination) {
-            popUpTo<Route.SplashScreen> { inclusive = true }
+            popUpTo(Route.SplashScreen) { inclusive = true }
         }
     }
 
@@ -72,10 +72,8 @@ fun SplashScreen(navController: NavController, startDestination: Route) {
                 .alpha(alpha.value)
                 .scale(scale.value)
         ) {
-
-            // ─── صورة الوالد رحمه الله ───
-            AsyncImage(
-                model = R.drawable.father_photo,
+            androidx.compose.foundation.Image(
+                painter = painterResource(id = R.drawable.father_photo),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
@@ -85,21 +83,18 @@ fun SplashScreen(navController: NavController, startDestination: Route) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // ─── ترحم ───
             Text(
                 text = "رحمه الله ووسع له في قبره",
                 color = Color(0xFFE2B96F),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium,
-                textAlign = TextAlign.Center,
-                fontFamily = FontFamily.Default
+                textAlign = TextAlign.Center
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // ─── اسم التطبيق ───
             Text(
-                text = "محمد عبد العظيم المؤمن",
+                text = "محمد عبد العظيم زاد المؤمن",
                 color = Color.White,
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold,
