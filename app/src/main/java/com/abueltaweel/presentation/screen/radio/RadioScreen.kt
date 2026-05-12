@@ -7,18 +7,18 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.abueltaweel.presentation.screen.radio.components.RadioContent
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun RadioScreen(
-    viewModel: RadioChannelsViewModel = viewModel() // تأكد من طريقة استدعاء الـ ViewModel المناسبة لمشروعك
+    viewModel: RadioChannelsViewModel = viewModel()
 ) {
-    // حل مشكلة Unresolved reference 'screenState'
+    // استخدام getValue (by) يتطلب import androidx.compose.runtime.getValue
     val screenState by viewModel.screenState.collectAsState()
 
-    // حل مشكلة Unresolved reference 'effect' (إذا كنت تستخدمها للإشعارات)
-    LaunchedEffect(key1 = Unit) {
-        viewModel.effect.collect { effect ->
-            // هنا يمكنك التعامل مع الـ effects مثل إظهار Toast
+    LaunchedEffect(key1 = true) {
+        viewModel.effect.collectLatest { effect ->
+            // معالجة الـ effects هنا إذا لزم الأمر
         }
     }
 
