@@ -13,12 +13,12 @@ import kotlinx.coroutines.flow.collectLatest
 fun RadioScreen(
     viewModel: RadioChannelsViewModel = viewModel()
 ) {
-    // استخدام getValue (by) يتطلب import androidx.compose.runtime.getValue
+    // السطر القادم كان يسبب خطأ بسبب نقص import getValue
     val screenState by viewModel.screenState.collectAsState()
 
     LaunchedEffect(key1 = true) {
         viewModel.effect.collectLatest { effect ->
-            // معالجة الـ effects هنا إذا لزم الأمر
+            // التعامل مع الأحداث الجانبية مثل التنبيهات
         }
     }
 
