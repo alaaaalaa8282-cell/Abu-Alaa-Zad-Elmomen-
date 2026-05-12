@@ -1,8 +1,9 @@
 package com.abueltaweel.presentation.screen.dhikr
 
+import android.app.Application
 import android.content.Context
 import android.content.Intent
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import com.abueltaweel.R
 import com.abueltaweel.presentation.service.DhikrService
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,43 +19,61 @@ data class DhikrItem(
 data class DhikrUiState(
     val dhikrList: List<DhikrItem> = allDhikrs,
     val selectedDhikr: DhikrItem = allDhikrs.first(),
-    val count: Int = 33,
-    val intervalSec: Int = 3,
-    val volume: Float = 0.8f,       // ← جديد
+    val intervalSec: Int = 60,
+    val volume: Float = 0.8f,
     val isRunning: Boolean = false
 )
 
 val allDhikrs = listOf(
-    DhikrItem(1,  "الحمد لله",                  R.raw.alhamdo_lelah),
-    DhikrItem(2,  "اللهم لك الحمد",             R.raw.allahom_lk_alhamd),
-    DhikrItem(3,  "آية الأحزاب",                R.raw.ayah_elahzab),
-    DhikrItem(4,  "لا حول ولا قوة إلا بالله",   R.raw.lahawla_wlaqowat),
-    DhikrItem(5,  "الصلاة على النبي",            R.raw.nozaker_salt_ala_habib),
-    DhikrItem(6,  "ربنا اغفر لي",               R.raw.rbna_ighfer_li),
-    DhikrItem(7,  "سبحان الله وبحمده",           R.raw.sobhanallah_wabehamdeh)
+    DhikrItem(1, "الحمد لله",                 R.raw.alhamdo_lelah),
+    DhikrItem(2, "اللهم لك الحمد",            R.raw.allahom_lk_alhamd),
+    DhikrItem(3, "آية الأحزاب",               R.raw.ayah_elahzab),
+    DhikrItem(4, "لا حول ولا قوة إلا بالله",  R.raw.lahawla_wlaqowat),
+    DhikrItem(5, "الصلاة على النبي",           R.raw.nozaker_salt_ala_habib),
+    DhikrItem(6, "ربنا اغفر لي",              R.raw.rbna_ighfer_li),
+    DhikrItem(7, "سبحان الله وبحمده",          R.raw.sobhanallah_wabehamdeh)
 )
 
-class DhikrViewModel : ViewModel() {
-    private val _uiState = MutableStateFlow(DhikrUiState())
+private const val PREFS_NAME    = "dhikr_prefs"
+private const val KEY_DHIKR_ID  = "dhikr_id"
+private const val KEY_INTERVAL  = "dhikr_interval"
+private const val KEY_VOLUME    = "dhikr_volume"
+
+class DhikrViewModel(app: Application) : AndroidViewModel(app) {
+
+    private val prefs = app.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
+    private val savedDhikrId  = prefs.getInt(KEY_DHIKR_ID, 1)
+    private val savedInterval = prefs.getInt(KEY_INTERVAL, 60)
+    private val savedVolume   = prefs.getFloat(KEY_VOLUME, 0.8f)
+
+    private val _uiState = MutableStateFlow(
+        DhikrUiState(
+            selectedDhikr = allDhikrs.firstOrNull { it.id == savedDhikrId } ?: allDhikrs.first(),
+            intervalSec   = savedInterval,
+            volume        = savedVolume,
+            isRunning     = DhikrService.isRunning
+        )
+    )
     val uiState: StateFlow<DhikrUiState> = _uiState.asStateFlow()
 
     fun selectDhikr(item: DhikrItem) {
+        prefs.edit().putInt(KEY_DHIKR_ID, item.id).apply()
         _uiState.value = _uiState.value.copy(selectedDhikr = item)
     }
 
-    fun setCount(count: Int) {
-        _uiState.value = _uiState.value.copy(count = count.coerceIn(1, 1000))
-    }
-
     fun setInterval(sec: Int) {
-        _uiState.value = _uiState.value.copy(intervalSec = sec.coerceIn(1, 60))
+        val v = sec.coerceIn(10, 3600)
+        prefs.edit().putInt(KEY_INTERVAL, v).apply()
+        _uiState.value = _uiState.value.copy(intervalSec = v)
     }
 
-    fun setVolume(v: Float) {                           // ← جديد
-        _uiState.value = _uiState.value.copy(volume = v.coerceIn(0f, 1f))
+    fun setVolume(v: Float) {
+        val clamped = v.coerceIn(0f, 1f)
+        prefs.edit().putFloat(KEY_VOLUME, clamped).apply()
+        _uiState.value = _uiState.value.copy(volume = clamped)
     }
 
-    // ← يتحقق إن السيرفس شغال لما الشاشة ترجع
     fun syncServiceState(context: Context) {
         val running = DhikrService.isRunning
         if (_uiState.value.isRunning != running) {
@@ -64,16 +83,15 @@ class DhikrViewModel : ViewModel() {
 
     fun start(context: Context) {
         val state = _uiState.value
-        // نكرر كل الأذكار بعدد count مرة
-        val resIds  = IntArray(state.count) { state.selectedDhikr.rawResId }
-        val texts   = Array(state.count)   { state.selectedDhikr.textAr   }
+        val resIds = intArrayOf(state.selectedDhikr.rawResId)
+        val texts  = arrayOf(state.selectedDhikr.textAr)
 
         context.startForegroundService(
             Intent(context, DhikrService::class.java).apply {
-                putExtra(DhikrService.EXTRA_TEXTS,        texts)
-                putExtra(DhikrService.EXTRA_RES_IDS,      resIds)
-                putExtra(DhikrService.EXTRA_INTERVAL_MS,  state.intervalSec * 1000L)
-                putExtra(DhikrService.EXTRA_VOLUME,       state.volume)
+                putExtra(DhikrService.EXTRA_TEXTS,       texts)
+                putExtra(DhikrService.EXTRA_RES_IDS,     resIds)
+                putExtra(DhikrService.EXTRA_INTERVAL_MS, state.intervalSec * 1000L)
+                putExtra(DhikrService.EXTRA_VOLUME,      state.volume)
             }
         )
         _uiState.value = state.copy(isRunning = true)
