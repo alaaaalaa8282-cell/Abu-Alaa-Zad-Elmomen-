@@ -2,6 +2,7 @@ package com.abueltaweel.presentation.screen.splash
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -45,7 +46,7 @@ fun SplashScreen(
         alpha.animateTo(1f, animationSpec = tween(900))
         scale.animateTo(1f, animationSpec = tween(900))
         delay(2500)
-        navController.navigate(startDestination.route) {
+        navController.navigate(startDestination) {
             popUpTo(Route.SplashScreen.route) { inclusive = true }
         }
     }
@@ -71,7 +72,7 @@ fun SplashScreen(
                 .alpha(alpha.value)
                 .scale(scale.value)
         ) {
-            androidx.compose.foundation.Image(
+            Image(
                 painter = painterResource(id = R.drawable.father_photo),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
@@ -93,7 +94,7 @@ fun SplashScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "محمد عبد العظيم زاد المؤمن",
+                text = "زاد المؤمن",
                 color = Color.White,
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold,
