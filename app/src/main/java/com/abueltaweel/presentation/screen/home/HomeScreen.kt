@@ -4,22 +4,36 @@ import android.Manifest
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.abueltaweel.R
 import com.abueltaweel.design_system.theme.Theme
 import com.abueltaweel.presentation.base.LocalAppLocale
 import com.abueltaweel.presentation.navigation.Route
@@ -46,30 +60,68 @@ fun HomeScreen(
             HomeEffect.NavigateToFullPrayersDetails -> {
                 navController.navigate(Route.FullPrayerTimeView)
             }
-
             HomeEffect.NavigateToCalibrateDevice -> {
                 navController.navigate(Route.CalibrateDevice)
             }
-
             HomeEffect.NavigateToSettings -> {
                 navController.navigate(Route.SettingsScreen)
             }
-
             HomeEffect.NavigateToQuran -> {
                 navController.navigate(Route.SurahListScreen)
             }
-
             HomeEffect.NavigateToTilawah -> {
                 // TODO
             }
         }
     }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .background(Theme.color.surfaces.surface)
             .windowInsetsPadding(WindowInsets.systemBars)
     ) {
+        // ─── صورة الوالد رحمه الله ───
+        item {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .height(180.dp)
+                    .clip(RoundedCornerShape(16.dp))
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.father_photo),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+                // gradient overlay عشان النص يبان
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    Color(0xCC000000)
+                                )
+                            )
+                        )
+                )
+                Text(
+                    text = "رحمه الله ووسع له في قبره",
+                    color = Color(0xFFE2B96F),
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 12.dp)
+                )
+            }
+        }
+
         item {
             HomeAppBar(
                 modifier = Modifier.padding(horizontal = 16.dp),
@@ -109,14 +161,7 @@ fun RequestNotificationPermission() {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         val launcher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.RequestPermission()
-        ) { isGranted: Boolean ->
-            if (isGranted) {
-
-            } else {
-
-            }
-        }
-
+        ) {}
         LaunchedEffect(Unit) {
             launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
