@@ -269,4 +269,7 @@
     <string name="v">%1$s %2$s</string>
     <string name="version">Version</string>
     <string name="radio">Radio</string>
+    <string name="mozan_mohamed_refat">محمد رفعت</string>
+    <string name="mozan_al_nakshabandy">النقشبندي</string>
+    <string name="mozan_al_hosary">الحصري</string>
 </resources>
