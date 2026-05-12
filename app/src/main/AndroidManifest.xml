@@ -80,7 +80,12 @@
             android:exported="false"
             android:foregroundServiceType="mediaPlayback"
             android:showOnLockScreen="true"
-           android:turnScreenOn="true" />
+            android:turnScreenOn="true" />
+        <service
+    android:name=".presentation.service.PrayerCountdownService"
+    android:exported="false"
+    android:foregroundServiceType="specialUse"
+    tools:targetApi="34" />
 </application>
 
 </manifest>
