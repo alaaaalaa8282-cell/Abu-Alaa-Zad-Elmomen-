@@ -100,7 +100,7 @@ fun FullPrayerTimesViewScreen(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0A1A10))
+            .background(Color(0xFFF0DEB4))
             .windowInsetsPadding(WindowInsets.systemBars)
     ) {
         item {
