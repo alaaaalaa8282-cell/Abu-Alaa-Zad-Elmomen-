@@ -84,7 +84,7 @@ fun SplashScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "رحمه الله ووسع له في قبره",
+                text = "محمد عبد العظيم طرفايه رحمه الله ووسع له في قبره",
                 color = Color(0xFFE2B96F),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium,
@@ -94,7 +94,7 @@ fun SplashScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "زاد المؤمن",
+                text = "ابو علاء المؤمن",
                 color = Color.White,
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold,
