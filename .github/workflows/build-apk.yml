@@ -22,13 +22,13 @@ jobs:
 
       - name: Decode Keystore
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > $GITHUB_WORKSPACE/my-release-key.jks
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > $GITHUB_WORKSPACE/my-release-key.p12
 
       - name: Build Release APK
         env:
           SUPABASE_URL: https://placeholder.supabase.co
           SUPABASE_KEY: placeholder_key_for_build_only
-          KEY_STORE_PATH: ${{ github.workspace }}/my-release-key.jks
+          KEY_STORE_PATH: ${{ github.workspace }}/my-release-key.p12
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
@@ -37,7 +37,8 @@ jobs:
             -Pandroid.injected.signing.store.file=$KEY_STORE_PATH \
             -Pandroid.injected.signing.store.password=$STORE_PASSWORD \
             -Pandroid.injected.signing.key.alias=$KEY_ALIAS \
-            -Pandroid.injected.signing.key.password=$KEY_PASSWORD
+            -Pandroid.injected.signing.key.password=$KEY_PASSWORD \
+            -Pandroid.injected.signing.store.type=PKCS12
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
