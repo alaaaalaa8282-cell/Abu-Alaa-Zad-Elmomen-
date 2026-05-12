@@ -1,6 +1,8 @@
 package com.abueltaweel.presentation.screen.dhikr
 
+import android.app.AlarmManager
 import android.app.Application
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import androidx.lifecycle.AndroidViewModel
@@ -9,6 +11,7 @@ import com.abueltaweel.presentation.service.DhikrService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.util.Calendar
 
 data class DhikrItem(
     val id: Int,
@@ -21,7 +24,13 @@ data class DhikrUiState(
     val selectedDhikr: DhikrItem = allDhikrs.first(),
     val intervalSec: Int = 60,
     val volume: Float = 0.8f,
-    val isRunning: Boolean = false
+    val isRunning: Boolean = false,
+    // ─── وقت التشغيل التلقائي ───
+    val autoEnabled: Boolean = false,
+    val startHour: Int = 8,
+    val startMinute: Int = 0,
+    val stopHour: Int = 22,
+    val stopMinute: Int = 0
 )
 
 val allDhikrs = listOf(
@@ -34,25 +43,34 @@ val allDhikrs = listOf(
     DhikrItem(7, "سبحان الله وبحمده",          R.raw.sobhanallah_wabehamdeh)
 )
 
-private const val PREFS_NAME    = "dhikr_prefs"
-private const val KEY_DHIKR_ID  = "dhikr_id"
-private const val KEY_INTERVAL  = "dhikr_interval"
-private const val KEY_VOLUME    = "dhikr_volume"
+private const val PREFS_NAME      = "dhikr_prefs"
+private const val KEY_DHIKR_ID   = "dhikr_id"
+private const val KEY_INTERVAL   = "dhikr_interval"
+private const val KEY_VOLUME     = "dhikr_volume"
+private const val KEY_AUTO       = "dhikr_auto"
+private const val KEY_START_H    = "dhikr_start_h"
+private const val KEY_START_M    = "dhikr_start_m"
+private const val KEY_STOP_H     = "dhikr_stop_h"
+private const val KEY_STOP_M     = "dhikr_stop_m"
+
+private const val REQ_START = 1001
+private const val REQ_STOP  = 1002
 
 class DhikrViewModel(app: Application) : AndroidViewModel(app) {
 
     private val prefs = app.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-    private val savedDhikrId  = prefs.getInt(KEY_DHIKR_ID, 1)
-    private val savedInterval = prefs.getInt(KEY_INTERVAL, 60)
-    private val savedVolume   = prefs.getFloat(KEY_VOLUME, 0.8f)
-
     private val _uiState = MutableStateFlow(
         DhikrUiState(
-            selectedDhikr = allDhikrs.firstOrNull { it.id == savedDhikrId } ?: allDhikrs.first(),
-            intervalSec   = savedInterval,
-            volume        = savedVolume,
-            isRunning     = DhikrService.isRunning
+            selectedDhikr = allDhikrs.firstOrNull { it.id == prefs.getInt(KEY_DHIKR_ID, 1) } ?: allDhikrs.first(),
+            intervalSec   = prefs.getInt(KEY_INTERVAL, 60),
+            volume        = prefs.getFloat(KEY_VOLUME, 0.8f),
+            isRunning     = DhikrService.isRunning,
+            autoEnabled   = prefs.getBoolean(KEY_AUTO, false),
+            startHour     = prefs.getInt(KEY_START_H, 8),
+            startMinute   = prefs.getInt(KEY_START_M, 0),
+            stopHour      = prefs.getInt(KEY_STOP_H, 22),
+            stopMinute    = prefs.getInt(KEY_STOP_M, 0)
         )
     )
     val uiState: StateFlow<DhikrUiState> = _uiState.asStateFlow()
@@ -74,6 +92,24 @@ class DhikrViewModel(app: Application) : AndroidViewModel(app) {
         _uiState.value = _uiState.value.copy(volume = clamped)
     }
 
+    fun setAutoEnabled(enabled: Boolean, context: Context) {
+        prefs.edit().putBoolean(KEY_AUTO, enabled).apply()
+        _uiState.value = _uiState.value.copy(autoEnabled = enabled)
+        if (enabled) scheduleAlarms(context) else cancelAlarms(context)
+    }
+
+    fun setStartTime(hour: Int, minute: Int, context: Context) {
+        prefs.edit().putInt(KEY_START_H, hour).putInt(KEY_START_M, minute).apply()
+        _uiState.value = _uiState.value.copy(startHour = hour, startMinute = minute)
+        if (_uiState.value.autoEnabled) scheduleAlarms(context)
+    }
+
+    fun setStopTime(hour: Int, minute: Int, context: Context) {
+        prefs.edit().putInt(KEY_STOP_H, hour).putInt(KEY_STOP_M, minute).apply()
+        _uiState.value = _uiState.value.copy(stopHour = hour, stopMinute = minute)
+        if (_uiState.value.autoEnabled) scheduleAlarms(context)
+    }
+
     fun syncServiceState(context: Context) {
         val running = DhikrService.isRunning
         if (_uiState.value.isRunning != running) {
@@ -83,13 +119,10 @@ class DhikrViewModel(app: Application) : AndroidViewModel(app) {
 
     fun start(context: Context) {
         val state = _uiState.value
-        val resIds = allDhikrs.map { it.rawResId }.toIntArray()
-     val texts  = allDhikrs.map { it.textAr }.toTypedArray()
-
         context.startForegroundService(
             Intent(context, DhikrService::class.java).apply {
-                putExtra(DhikrService.EXTRA_TEXTS,       texts)
-                putExtra(DhikrService.EXTRA_RES_IDS,     resIds)
+                putExtra(DhikrService.EXTRA_TEXTS,       arrayOf(state.selectedDhikr.textAr))
+                putExtra(DhikrService.EXTRA_RES_IDS,     intArrayOf(state.selectedDhikr.rawResId))
                 putExtra(DhikrService.EXTRA_INTERVAL_MS, state.intervalSec * 1000L)
                 putExtra(DhikrService.EXTRA_VOLUME,      state.volume)
             }
@@ -104,5 +137,70 @@ class DhikrViewModel(app: Application) : AndroidViewModel(app) {
             }
         )
         _uiState.value = _uiState.value.copy(isRunning = false)
+    }
+
+    // ─── جدولة الأذكار ───
+    private fun scheduleAlarms(context: Context) {
+        val state = _uiState.value
+        val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
+        // Start Intent
+        val startIntent = Intent(context, DhikrService::class.java).apply {
+            putExtra(DhikrService.EXTRA_TEXTS,       arrayOf(state.selectedDhikr.textAr))
+            putExtra(DhikrService.EXTRA_RES_IDS,     intArrayOf(state.selectedDhikr.rawResId))
+            putExtra(DhikrService.EXTRA_INTERVAL_MS, state.intervalSec * 1000L)
+            putExtra(DhikrService.EXTRA_VOLUME,      state.volume)
+        }
+        val startPi = PendingIntent.getForegroundService(
+            context, REQ_START, startIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        // Stop Intent
+        val stopIntent = Intent(context, DhikrService::class.java).apply {
+            action = DhikrService.ACTION_STOP
+        }
+        val stopPi = PendingIntent.getService(
+            context, REQ_STOP, stopIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        // وقت البداية
+        val startCal = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, state.startHour)
+            set(Calendar.MINUTE, state.startMinute)
+            set(Calendar.SECOND, 0)
+            if (timeInMillis <= System.currentTimeMillis())
+                add(Calendar.DAY_OF_YEAR, 1)
+        }
+
+        // وقت النهاية
+        val stopCal = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, state.stopHour)
+            set(Calendar.MINUTE, state.stopMinute)
+            set(Calendar.SECOND, 0)
+            if (timeInMillis <= System.currentTimeMillis())
+                add(Calendar.DAY_OF_YEAR, 1)
+        }
+
+        am.setRepeating(AlarmManager.RTC_WAKEUP, startCal.timeInMillis, AlarmManager.INTERVAL_DAY, startPi)
+        am.setRepeating(AlarmManager.RTC_WAKEUP, stopCal.timeInMillis,  AlarmManager.INTERVAL_DAY, stopPi)
+    }
+
+    private fun cancelAlarms(context: Context) {
+        val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
+        val startPi = PendingIntent.getForegroundService(
+            context, REQ_START,
+            Intent(context, DhikrService::class.java),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_NO_CREATE
+        )
+        val stopPi = PendingIntent.getService(
+            context, REQ_STOP,
+            Intent(context, DhikrService::class.java),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_NO_CREATE
+        )
+        startPi?.let { am.cancel(it) }
+        stopPi?.let  { am.cancel(it) }
     }
 }
