@@ -46,61 +46,86 @@ fun PrayerItem(
     val amPm = if (isAm) localizedString(R.string.am) else localizedString(R.string.pm)
     val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
 
-    val bgColor = if (isNextPrayer) Color(0xFF1A3A2A) else Color(0xFF0D1F1A)
-    val borderColor = if (isNextPrayer) Color(0xFFC9A84C) else Color(0xFF1E3A2A)
-    val timeColor = if (isNextPrayer) Color(0xFFFF4444) else Color(0xFF00CC66)
+    val rowBg = if (isNextPrayer) Color(0xFFFFF3D0) else Color(0xFFF5E6C8)
+    val borderColor = if (isNextPrayer) Color(0xFFC9A84C) else Color(0xFF8B6914)
+    val nameBg = if (isNextPrayer) Color(0xFFC9A84C) else Color(0xFFB8860B)
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 4.dp)
+            .padding(horizontal = 10.dp, vertical = 4.dp)
             .clip(RoundedCornerShape(8.dp))
-            .background(bgColor)
-            .border(1.dp, borderColor, RoundedCornerShape(8.dp))
-            .padding(horizontal = 12.dp, vertical = 10.dp),
+            .background(rowBg)
+            .border(
+                width = if (isNextPrayer) 2.dp else 1.dp,
+                color = borderColor,
+                shape = RoundedCornerShape(8.dp)
+            )
+            .padding(horizontal = 8.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         // اسم الصلاة
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            if (isNextPrayer) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_next_prayer_arrow),
-                    tint = Color(0xFFC9A84C),
-                    contentDescription = "",
-                    modifier = Modifier
-                        .size(16.dp)
-                        .padding(end = 4.dp)
-                        .graphicsLayer { scaleX = if (isRtl) -1f else 1f }
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(6.dp))
+                .background(nameBg)
+                .padding(horizontal = 14.dp, vertical = 6.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (isNextPrayer) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_next_prayer_arrow),
+                        tint = Color(0xFF1A0A00),
+                        contentDescription = "",
+                        modifier = Modifier
+                            .size(14.dp)
+                            .padding(end = 4.dp)
+                            .graphicsLayer { scaleX = if (isRtl) -1f else 1f }
+                    )
+                }
+                Text(
+                    text = localizedString(prayerNameResource),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1A0A00)
                 )
             }
-            Text(
-                text = localizedString(prayerNameResource),
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = if (isNextPrayer) Color(0xFFC9A84C) else Color(0xFF8BAF8B),
-                modifier = Modifier.padding(start = if (isNextPrayer) 4.dp else 0.dp)
-            )
         }
 
-        // الوقت بشكل ديجيتال
+        // صندوق الوقت بشكل LED
         Row(verticalAlignment = Alignment.CenterVertically) {
+            // مساء / صباحاً
             Text(
-                text = prayerTime.toLocalizedDigits(language),
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                fontFamily = FontFamily.Monospace,
-                color = timeColor
+                text = amPm,
+                fontSize = 11.sp,
+                color = Color(0xFF5A3E00),
+                modifier = Modifier.padding(end = 4.dp)
             )
-            Text(
-                text = " $amPm",
-                fontSize = 12.sp,
-                color = Color(0xFF8BAF8B),
-                modifier = Modifier.padding(start = 4.dp)
-            )
+
+            // الصندوق الأسود للوقت
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(Color(0xFF0A0A0A))
+                    .border(1.dp, Color(0xFF333300), RoundedCornerShape(6.dp))
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = prayerTime.toLocalizedDigits(language),
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily.Monospace,
+                    color = Color(0xFFFF2200),
+                    letterSpacing = 2.sp
+                )
+            }
 
             Spacer(Modifier.width(8.dp))
 
+            // أيقونة الصوت
             AnimatedContent(
                 targetState = isNotificationEnabled,
                 transitionSpec = {
@@ -114,11 +139,11 @@ fun PrayerItem(
                         else R.drawable.ic_volume_off
                     ),
                     contentDescription = null,
-                    tint = if (isNotificationEnabled) Color(0xFFC9A84C) else Color(0xFF4A6A4A),
+                    tint = if (isNotificationEnabled) Color(0xFFC9A84C) else Color(0xFF8B6914),
                     modifier = Modifier
                         .size(28.dp)
                         .clip(RoundedCornerShape(6.dp))
-                        .background(Color(0xFF1E3A2A))
+                        .background(Color(0xFF2A1800))
                         .padding(4.dp)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
