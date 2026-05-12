@@ -20,12 +20,12 @@ class DhikrService : Service() {
     private var wakeLock: PowerManager.WakeLock? = null
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
-    private var dhikrResIds   = intArrayOf()
-    private var dhikrTexts    = arrayOf<String>()
-    private var intervalMs    = 5 * 60 * 1000L
-    private var volume        = 1f
-    private var currentIndex  = 0
-    private var isRunning     = false
+    private var dhikrResIds  = intArrayOf()
+    private var dhikrTexts   = arrayOf<String>()
+    private var intervalMs   = 5 * 60 * 1000L
+    private var volume       = 1f
+    private var currentIndex = 0
+    private var running      = false
 
     override fun onBind(intent: Intent?) = null
 
@@ -40,7 +40,8 @@ class DhikrService : Service() {
         intervalMs   = intent.getLongExtra(EXTRA_INTERVAL_MS, 5 * 60 * 1000L)
         volume       = intent.getFloatExtra(EXTRA_VOLUME, 1f)
         currentIndex = 0
-        isRunning    = true
+        running      = true
+        isRunning    = true   // ← static flag
 
         acquireWakeLock()
         createChannel()
@@ -51,11 +52,11 @@ class DhikrService : Service() {
     }
 
     private fun playCurrentDhikr() {
-        if (!isRunning || dhikrResIds.isEmpty()) return
+        if (!running || dhikrResIds.isEmpty()) return
 
         val resId = dhikrResIds[currentIndex]
         val logVol = if (volume <= 0f) 0f
-            else (1 - (Math.log((1 + (1 - volume) * 99).toDouble()) / Math.log(100.0))).toFloat()
+        else (1 - (Math.log((1 + (1 - volume) * 99).toDouble()) / Math.log(100.0))).toFloat()
 
         updateNotification(currentIndex)
 
@@ -65,20 +66,18 @@ class DhikrService : Service() {
                 setVolume(logVol, logVol)
                 setWakeMode(this@DhikrService, PowerManager.PARTIAL_WAKE_LOCK)
                 setOnCompletionListener {
-                    // بعد ما الذكر يخلص ننتظر الـ interval وبعدين نشغل الي بعده
                     scope.launch {
                         delay(intervalMs)
-                        if (isRunning) {
+                        if (running) {
                             currentIndex = (currentIndex + 1) % dhikrResIds.size
                             playCurrentDhikr()
                         }
                     }
                 }
                 setOnErrorListener { _, _, _ ->
-                    // لو في error ننتقل للذكر التالي
                     scope.launch {
                         delay(intervalMs)
-                        if (isRunning) {
+                        if (running) {
                             currentIndex = (currentIndex + 1) % dhikrResIds.size
                             playCurrentDhikr()
                         }
@@ -88,10 +87,9 @@ class DhikrService : Service() {
                 start()
             }
         } catch (e: Exception) {
-            // لو في مشكلة في الملف انتقل للتالي
             scope.launch {
                 delay(intervalMs)
-                if (isRunning) {
+                if (running) {
                     currentIndex = (currentIndex + 1) % dhikrResIds.size
                     playCurrentDhikr()
                 }
@@ -100,7 +98,8 @@ class DhikrService : Service() {
     }
 
     private fun stopDhikr() {
-        isRunning = false
+        running   = false
+        isRunning = false   // ← static flag
         scope.cancel()
         try {
             mediaPlayer?.stop()
@@ -117,7 +116,7 @@ class DhikrService : Service() {
             val pm = getSystemService(POWER_SERVICE) as PowerManager
             wakeLock = pm.newWakeLock(
                 PowerManager.PARTIAL_WAKE_LOCK, "AbuEltaweel:DhikrWakeLock"
-            ).also { it.acquire(6 * 60 * 60 * 1000L) } // 6 ساعات max
+            ).also { it.acquire(6 * 60 * 60 * 1000L) }
         } catch (_: Exception) {}
     }
 
@@ -175,7 +174,8 @@ class DhikrService : Service() {
     }
 
     override fun onDestroy() {
-        isRunning = false
+        running   = false
+        isRunning = false   // ← static flag
         scope.cancel()
         try { mediaPlayer?.release() } catch (_: Exception) {}
         mediaPlayer = null
@@ -184,12 +184,15 @@ class DhikrService : Service() {
     }
 
     companion object {
-        const val CHANNEL_ID       = "dhikr_channel"
-        const val NOTIF_ID         = 42
-        const val ACTION_STOP      = "com.abueltaweel.STOP_DHIKR"
-        const val EXTRA_RES_IDS    = "dhikr_res_ids"
-        const val EXTRA_TEXTS      = "dhikr_texts"
-        const val EXTRA_INTERVAL_MS= "dhikr_interval_ms"
-        const val EXTRA_VOLUME     = "dhikr_volume"
+        const val CHANNEL_ID        = "dhikr_channel"
+        const val NOTIF_ID          = 42
+        const val ACTION_STOP       = "com.abueltaweel.STOP_DHIKR"
+        const val EXTRA_RES_IDS     = "dhikr_res_ids"
+        const val EXTRA_TEXTS       = "dhikr_texts"
+        const val EXTRA_INTERVAL_MS = "dhikr_interval_ms"
+        const val EXTRA_VOLUME      = "dhikr_volume"
+
+        // ← static flag يقدر الـ ViewModel يقرأه
+        @Volatile var isRunning: Boolean = false
     }
 }
