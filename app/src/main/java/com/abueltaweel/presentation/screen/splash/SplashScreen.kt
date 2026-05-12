@@ -45,7 +45,7 @@ fun SplashScreen(
     LaunchedEffect(Unit) {
         alpha.animateTo(1f, animationSpec = tween(900))
         scale.animateTo(1f, animationSpec = tween(900))
-        delay(2500)
+        delay(800)
         navController.navigate(startDestination) {
             popUpTo(Route.SplashScreen.route) { inclusive = true }
         }
