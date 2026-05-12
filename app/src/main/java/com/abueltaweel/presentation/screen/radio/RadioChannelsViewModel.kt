@@ -11,25 +11,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-// ملاحظة: إذا كان مشروعك يحتوي بالفعل على RadioChannel في ملف منفصل، يمكنك حذف هذه التعريفات
-// لكنني وضعتها هنا لضمان أن الـ Build سيعمل فوراً
-data class RadioChannel(
-    val id: Int,
-    val name: String,
-    val url: String,
-    val description: String = ""
-)
-
-data class RadioUiState(
-    val channels: List<RadioChannel> = emptyList(),
-    val isLoading: Boolean = false,
-    val isPlaying: Boolean = false,
-    val currentChannel: RadioChannel? = null,
-    val errorMessage: String? = null
-)
-
 class RadioChannelsViewModel : ViewModel() {
 
+    // نستخدم RadioUiState الأصلي الخاص بمشروعك
     private val _screenState = MutableStateFlow(RadioUiState())
     val screenState: StateFlow<RadioUiState> = _screenState.asStateFlow()
 
@@ -37,34 +21,36 @@ class RadioChannelsViewModel : ViewModel() {
     val effect = _effect.asSharedFlow()
 
     init {
-        getRadioChannels()
+        loadChannels()
     }
 
-    private fun getRadioChannels() {
+    private fun loadChannels() {
         viewModelScope.launch {
             _screenState.update { it.copy(isLoading = true) }
-            
-            // روابط البث المباشر المؤكدة
-            val reliableChannels = listOf(
-                RadioChannel(1, "إذاعة القرآن الكريم - القاهرة", "https://n02.radiojar.com/8s7uar320z4tv"),
-                RadioChannel(2, "إذاعة تلاوات خاشعة", "https://n0a.radiojar.com/0tpy8cr738quv"),
-                RadioChannel(3, "الشيخ عبد الباسط عبد الصمد", "https://backup.quran.com.kw/abdulbasit"),
-                RadioChannel(4, "الشيخ محمد صديق المنشاوي", "https://backup.quran.com.kw/minshawi"),
-                RadioChannel(5, "الشيخ محمود خليل الحصري", "https://backup.quran.com.kw/hussary"),
-                RadioChannel(6, "إذاعة السنة النبوية", "https://n02.radiojar.com/97y03bt320z4tv"),
-                RadioChannel(7, "الشيخ ماهر المعيقلي", "https://backup.quran.com.kw/maher"),
-                RadioChannel(8, "إذاعة القرآن - السعودية", "https://n08.radiojar.com/732n6p280z4tv")
+
+            // نستخدم RadioChannelUiState كما هو معرف في ملفك
+            val list = listOf(
+                RadioChannelUiState(id = 1, nameAr = "إذاعة القرآن الكريم - القاهرة", streamUrl = "https://n02.radiojar.com/8s7uar320z4tv"),
+                RadioChannelUiState(id = 2, nameAr = "إذاعة تلاوات خاشعة", streamUrl = "https://n0a.radiojar.com/0tpy8cr738quv"),
+                RadioChannelUiState(id = 3, nameAr = "الشيخ عبد الباسط عبد الصمد", streamUrl = "https://backup.quran.com.kw/abdulbasit"),
+                RadioChannelUiState(id = 4, nameAr = "الشيخ محمد صديق المنشاوي", streamUrl = "https://backup.quran.com.kw/minshawi"),
+                RadioChannelUiState(id = 5, nameAr = "الشيخ محمود خليل الحصري", streamUrl = "https://backup.quran.com.kw/hussary"),
+                RadioChannelUiState(id = 6, nameAr = "إذاعة السنة النبوية", streamUrl = "https://n02.radiojar.com/97y03bt320z4tv")
             )
-            
+
             _screenState.update { 
-                it.copy(channels = reliableChannels, isLoading = false) 
+                it.copy(channels = list, isLoading = false) 
             }
         }
     }
 
-    fun onChannelClick(channel: RadioChannel) {
-        _screenState.update { 
-            it.copy(currentChannel = channel, isPlaying = true) 
+    fun onChannelClick(channel: RadioChannelUiState) {
+        _screenState.update { state ->
+            state.copy(
+                channels = state.channels.map { 
+                    it.copy(isPlaying = it.id == channel.id) 
+                }
+            )
         }
     }
 }
