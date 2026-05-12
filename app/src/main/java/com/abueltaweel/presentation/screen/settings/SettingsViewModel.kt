@@ -21,14 +21,17 @@ class SettingsViewModel(
     SettingsInteractionListener {
 
     private val moazenResMap = mapOf(
-        SettingsUiState.Moazen.AZAN_ABED_ALBASET       to R.raw.azan_abed_albaset,
-        SettingsUiState.Moazen.AZAN_MAKKAH              to R.raw.azan_makkah,
-        SettingsUiState.Moazen.AZAN_MANSOOR_AL_ZAHRANI  to R.raw.azan_mansoor_al_zahrani,
-        SettingsUiState.Moazen.AZAN_MISHARY_ALAFASI     to R.raw.azan_mishary_alafasi,
-        SettingsUiState.Moazen.AZAN_MOHAMMED_ALMENSHWY  to R.raw.azan_mohammed_almenshawy,
-        SettingsUiState.Moazen.AZAN_NASSER_ALQATAMI     to R.raw.azan_nasser_alqatami,
-        SettingsUiState.Moazen.AZAN_SUHAIB_KHATBA       to R.raw.azan_suhaib_khatba
-    )
+    SettingsUiState.Moazen.AZAN_ABED_ALBASET      to R.raw.azan_abed_albaset,
+    SettingsUiState.Moazen.AZAN_MAKKAH             to R.raw.azan_makkah,
+    SettingsUiState.Moazen.AZAN_MANSOOR_AL_ZAHRANI to R.raw.azan_mansoor_al_zahrani,
+    SettingsUiState.Moazen.AZAN_MISHARY_ALAFASI    to R.raw.azan_mishary_alafasi,
+    SettingsUiState.Moazen.AZAN_MOHAMMED_ALMENSHWY to R.raw.azan_mohammed_almenshawy,
+    SettingsUiState.Moazen.AZAN_NASSER_ALQATAMI    to R.raw.azan_nasser_alqatami,
+    SettingsUiState.Moazen.AZAN_SUHAIB_KHATBA      to R.raw.azan_suhaib_khatba,
+    SettingsUiState.Moazen.AZAN_MOHAMED_REFAT      to R.raw.azan_mohamed_refat,
+    SettingsUiState.Moazen.AZAN_AL_NAKSHABANDY     to R.raw.azan_al_nakshabandy,
+    SettingsUiState.Moazen.AZAN_AL_HOSARY          to R.raw.azan_al_hosary
+)
 
     private var previewPlayer: MediaPlayer? = null
 
