@@ -24,6 +24,8 @@ import com.abueltaweel.presentation.screen.settings.SettingsViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
+import org.koin.android.ext.koin.androidApplication
+import org.koin.androidx.viewmodel.dsl.viewModel
 
 val presentationModule = module {
     viewModelOf(::HomeViewModel)
@@ -44,6 +46,6 @@ val presentationModule = module {
     viewModelOf(::RadioChannelsViewModel)
     viewModelOf(::BatteryOptimizationViewModel)
     viewModelOf(::AudioAzkarViewModel)
-    viewModelOf(::DhikrViewModel)
+    viewModel { DhikrViewModel(androidApplication()) }
     single<PlayerController> { AudioPlayerManager(androidContext()) }
 }
