@@ -34,7 +34,7 @@ fun AppNavigation(settingsRepository: SettingsRepository) {
 
     val onboardingComplete by settingsRepository
         .observeOnboardingComplete()
-        .collectAsState(initial = null)
+        .collectAsState(initial = false)
 
     if (onboardingComplete == null) return
 
