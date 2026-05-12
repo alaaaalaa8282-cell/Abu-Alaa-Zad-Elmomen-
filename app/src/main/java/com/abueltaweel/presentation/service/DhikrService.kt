@@ -182,7 +182,17 @@ class DhikrService : Service() {
         releaseWakeLock()
         super.onDestroy()
     }
-
+  override fun onTaskRemoved(rootIntent: Intent?) {
+    val restart = Intent(applicationContext, DhikrService::class.java).apply {
+        putExtra(EXTRA_RES_IDS, dhikrResIds)
+        putExtra(EXTRA_TEXTS, dhikrTexts)
+        putExtra(EXTRA_INTERVAL_MS, intervalMs)
+        putExtra(EXTRA_VOLUME, volume)
+    }
+    startService(restart)
+    super.onTaskRemoved(rootIntent)
+  }
+    
     companion object {
         const val CHANNEL_ID        = "dhikr_channel"
         const val NOTIF_ID          = 42
