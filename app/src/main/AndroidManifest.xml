@@ -78,7 +78,9 @@
         <service
             android:name=".presentation.service.DhikrService"
             android:exported="false"
-            android:foregroundServiceType="mediaPlayback" />
+            android:foregroundServiceType="mediaPlayback"
+            android:showOnLockScreen="true"
+           android:turnScreenOn="true" />
 </application>
 
 </manifest>
