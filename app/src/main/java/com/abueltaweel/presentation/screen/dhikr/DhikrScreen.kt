@@ -32,61 +32,123 @@ import com.abueltaweel.R
 import org.koin.androidx.compose.koinViewModel
 import kotlin.math.roundToInt
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DhikrScreen(viewModel: DhikrViewModel = koinViewModel()) {
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    // sync حالة السيرفس لما الشاشة ترجع
+    var showStartPicker by remember { mutableStateOf(false) }
+    var showStopPicker  by remember { mutableStateOf(false) }
+
+    val startTimePickerState = rememberTimePickerState(
+        initialHour = state.startHour, initialMinute = state.startMinute, is24Hour = true
+    )
+    val stopTimePickerState = rememberTimePickerState(
+        initialHour = state.stopHour, initialMinute = state.stopMinute, is24Hour = true
+    )
+
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                viewModel.syncServiceState(context)
-            }
+            if (event == Lifecycle.Event.ON_RESUME) viewModel.syncServiceState(context)
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    val notifLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) {}
+    val notifLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
     LaunchedEffect(Unit) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
             notifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-        }
+    }
+
+    // ─── Start Time Dialog ───
+    if (showStartPicker) {
+        AlertDialog(
+            onDismissRequest = { showStartPicker = false },
+            containerColor = Color(0xFF1B3A4B),
+            title = { Text("وقت بدء الأذكار", color = Color(0xFFC9A84C), fontWeight = FontWeight.Bold) },
+            text = {
+                TimePicker(
+                    state = startTimePickerState,
+                    colors = TimePickerDefaults.colors(
+                        clockDialColor = Color(0xFF0D1B2A),
+                        clockDialSelectedContentColor = Color.Black,
+                        clockDialUnselectedContentColor = Color.White,
+                        selectorColor = Color(0xFFC9A84C),
+                        periodSelectorSelectedContainerColor = Color(0xFFC9A84C),
+                        timeSelectorSelectedContainerColor = Color(0xFFC9A84C),
+                        timeSelectorUnselectedContainerColor = Color(0xFF0D1B2A),
+                        timeSelectorSelectedContentColor = Color.Black,
+                        timeSelectorUnselectedContentColor = Color.White
+                    )
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.setStartTime(startTimePickerState.hour, startTimePickerState.minute, context)
+                    showStartPicker = false
+                }) { Text("حفظ", color = Color(0xFFC9A84C)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showStartPicker = false }) {
+                    Text("إلغاء", color = Color.Gray)
+                }
+            }
+        )
+    }
+
+    // ─── Stop Time Dialog ───
+    if (showStopPicker) {
+        AlertDialog(
+            onDismissRequest = { showStopPicker = false },
+            containerColor = Color(0xFF1B3A4B),
+            title = { Text("وقت إيقاف الأذكار", color = Color(0xFFC9A84C), fontWeight = FontWeight.Bold) },
+            text = {
+                TimePicker(
+                    state = stopTimePickerState,
+                    colors = TimePickerDefaults.colors(
+                        clockDialColor = Color(0xFF0D1B2A),
+                        clockDialSelectedContentColor = Color.Black,
+                        clockDialUnselectedContentColor = Color.White,
+                        selectorColor = Color(0xFFC9A84C),
+                        timeSelectorSelectedContainerColor = Color(0xFFC9A84C),
+                        timeSelectorUnselectedContainerColor = Color(0xFF0D1B2A),
+                        timeSelectorSelectedContentColor = Color.Black,
+                        timeSelectorUnselectedContentColor = Color.White
+                    )
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.setStopTime(stopTimePickerState.hour, stopTimePickerState.minute, context)
+                    showStopPicker = false
+                }) { Text("حفظ", color = Color(0xFFC9A84C)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showStopPicker = false }) {
+                    Text("إلغاء", color = Color.Gray)
+                }
+            }
+        )
     }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFF0D1B2A))
+        modifier = Modifier.fillMaxSize().background(Color(0xFF0D1B2A))
     ) {
         // Header
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    Brush.verticalGradient(listOf(Color(0xFF1B3A4B), Color(0xFF0D1B2A)))
-                )
+            modifier = Modifier.fillMaxWidth()
+                .background(Brush.verticalGradient(listOf(Color(0xFF1B3A4B), Color(0xFF0D1B2A))))
                 .padding(20.dp),
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_tasbih),
-                    contentDescription = null,
-                    tint = Color(0xFFC9A84C),
-                    modifier = Modifier.size(48.dp)
-                )
+                Icon(painterResource(R.drawable.ic_tasbih), null, tint = Color(0xFFC9A84C), modifier = Modifier.size(48.dp))
                 Spacer(Modifier.height(8.dp))
                 Text("أذكاري", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                Text(
-                    "تُشغِّل الأذكار بالتسلسل ثم تعيد من الأول",
-                    fontSize = 13.sp, color = Color(0xFFB0BEC5),
-                    textAlign = TextAlign.Center
-                )
+                Text("تُشغِّل الأذكار بالتسلسل ثم تعيد من الأول", fontSize = 13.sp, color = Color(0xFFB0BEC5))
             }
         }
 
@@ -98,13 +160,7 @@ fun DhikrScreen(viewModel: DhikrViewModel = koinViewModel()) {
 
             // ─── قائمة الأذكار ───
             item {
-                Text(
-                    "اختر الذكر",
-                    color = Color(0xFFC9A84C),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 4.dp)
-                )
+                Text("اختر الذكر", color = Color(0xFFC9A84C), fontSize = 14.sp, fontWeight = FontWeight.Bold)
             }
             items(state.dhikrList, key = { it.id }) { item ->
                 val selected = state.selectedDhikr.id == item.id
@@ -112,155 +168,137 @@ fun DhikrScreen(viewModel: DhikrViewModel = koinViewModel()) {
                     if (selected) Color(0x44C9A84C) else Color(0xFF1B3A4B), label = "bg"
                 )
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
                         .background(bg)
                         .clickable(enabled = !state.isRunning) { viewModel.selectDhikr(item) }
                         .padding(14.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     if (selected) {
-                        Box(
-                            Modifier
-                                .size(22.dp)
-                                .background(Color(0xFFC9A84C), CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painterResource(R.drawable.check), null,
-                                tint = Color.Black,
-                                modifier = Modifier.size(14.dp)
-                            )
+                        Box(Modifier.size(22.dp).background(Color(0xFFC9A84C), CircleShape), Alignment.Center) {
+                            Icon(painterResource(R.drawable.check), null, tint = Color.Black, modifier = Modifier.size(14.dp))
                         }
                         Spacer(Modifier.width(10.dp))
                     }
-                    Text(
-                        text = item.textAr,
-                        color = if (selected) Color(0xFFC9A84C) else Color.White,
-                        fontSize = 16.sp,
-                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
-                    )
+                    Text(item.textAr, color = if (selected) Color(0xFFC9A84C) else Color.White, fontSize = 16.sp,
+                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
                 }
             }
 
             // ─── الفترة بين كل ذكر ───
             item {
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(4.dp))
                 val mins = state.intervalSec / 60
                 val secs = state.intervalSec % 60
-                val intervalLabel = when {
-                    mins > 0 && secs > 0 -> "$mins د $secs ث"
-                    mins > 0             -> "$mins دقيقة"
-                    else                 -> "$secs ثانية"
-                }
-                Text(
-                    "الفترة بين كل ذكر: $intervalLabel",
-                    color = Color(0xFFC9A84C),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                val lbl = when { mins > 0 && secs > 0 -> "$mins د $secs ث"; mins > 0 -> "$mins دقيقة"; else -> "$secs ثانية" }
+                Text("الفترة بين كل ذكر: $lbl", color = Color(0xFFC9A84C), fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(8.dp))
-                // أزرار سريعة واضحة
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    listOf(
-                        "1 د"  to 60,
-                        "5 د"  to 300,
-                        "10 د" to 600,
-                        "30 د" to 1800
-                    ).forEach { (lbl, sec) ->
-                        val isSelected = state.intervalSec == sec
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    listOf("1 د" to 60, "5 د" to 300, "10 د" to 600, "30 د" to 1800).forEach { (l, sec) ->
+                        val isSel = state.intervalSec == sec
                         Button(
                             onClick = { if (!state.isRunning) viewModel.setInterval(sec) },
                             enabled = !state.isRunning,
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isSelected) Color(0xFFC9A84C)
-                                else Color(0xFF1B3A4B),
-                                contentColor = if (isSelected) Color.Black else Color(0xFFC9A84C),
-                                disabledContainerColor = if (isSelected) Color(0x99C9A84C)
-                                else Color(0xFF1B3A4B)
+                                containerColor = if (isSel) Color(0xFFC9A84C) else Color(0xFF1B3A4B),
+                                contentColor = if (isSel) Color.Black else Color(0xFFC9A84C),
+                                disabledContainerColor = if (isSel) Color(0x99C9A84C) else Color(0xFF1B3A4B),
+                                disabledContentColor = if (isSel) Color.Black else Color(0x66C9A84C)
                             ),
                             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(40.dp),
+                            modifier = Modifier.weight(1f).height(40.dp),
                             shape = RoundedCornerShape(10.dp)
-                        ) {
-                            Text(lbl, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                        }
+                        ) { Text(l, fontSize = 13.sp, fontWeight = FontWeight.Bold) }
                     }
                 }
             }
 
             // ─── مستوى الصوت ───
             item {
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    "مستوى الصوت: ${(state.volume * 100).roundToInt()}%",
-                    color = Color(0xFFC9A84C),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(Modifier.height(4.dp))
+                Text("مستوى الصوت: ${(state.volume * 100).roundToInt()}%",
+                    color = Color(0xFFC9A84C), fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 Slider(
-                    value = state.volume,
-                    onValueChange = { viewModel.setVolume(it) },
-                    valueRange = 0f..1f,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = SliderDefaults.colors(
-                        thumbColor = Color(0xFFC9A84C),
-                        activeTrackColor = Color(0xFFC9A84C),
-                        inactiveTrackColor = Color(0xFF1B3A4B)
-                    )
+                    value = state.volume, onValueChange = { viewModel.setVolume(it) },
+                    valueRange = 0f..1f, modifier = Modifier.fillMaxWidth(),
+                    colors = SliderDefaults.colors(thumbColor = Color(0xFFC9A84C), activeTrackColor = Color(0xFFC9A84C), inactiveTrackColor = Color(0xFF1B3A4B))
                 )
             }
 
-            // ─── زرار التشغيل / الإيقاف ───
+            // ─── التشغيل التلقائي ───
             item {
-                Spacer(Modifier.height(16.dp))
-                Button(
-                    onClick = {
-                        if (state.isRunning) viewModel.stop(context)
-                        else viewModel.start(context)
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (state.isRunning) Color(0xFFB00020)
-                        else Color(0xFFC9A84C)
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(54.dp),
-                    shape = RoundedCornerShape(12.dp)
+                Spacer(Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
+                        .background(Color(0xFF1B3A4B)).padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Icon(
-                        painter = painterResource(
-                            if (state.isRunning) R.drawable.ic_stop else R.drawable.ic_play
-                        ),
-                        contentDescription = null,
-                        tint = Color.Black,
-                        modifier = Modifier.size(22.dp)
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        if (state.isRunning) "إيقاف الأذكار" else "ابدأ الأذكار",
-                        color = Color.Black,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
+                    Text("تشغيل تلقائي يومي", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+                    Switch(
+                        checked = state.autoEnabled,
+                        onCheckedChange = { viewModel.setAutoEnabled(it, context) },
+                        colors = SwitchDefaults.colors(checkedThumbColor = Color.Black, checkedTrackColor = Color(0xFFC9A84C))
                     )
                 }
 
+                if (state.autoEnabled) {
+                    Spacer(Modifier.height(10.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                        // وقت البداية
+                        Button(
+                            onClick = { showStartPicker = true },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1B3A4B)),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.weight(1f).height(56.dp)
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("بداية", color = Color(0xFFC9A84C), fontSize = 12.sp)
+                                Text(
+                                    "%02d:%02d".format(state.startHour, state.startMinute),
+                                    color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                        // وقت النهاية
+                        Button(
+                            onClick = { showStopPicker = true },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1B3A4B)),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.weight(1f).height(56.dp)
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("نهاية", color = Color(0xFFC9A84C), fontSize = 12.sp)
+                                Text(
+                                    "%02d:%02d".format(state.stopHour, state.stopMinute),
+                                    color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ─── زرار التشغيل/الإيقاف ───
+            item {
+                Spacer(Modifier.height(12.dp))
+                Button(
+                    onClick = { if (state.isRunning) viewModel.stop(context) else viewModel.start(context) },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (state.isRunning) Color(0xFFB00020) else Color(0xFFC9A84C)
+                    ),
+                    modifier = Modifier.fillMaxWidth().height(54.dp),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(painterResource(if (state.isRunning) R.drawable.ic_stop else R.drawable.ic_play),
+                        null, tint = Color.Black, modifier = Modifier.size(22.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(if (state.isRunning) "إيقاف الأذكار" else "ابدأ الأذكار",
+                        color = Color.Black, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                }
                 if (state.isRunning) {
-                    Spacer(Modifier.height(12.dp))
-                    Text(
-                        "الأذكار تعمل في الخلفية",
-                        color = Color(0xFF4CAF50),
-                        fontSize = 13.sp,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    Spacer(Modifier.height(10.dp))
+                    Text("الأذكار تعمل في الخلفية", color = Color(0xFF4CAF50),
+                        fontSize = 13.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                 }
             }
         }
