@@ -11,5 +11,8 @@ import com.abueltaweel.R
         SettingsUiState.Moazen.AZAN_MOHAMMED_ALMENSHWY -> R.string.mozan_mohammed_almenshawy
         SettingsUiState.Moazen.AZAN_NASSER_ALQATAMI -> R.string.mozan_nasser_alqatami
         SettingsUiState.Moazen.AZAN_SUHAIB_KHATBA -> R.string.mozan_suhaib_khatba
+        SettingsUiState.Moazen.AZAN_MOHAMED_REFAT      -> R.string.mozan_mohamed_refat
+        SettingsUiState.Moazen.AZAN_AL_NAKSHABANDY     -> R.string.mozan_al_nakshabandy
+        SettingsUiState.Moazen.AZAN_AL_HOSARY          -> R.string.mozan_al_hosary
     }
 }
