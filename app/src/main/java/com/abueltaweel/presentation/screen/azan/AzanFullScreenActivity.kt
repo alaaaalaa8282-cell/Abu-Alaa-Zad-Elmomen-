@@ -27,6 +27,8 @@ import androidx.compose.ui.unit.sp
 import com.abueltaweel.R
 import com.abueltaweel.presentation.service.PrayerAlarmService
 import com.abueltaweel.presentation.utils.Constants
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
 
 class AzanFullScreenActivity : ComponentActivity() {
 
@@ -77,11 +79,12 @@ fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
         label = "scale"
     )
     Box(
-        modifier = Modifier.fillMaxSize().background(
-            Brush.verticalGradient(listOf(Color(0xFF0D1B2A), Color(0xFF1B3A4B), Color(0xFF0D2137)))
-        ),
+        modifier = Modifier.fillMaxSize(),
+            
         contentAlignment = Alignment.Center
     ) {
+      Image(painter = painterResource(R.drawable.father_photo), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+     Box(modifier = Modifier.fillMaxSize().background(Color(0xCC000000)))
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
