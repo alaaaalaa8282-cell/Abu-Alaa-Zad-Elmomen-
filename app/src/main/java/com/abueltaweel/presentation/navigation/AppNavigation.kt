@@ -25,7 +25,7 @@ import com.abueltaweel.presentation.screen.qiblah.QiblahScreen
 import com.abueltaweel.presentation.screen.quran.SurahListScreen
 import com.abueltaweel.presentation.screen.radio.RadioScreen
 import com.abueltaweel.presentation.screen.settings.SettingsScreen
-import com.abueltaweel.presentation.screen.splash.SplashScreen  // ← جديد
+import com.abueltaweel.presentation.screen.splash.SplashScreen
 
 @OptIn(kotlin.time.ExperimentalTime::class)
 @Composable
@@ -38,22 +38,20 @@ fun AppNavigation(settingsRepository: SettingsRepository) {
 
     if (onboardingComplete == null) return
 
-    val afterSplashDestination =
+    val afterSplashDestination: Route =
         if (onboardingComplete == true) Route.AppRoute
         else Route.MadhabScreen
 
     NavHost(
         navController = navController,
-        startDestination = Route.SplashScreen.route  // ← الـ Splash أول حاجة
+        startDestination = Route.SplashScreen
     ) {
-        // ─── Splash ───
-        composable(Route.SplashScreen.route) {
+        composable<Route.SplashScreen> {
             SplashScreen(
                 navController = navController,
                 startDestination = afterSplashDestination
             )
         }
-
         composable<Route.SurahListScreen> { SurahListScreen(navController) }
         composable<Route.AppRoute> {
             MainContainer(rootNavController = navController)
