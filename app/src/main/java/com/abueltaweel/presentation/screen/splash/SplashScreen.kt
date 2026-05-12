@@ -2,7 +2,6 @@ package com.abueltaweel.presentation.screen.splash
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -46,8 +45,8 @@ fun SplashScreen(
         alpha.animateTo(1f, animationSpec = tween(900))
         scale.animateTo(1f, animationSpec = tween(900))
         delay(2500)
-        navController.navigate(startDestination) {
-            popUpTo(Route.SplashScreen) { inclusive = true }
+        navController.navigate(startDestination.route) {
+            popUpTo(Route.SplashScreen.route) { inclusive = true }
         }
     }
 
