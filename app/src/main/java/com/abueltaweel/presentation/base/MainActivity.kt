@@ -31,6 +31,7 @@ import com.abueltaweel.presentation.navigation.AppNavigation
 import org.koin.android.ext.android.inject
 import java.util.Locale
 import kotlin.time.ExperimentalTime
+import android.content.Intent
 
 class MainActivity : ComponentActivity() {
     private val settingsRepository: SettingsRepository by inject()
@@ -40,7 +41,10 @@ class MainActivity : ComponentActivity() {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         var isSettingsLoaded = false
-
+        // تشغيل عداد الصلاة الدائم
+    startForegroundService(
+    android.content.Intent(this, com.abueltaweel.presentation.service.PrayerCountdownService::class.java)
+     )   
         splashScreen.setKeepOnScreenCondition {
             !isSettingsLoaded
         }
