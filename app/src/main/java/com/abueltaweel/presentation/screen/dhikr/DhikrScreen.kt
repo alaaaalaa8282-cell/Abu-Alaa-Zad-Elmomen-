@@ -269,7 +269,7 @@ fun DhikrScreen(viewModel: DhikrViewModel = koinViewModel()) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text("نهاية", color = Color(0xFFC9A84C), fontSize = 12.sp)
                                 Text(
-                                    "%d:%02d %s".format(if (state.startHour % 12 == 0) 12 else state.startHour % 12, state.startMinute, if (state.startHour < 12) "ص" else "م") 
+                                    "%d:%02d %s".format(if (state.stopHour % 12 == 0) 12 else state.stopHour % 12, state.stopMinute, if (state.stopHour < 12) "ص" else "م") 
                                     color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold
                                 )
                             }
