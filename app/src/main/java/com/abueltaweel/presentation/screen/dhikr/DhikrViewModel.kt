@@ -83,8 +83,10 @@ class DhikrViewModel(app: Application) : AndroidViewModel(app) {
 
     fun start(context: Context) {
         val state = _uiState.value
-        val resIds = intArrayOf(state.selectedDhikr.rawResId)
-        val texts  = arrayOf(state.selectedDhikr.textAr)
+        val startIndex = allDhikrs.indexOfFirst { it.id == state.selectedDhikr.id }.coerceAtLeast(0)
+        val ordered    = allDhikrs.drop(startIndex) + allDhikrs.take(startIndex)
+       val resIds     = ordered.map { it.rawResId }.toIntArray()
+       val texts      = ordered.map { it.textAr }.toTypedArray()
 
         context.startForegroundService(
             Intent(context, DhikrService::class.java).apply {
