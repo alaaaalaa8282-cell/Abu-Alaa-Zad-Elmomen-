@@ -8,16 +8,16 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 private val islamicRadioChannels = listOf(
-    RadioUiState.RadioChannelUiState(1,  "إذاعة القرآن الكريم المصرية",  "Egypt Quran",    "http://stream.radiojar.com/0tpy1h0kxtzuv"),
-    RadioUiState.RadioChannelUiState(2,  "إذاعة القرآن الكريم السعودية", "Saudi Quran",    "https://n01.radiojar.com/ksa-quran.mp3"),
-    RadioUiState.RadioChannelUiState(3,  "إذاعة المجد للقرآن الكريم",    "Al Majd Quran",  "https://n01.radiojar.com/almajdquran.mp3"),
-    RadioUiState.RadioChannelUiState(4,  "إذاعة القرآن الكريم الكويت",   "Kuwait Quran",   "https://n01.radiojar.com/kuwaitquran.mp3"),
-    RadioUiState.RadioChannelUiState(5,  "إذاعة نداء الإسلام",           "Nida Al Islam",  "http://nadaalislamstream.com:8000/stream"),
-    RadioUiState.RadioChannelUiState(6,  "إذاعة القرآن الكريم المغرب",   "Morocco Quran",  "https://n01.radiojar.com/morocquran.mp3"),
-    RadioUiState.RadioChannelUiState(7,  "إذاعة القرآن الكريم الأردن",   "Jordan Quran",   "https://n01.radiojar.com/jordanquran.mp3"),
-    RadioUiState.RadioChannelUiState(8,  "إذاعة القرآن الكريم تونس",     "Tunisia Quran",  "https://n01.radiojar.com/tunisquran.mp3"),
-    RadioUiState.RadioChannelUiState(9,  "إذاعة القرآن الكريم الجزائر",  "Algeria Quran",  "https://n01.radiojar.com/algeriaQuran.mp3"),
-    RadioUiState.RadioChannelUiState(10, "راديو الإسلام",                 "Radio Islam",    "https://n01.radiojar.com/radioislam.mp3")
+    RadioUiState.RadioChannelUiState(1, "إذاعة القرآن الكريم المصرية",  "Egypt Quran",   "http://cana.be/4978"),
+    RadioUiState.RadioChannelUiState(2, "إذاعة القرآن الكريم السعودية", "Saudi Quran",   "http://stream.srrs.sa:8000/quran/"),
+    RadioUiState.RadioChannelUiState(3, "إذاعة المجد للقرآن الكريم",   "Al Majd Quran", "http://www.almajdtv.com:1935/live/quran/playlist.m3u8"),
+    RadioUiState.RadioChannelUiState(4, "إذاعة القرآن الكريم الكويت",  "Kuwait Quran",  "http://www.snrplayer.com:8005/stream"),
+    RadioUiState.RadioChannelUiState(5, "إذاعة القرآن الكريم المغرب",  "Morocco Quran", "http://radio.snrt.ma:1935/live/quran/playlist.m3u8"),
+    RadioUiState.RadioChannelUiState(6, "إذاعة نداء الإسلام",          "Nida Al Islam", "http://stream.zeno.fm/yn65y9gklzzuv"),
+    RadioUiState.RadioChannelUiState(7, "إذاعة القرآن الكريم الأردن",  "Jordan Quran",  "http://stream.zeno.fm/2r0km5ekl5zuv"),
+    RadioUiState.RadioChannelUiState(8, "إذاعة القرآن الكريم تونس",    "Tunisia Quran", "http://stream.zeno.fm/0r0xa792kwzuv"),
+    RadioUiState.RadioChannelUiState(9, "إذاعة القرآن الكريم الجزائر", "Algeria Quran", "http://stream.zeno.fm/4d6d4952n8zuv"),
+    RadioUiState.RadioChannelUiState(10,"راديو الإسلام",                "Radio Islam",   "http://stream.zeno.fm/wrnyq6eklzzuv")
 )
 
 class RadioChannelsViewModel(
