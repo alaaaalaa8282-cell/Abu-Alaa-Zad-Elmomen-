@@ -3,24 +3,42 @@ package com.abueltaweel.presentation.screen.radio
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+data class RadioChannel(
+    val id: Int,
+    val name: String,
+    val url: String,
+    val description: String = ""
+)
+
+data class RadioUiState(
+    val channels: List<RadioChannel> = emptyList(),
+    val isLoading: Boolean = false,
+    val isPlaying: Boolean = false,
+    val currentChannel: RadioChannel? = null,
+    val errorMessage: String? = null
+)
 
 class RadioChannelsViewModel : ViewModel() {
 
-    // تأكد من استخدام هذا الاسم ليتوافق مع RadioScreen
     private val _screenState = MutableStateFlow(RadioUiState())
     val screenState: StateFlow<RadioUiState> = _screenState.asStateFlow()
 
-    // إضافة الـ effect لكي لا يعترض ملف RadioScreen
     private val _effect = MutableSharedFlow<String>()
     val effect = _effect.asSharedFlow()
 
     init {
-        loadRadioChannels()
+        getRadioChannels()
     }
 
-    private fun loadRadioChannels() {
+    private fun getRadioChannels() {
         viewModelScope.launch {
             _screenState.update { it.copy(isLoading = true) }
             
@@ -33,14 +51,17 @@ class RadioChannelsViewModel : ViewModel() {
                 RadioChannel(6, "إذاعة السنة النبوية", "https://n02.radiojar.com/97y03bt320z4tv")
             )
             
-            _screenState.update { it.copy(channels = reliableChannels, isLoading = false) }
+            _screenState.update { 
+                it.copy(channels = reliableChannels, isLoading = false) 
+            }
         }
     }
 
     fun onChannelClick(channel: RadioChannel) {
-        _screenState.update { it.copy(currentChannel = channel, isPlaying = true) }
+        _screenState.update { 
+            it.copy(currentChannel = channel, isPlaying = true) 
+        }
     }
 }
-
 
 ```
