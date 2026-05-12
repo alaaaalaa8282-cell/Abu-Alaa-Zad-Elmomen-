@@ -17,7 +17,7 @@ android {
         applicationId = "com.abueltaweel"
         minSdk = 26
         targetSdk = 36
-        versionCode = 15
+        versionCode = System.currentTimeMillis().toInt()
         versionName = "1.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
