@@ -99,7 +99,7 @@ class RadioChannelsViewModel(
                 id = 14,
                 nameAr = "إذاعة علي الحذيفي",
                 nameEn = "Ali Al-Hudhaifi",
-                streamUrl = "https://live.mp3quran.net:9844"
+                streamUrl = "https://backup.qurango.net/radio/ali_alhuthaify"
             ),
             RadioUiState.RadioChannelUiState(
                 id = 15,
