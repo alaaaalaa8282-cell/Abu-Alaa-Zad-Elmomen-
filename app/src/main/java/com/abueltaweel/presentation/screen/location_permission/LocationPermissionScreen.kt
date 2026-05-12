@@ -115,9 +115,8 @@ fun LocationPermissionScreen(
             }
 
             LocationEffect.NavigateToHome -> {
-                // navController.navigate(Route.HomeScreen)
-                navController.navigate(Route.HomeScreen) {
-                    popUpTo(Route.MadhabScreen) { inclusive = true }
+                navController.navigate(Route.AppRoute) {
+                    popUpTo(0) { inclusive = true }
                 }
             }
 
@@ -168,7 +167,6 @@ fun LocationPermissionScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     Box(
                         modifier = Modifier.fillMaxWidth(),
