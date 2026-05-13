@@ -86,6 +86,10 @@
     android:exported="false"
     android:foregroundServiceType="specialUse"
     tools:targetApi="34" />
-</application>
+<service
+    android:name=".presentation.service.PrayerCountdownService"
+    android:foregroundServiceType="dataSync"
+    android:exported="false" />
+    </application>
 
 </manifest>
