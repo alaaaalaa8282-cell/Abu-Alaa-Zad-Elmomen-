@@ -59,7 +59,7 @@ if (intent?.action == ACTION_UPDATE_VOLUME) {
     }
 
     private fun playCurrentDhikr() {
-        if (!running || dhikrResIds.isEmpty()) return
+        if (!running || dhikrResIds.isEmpty() || PrayerAlarmService.isPlaying) return
 
         val resId = dhikrResIds[currentIndex]
         val logVol = if (volume <= 0f) 0f
