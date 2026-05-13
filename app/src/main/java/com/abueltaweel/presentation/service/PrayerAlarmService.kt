@@ -161,8 +161,10 @@ class PrayerAlarmService : Service() {
             prepare()
             start()
             setOnCompletionListener {
-                stopForeground(true)
-                stopSelf()
+    sendBroadcast(Intent(Constants.ACTION_STOP_AZAN))
+    stopForeground(true)
+    stopSelf()
+}
             }
         }
         afd.close()
