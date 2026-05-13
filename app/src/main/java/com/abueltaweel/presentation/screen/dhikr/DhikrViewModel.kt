@@ -121,10 +121,8 @@ class DhikrViewModel(app: Application) : AndroidViewModel(app) {
         val state = _uiState.value
         context.startForegroundService(
             Intent(context, DhikrService::class.java).apply {
-                putExtra(DhikrService.EXTRA_TEXTS,       arrayOf(state.selectedDhikr.textAr))
-                putExtra(DhikrService.EXTRA_RES_IDS,     intArrayOf(state.selectedDhikr.rawResId))
-                val resIds = allDhikrs.map { it.rawResId }.toIntArray()
-                val texts  = allDhikrs.map { it.textAr }.toTypedArray()
+                putExtra(DhikrService.EXTRA_TEXTS,   allDhikrs.map { it.textAr }.toTypedArray())
+               putExtra(DhikrService.EXTRA_RES_IDS, allDhikrs.map { it.rawResId }.toIntArray())
             }
         )
         _uiState.value = state.copy(isRunning = true)
