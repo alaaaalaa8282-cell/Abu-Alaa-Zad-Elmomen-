@@ -67,11 +67,7 @@ class AzanFullScreenActivity : ComponentActivity() {
             })
         }
     }
-private val azanDoneReceiver = object : android.content.BroadcastReceiver() {
-    override fun onReceive(context: Context?, intent: Intent?) {
-        finish()
-    }
-}
+
     override fun onResume() {
         super.onResume()
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
