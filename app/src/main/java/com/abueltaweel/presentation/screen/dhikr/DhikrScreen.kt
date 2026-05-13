@@ -222,7 +222,7 @@ fun DhikrScreen(viewModel: DhikrViewModel = koinViewModel()) {
                  onValueChange = { newValue -> viewModel.setVolume(newValue, context) },
                  valueRange = 0f..1f,
                   modifier = Modifier.fillMaxWidth(),
-                  enabled = !state.isRunning,
+                  enabled = true,
                     colors = SliderDefaults.colors(thumbColor = Color(0xFFC9A84C), activeTrackColor = Color(0xFFC9A84C), inactiveTrackColor = Color(0xFF1B3A4B))
                 )
             }
