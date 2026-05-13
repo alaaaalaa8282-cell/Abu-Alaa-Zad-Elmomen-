@@ -74,12 +74,14 @@ private val azanDoneReceiver = object : android.content.BroadcastReceiver() {
 }
     override fun onResume() {
         super.onResume()
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         registerReceiver(azanDoneReceiver,
             IntentFilter(Constants.ACTION_STOP_AZAN))
     }
 
     override fun onPause() {
         super.onPause()
+       window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         unregisterReceiver(azanDoneReceiver)
     }
 
