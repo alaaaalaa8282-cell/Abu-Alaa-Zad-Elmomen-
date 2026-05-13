@@ -32,9 +32,9 @@ import com.abueltaweel.presentation.screen.splash.SplashScreen
 fun AppNavigation(settingsRepository: SettingsRepository) {
     val navController = rememberNavController()
 
-    val onboardingComplete by settingsRepository
-        .observeOnboardingComplete()
-        .collectAsState(initial = false)
+    val onboardingComplete: Boolean? by settingsRepository
+    .observeOnboardingComplete()
+    .collectAsState(initial = null)
 
     if (onboardingComplete == null) return
 
