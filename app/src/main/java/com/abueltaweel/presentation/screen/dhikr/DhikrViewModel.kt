@@ -130,6 +130,7 @@ class DhikrViewModel(app: Application) : AndroidViewModel(app) {
             Intent(context, DhikrService::class.java).apply {
                 putExtra(DhikrService.EXTRA_TEXTS,   allDhikrs.map { it.textAr }.toTypedArray())
                putExtra(DhikrService.EXTRA_RES_IDS, allDhikrs.map { it.rawResId }.toIntArray())
+              putExtra(DhikrService.EXTRA_VOLUME, _uiState.value.volume)
             }
         )
         _uiState.value = state.copy(isRunning = true)
