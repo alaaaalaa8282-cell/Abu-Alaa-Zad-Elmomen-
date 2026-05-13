@@ -203,7 +203,8 @@ class DhikrService : Service() {
         const val EXTRA_TEXTS       = "dhikr_texts"
         const val EXTRA_INTERVAL_MS = "dhikr_interval_ms"
         const val EXTRA_VOLUME      = "dhikr_volume"
-
+     const val ACTION_UPDATE_VOLUME = "com.abueltaweel.UPDATE_VOLUME"
+        
         // ← static flag يقدر الـ ViewModel يقرأه
         @Volatile var isRunning: Boolean = false
     }
