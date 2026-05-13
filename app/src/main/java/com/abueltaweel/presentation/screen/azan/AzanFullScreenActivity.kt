@@ -123,21 +123,19 @@ fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
 
     val animCrossfade by animateFloatAsState(
         targetValue = crossfadeAlpha,
-        animationSpec = tween(2000),
+        animationSpec = tween(5000),
         label = "crossfade"
     )
 
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(5000)
-            crossfadeAlpha = 1f
-            delay(2000)
-            currentIndex = nextIndex
-            nextIndex = (nextIndex + 1) % images.size
-            crossfadeAlpha = 0f
-        }
+        LaunchedEffect(Unit) {
+    while (true) {
+        delay(8000)
+        lineVisible = false
+        delay(800)
+        currentLineIndex = (currentLineIndex + 1) % azanLines.size
+        lineVisible = true
     }
-
+}
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val scale by infiniteTransition.animateFloat(
         initialValue = 1f, targetValue = 1.18f,
