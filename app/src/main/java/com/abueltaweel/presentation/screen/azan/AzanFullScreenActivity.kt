@@ -1,8 +1,10 @@
 package com.abueltaweel.presentation.screen.azan
 
 import android.app.KeyguardManager
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
@@ -17,7 +19,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -31,6 +32,12 @@ import androidx.compose.foundation.Image
 import androidx.compose.ui.layout.ContentScale
 
 class AzanFullScreenActivity : ComponentActivity() {
+
+    private val azanDoneReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            finish()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,6 +68,17 @@ class AzanFullScreenActivity : ComponentActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        registerReceiver(azanDoneReceiver,
+            IntentFilter(Constants.ACTION_STOP_AZAN))
+    }
+
+    override fun onPause() {
+        super.onPause()
+        unregisterReceiver(azanDoneReceiver)
+    }
+
     companion object {
         fun newIntent(context: Context, prayerName: String) =
             Intent(context, AzanFullScreenActivity::class.java).apply {
@@ -69,22 +87,7 @@ class AzanFullScreenActivity : ComponentActivity() {
             }
     }
 }
-private val azanDoneReceiver = object : android.content.BroadcastReceiver() {
-    override fun onReceive(context: Context?, intent: Intent?) {
-        finish()
-    }
-}
 
-override fun onResume() {
-    super.onResume()
-    registerReceiver(azanDoneReceiver, 
-        android.content.IntentFilter(Constants.ACTION_STOP_AZAN))
-}
-
-override fun onPause() {
-    super.onPause()
-    unregisterReceiver(azanDoneReceiver)
-}
 @Composable
 fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
@@ -95,11 +98,10 @@ fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
     )
     Box(
         modifier = Modifier.fillMaxSize(),
-            
         contentAlignment = Alignment.Center
     ) {
-      Image(painter = painterResource(R.drawable.father_photo), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-     Box(modifier = Modifier.fillMaxSize().background(Color(0xCC000000)))
+        Image(painter = painterResource(R.drawable.father_photo), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+        Box(modifier = Modifier.fillMaxSize().background(Color(0xCC000000)))
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
