@@ -40,6 +40,7 @@ class PrayerAlarmService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == Constants.ACTION_STOP_AZAN) {
             stopAzan()
+            isPlaying = false
             return START_STICKY
         }
         if (::mediaPlayer.isInitialized && mediaPlayer.isPlaying) return START_NOT_STICKY
@@ -53,8 +54,7 @@ class PrayerAlarmService : Service() {
 
         // ← الإشعار الصامت المخفي فقط عشان startForeground يشتغل
         startForeground(1, createSilentNotification())
-
-        // فتح شاشة الأذان
+        isPlaying = true         // فتح شاشة الأذان
         if (canShowOverlay()) {
             startActivity(AzanFullScreenActivity.newIntent(this, prayerEnum.getArabicName()))
         } else {
@@ -84,6 +84,9 @@ class PrayerAlarmService : Service() {
             }
             startActivity(intent)
         }
+   companion object {
+    @Volatile var isPlaying: Boolean = false
+   }
     }
 
     private fun stopAzan() {
