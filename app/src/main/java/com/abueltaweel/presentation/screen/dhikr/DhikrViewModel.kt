@@ -123,8 +123,8 @@ class DhikrViewModel(app: Application) : AndroidViewModel(app) {
             Intent(context, DhikrService::class.java).apply {
                 putExtra(DhikrService.EXTRA_TEXTS,       arrayOf(state.selectedDhikr.textAr))
                 putExtra(DhikrService.EXTRA_RES_IDS,     intArrayOf(state.selectedDhikr.rawResId))
-                putExtra(DhikrService.EXTRA_INTERVAL_MS, state.intervalSec * 1000L)
-                putExtra(DhikrService.EXTRA_VOLUME,      state.volume)
+                val resIds = allDhikrs.map { it.rawResId }.toIntArray()
+                val texts  = allDhikrs.map { it.textAr }.toTypedArray()
             }
         )
         _uiState.value = state.copy(isRunning = true)
@@ -146,8 +146,8 @@ class DhikrViewModel(app: Application) : AndroidViewModel(app) {
 
         // Start Intent
         val startIntent = Intent(context, DhikrService::class.java).apply {
-            putExtra(DhikrService.EXTRA_TEXTS,       arrayOf(state.selectedDhikr.textAr))
-            putExtra(DhikrService.EXTRA_RES_IDS,     intArrayOf(state.selectedDhikr.rawResId))
+            val resIds = allDhikrs.map { it.rawResId }.toIntArray()
+            val texts  = allDhikrs.map { it.textAr }.toTypedArray()
             putExtra(DhikrService.EXTRA_INTERVAL_MS, state.intervalSec * 1000L)
             putExtra(DhikrService.EXTRA_VOLUME,      state.volume)
         }
