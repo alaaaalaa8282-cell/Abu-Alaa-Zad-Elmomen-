@@ -218,8 +218,11 @@ fun DhikrScreen(viewModel: DhikrViewModel = koinViewModel()) {
                 Text("مستوى الصوت: ${(state.volume * 100).roundToInt()}%",
                     color = Color(0xFFC9A84C), fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 Slider(
-                    onValueChange = { viewModel.setVolume(it, context) },
-                    valueRange = 0f..1f, modifier = Modifier.fillMaxWidth(),
+    value = state.volume,
+    onValueChange = { newValue -> viewModel.setVolume(newValue, context) },
+    valueRange = 0f..1f,
+    modifier = Modifier.fillMaxWidth(),
+    enabled = !state.isRunning,
                    enabled = !state.isRunning,
                     colors = SliderDefaults.colors(thumbColor = Color(0xFFC9A84C), activeTrackColor = Color(0xFFC9A84C), inactiveTrackColor = Color(0xFF1B3A4B))
                 )
