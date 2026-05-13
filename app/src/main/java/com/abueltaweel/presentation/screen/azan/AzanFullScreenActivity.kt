@@ -120,7 +120,7 @@ fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
             Text("أذان $prayerName", fontSize = 24.sp, fontWeight = FontWeight.Medium,
                 color = Color.White, textAlign = TextAlign.Center)
             Spacer(Modifier.height(8.dp))
-            Text("الصَّلَاةُ خَيْرٌ مِنَ النَّوْمِ", fontSize = 16.sp,
+            Text("إِنَّ الصَّلَاةَ كَانَتْ عَلَى الْمُؤْمِنِينَ كِتَابًا مَّوْقُوتًا", fontSize = 16.sp,
                 color = Color(0xFFB0BEC5), textAlign = TextAlign.Center)
             Spacer(Modifier.height(60.dp))
             Button(
