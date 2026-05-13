@@ -128,14 +128,15 @@ fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
     )
 
         LaunchedEffect(Unit) {
-    while (true) {
-        delay(8000)
-        lineVisible = false
-        delay(800)
-        currentLineIndex = (currentLineIndex + 1) % azanLines.size
-        lineVisible = true
+        while (true) {
+            delay(5000)
+            crossfadeAlpha = 1f
+            delay(2000)
+            currentIndex = nextIndex
+            nextIndex = (nextIndex + 1) % images.size
+            crossfadeAlpha = 0f
+        }
     }
-}
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val scale by infiniteTransition.animateFloat(
         initialValue = 1f, targetValue = 1.18f,
@@ -163,14 +164,14 @@ fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
     var lineVisible by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
-        while (true) {
-            delay(3500)
-            lineVisible = false
-            delay(600)
-            currentLineIndex = (currentLineIndex + 1) % azanLines.size
-            lineVisible = true
-        }
+    while (true) {
+        delay(8000)
+        lineVisible = false
+        delay(800)
+        currentLineIndex = (currentLineIndex + 1) % azanLines.size
+        lineVisible = true
     }
+}
 
     Box(modifier = Modifier.fillMaxSize()) {
 
@@ -242,8 +243,8 @@ fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
             // نص الأذان بيتغير
             AnimatedVisibility(
                 visible = lineVisible,
-                enter = fadeIn(tween(600)) + slideInVertically { it / 3 },
-                exit = fadeOut(tween(600)) + slideOutVertically { -it / 3 }
+                enter = fadeIn(tween(800, easing = FastOutSlowInEasing)),
+                exit = fadeOut(tween(800, easing = FastOutSlowInEasing))
             ) {
                 Text(
                     azanLines[currentLineIndex],
