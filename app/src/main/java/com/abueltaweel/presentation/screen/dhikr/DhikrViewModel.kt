@@ -86,12 +86,19 @@ class DhikrViewModel(app: Application) : AndroidViewModel(app) {
         _uiState.value = _uiState.value.copy(intervalSec = v)
     }
 
-    fun setVolume(v: Float) {
-        val clamped = v.coerceIn(0f, 1f)
-        prefs.edit().putFloat(KEY_VOLUME, clamped).apply()
-        _uiState.value = _uiState.value.copy(volume = clamped)
+    fun setVolume(v: Float, context: Context) {
+    val clamped = v.coerceIn(0f, 1f)
+    prefs.edit().putFloat(KEY_VOLUME, clamped).apply()
+    _uiState.value = _uiState.value.copy(volume = clamped)
+    if (DhikrService.isRunning) {
+        context.startService(
+            Intent(context, DhikrService::class.java).apply {
+                action = DhikrService.ACTION_UPDATE_VOLUME
+                putExtra(DhikrService.EXTRA_VOLUME, clamped)
+            }
+        )
     }
-
+}
     fun setAutoEnabled(enabled: Boolean, context: Context) {
         prefs.edit().putBoolean(KEY_AUTO, enabled).apply()
         _uiState.value = _uiState.value.copy(autoEnabled = enabled)
