@@ -34,7 +34,14 @@ class DhikrService : Service() {
             stopDhikr()
             return START_NOT_STICKY
         }
-
+if (intent?.action == ACTION_UPDATE_VOLUME) {
+    volume = intent.getFloatExtra(EXTRA_VOLUME, volume)
+    val logVol = if (volume <= 0f) 0f
+    else (1 - (Math.log((1 + (1 - volume) * 99).toDouble()) / Math.log(100.0))).toFloat()
+    mediaPlayer?.setVolume(logVol, logVol)
+    return START_STICKY
+}
+ 
         dhikrResIds  = intent?.getIntArrayExtra(EXTRA_RES_IDS) ?: return START_NOT_STICKY
         dhikrTexts   = intent.getStringArrayExtra(EXTRA_TEXTS) ?: arrayOf()
         intervalMs   = intent.getLongExtra(EXTRA_INTERVAL_MS, 5 * 60 * 1000L)
