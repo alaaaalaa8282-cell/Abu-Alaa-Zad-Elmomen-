@@ -84,9 +84,7 @@ class PrayerAlarmService : Service() {
             }
             startActivity(intent)
         }
-   companion object {
-    @Volatile var isPlaying: Boolean = false
-   }
+   
     }
 
     private fun stopAzan() {
@@ -94,7 +92,9 @@ class PrayerAlarmService : Service() {
         stopForeground(true)
         stopSelf()
     }
-
+companion object {
+    @Volatile var isPlaying: Boolean = false
+}
     private fun createChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val nm = getSystemService(NotificationManager::class.java)
