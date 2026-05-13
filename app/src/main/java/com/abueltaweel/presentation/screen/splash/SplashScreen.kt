@@ -43,13 +43,19 @@ fun SplashScreen(
     val scale = remember { Animatable(0.85f) }
 
     LaunchedEffect(Unit) {
+    if (startDestination == Route.AppRoute) {
+        navController.navigate(startDestination) {
+            popUpTo(Route.SplashScreen.route) { inclusive = true }
+        }
+    } else {
         alpha.animateTo(1f, animationSpec = tween(900))
         scale.animateTo(1f, animationSpec = tween(900))
-        delay(800)
+        delay(2500)
         navController.navigate(startDestination) {
             popUpTo(Route.SplashScreen.route) { inclusive = true }
         }
     }
+}
 
     Box(
         modifier = Modifier
