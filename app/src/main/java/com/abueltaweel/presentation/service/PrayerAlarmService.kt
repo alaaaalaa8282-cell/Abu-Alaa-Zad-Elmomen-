@@ -164,7 +164,8 @@ class PrayerAlarmService : Service() {
     sendBroadcast(Intent(Constants.ACTION_STOP_AZAN))
     stopForeground(true)
     stopSelf()
-}     
+}
+        }
         afd.close()
     }
 
