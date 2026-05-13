@@ -27,7 +27,7 @@ fun format(instant: Instant, zone: TimeZone): FormattedTime {
     val locale = java.util.Locale.getDefault()
 
     val timeFormatter = java.time.format.DateTimeFormatter
-        .ofPattern("hh:mm", locale)
+    .ofPattern("hh:mm", java.util.Locale.ENGLISH)
 
     val amPmFormatter = java.time.format.DateTimeFormatter
     .ofPattern("a", java.util.Locale.ENGLISH)
