@@ -57,10 +57,16 @@ if (intent?.action == ACTION_UPDATE_VOLUME) {
 
         return START_STICKY
     }
-
+private fun isInCall(): Boolean {
+    return try {
+        val tm = getSystemService(TELEPHONY_SERVICE) as android.telephony.TelephonyManager
+        tm.callState != android.telephony.TelephonyManager.CALL_STATE_IDLE
+    } catch (e: SecurityException) {
+        false
+    }
+}
     private fun playCurrentDhikr() {
-        if (!running || dhikrResIds.isEmpty() || PrayerAlarmService.isPlaying) return
-
+        if (!running || dhikrResIds.isEmpty() || PrayerAlarmService.isPlaying || isInCall()) return
         val resId = dhikrResIds[currentIndex]
         val logVol = if (volume <= 0f) 0f
         else (1 - (Math.log((1 + (1 - volume) * 99).toDouble()) / Math.log(100.0))).toFloat()
