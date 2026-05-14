@@ -53,10 +53,11 @@ if (intent?.action == ACTION_UPDATE_VOLUME) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
     val req = android.media.AudioFocusRequest.Builder(android.media.AudioManager.AUDIOFOCUS_GAIN)
         .setOnAudioFocusChangeListener { focusChange ->
-            if (focusChange == android.media.AudioManager.AUDIOFOCUS_LOSS ||
-                focusChange == android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
-                stopDhikr()
-            }
+            if (focusChange == android.media.AudioManager.AUDIOFOCUS_LOSS) {
+    stopDhikr()
+} else if (focusChange == android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
+    mediaPlayer?.pause()
+}
         }
         .build()
     (getSystemService(AUDIO_SERVICE) as android.media.AudioManager).requestAudioFocus(req)
