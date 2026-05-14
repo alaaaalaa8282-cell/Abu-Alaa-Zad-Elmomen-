@@ -89,6 +89,13 @@ class PrayerAlarmService : Service() {
 
     private fun stopAzan() {
         if (::mediaPlayer.isInitialized && mediaPlayer.isPlaying) mediaPlayer.stop()
+       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+    audioManager.abandonAudioFocusRequest(
+        android.media.AudioFocusRequest.Builder(android.media.AudioManager.AUDIOFOCUS_GAIN)
+            .setOnAudioFocusChangeListener {}
+            .build()
+    )
+       }
         stopForeground(true)
         stopSelf()
     }
