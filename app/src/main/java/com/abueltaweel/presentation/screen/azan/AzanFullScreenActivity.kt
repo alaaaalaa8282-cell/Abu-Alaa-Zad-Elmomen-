@@ -7,6 +7,10 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.telephony.PhoneStateListener
+import android.telephony.TelephonyManager
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -14,8 +18,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -47,6 +49,21 @@ class AzanFullScreenActivity : ComponentActivity() {
         }
     }
 
+    private var telephonyManager: TelephonyManager? = null
+    private var athanPlayed = false
+    private val callTimeoutHandler = Handler(Looper.getMainLooper())
+
+    private val phoneStateListener = object : PhoneStateListener() {
+        override fun onCallStateChanged(state: Int, phoneNumber: String?) {
+            if (state == TelephonyManager.CALL_STATE_IDLE && !athanPlayed) {
+                athanPlayed = true
+                callTimeoutHandler.removeCallbacksAndMessages(null)
+                val prayerName = intent.getStringExtra(Constants.PRAYER_NAME_KEY) ?: "الصلاة"
+                playAzan(prayerName)
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -66,14 +83,61 @@ class AzanFullScreenActivity : ComponentActivity() {
         }
 
         val prayerName = intent.getStringExtra(Constants.PRAYER_NAME_KEY) ?: "الصلاة"
+        val isCallInProgress = isInCall()
+
+        if (isCallInProgress) {
+            registerPhoneStateListener()
+            callTimeoutHandler.postDelayed({
+                if (!athanPlayed) {
+                    athanPlayed = true
+                    finish()
+                }
+            }, 4 * 60 * 1000L)
+        } else {
+            athanPlayed = true
+            playAzan(prayerName)
+        }
+
         setContent {
             AzanFullScreenContent(prayerName = prayerName, onStop = {
-                startService(Intent(this, PrayerAlarmService::class.java).apply {
-                    action = Constants.ACTION_STOP_AZAN
-                })
+                stopAzan()
                 finish()
             })
         }
+    }
+
+    private fun isInCall(): Boolean {
+        return try {
+            val tm = getSystemService(TELEPHONY_SERVICE) as TelephonyManager
+            tm.callState != TelephonyManager.CALL_STATE_IDLE
+        } catch (e: SecurityException) {
+            false
+        }
+    }
+
+    private fun playAzan(prayerName: String) {
+        startService(Intent(this, PrayerAlarmService::class.java).apply {
+            putExtra(Constants.PRAYER_NAME_KEY, prayerName)
+        })
+    }
+
+    private fun stopAzan() {
+        startService(Intent(this, PrayerAlarmService::class.java).apply {
+            action = Constants.ACTION_STOP_AZAN
+        })
+    }
+
+    private fun registerPhoneStateListener() {
+        try {
+            telephonyManager = getSystemService(TELEPHONY_SERVICE) as TelephonyManager
+            telephonyManager?.listen(phoneStateListener, PhoneStateListener.LISTEN_CALL_STATE)
+        } catch (e: SecurityException) {}
+    }
+
+    private fun unregisterPhoneStateListener() {
+        try {
+            telephonyManager?.listen(phoneStateListener, PhoneStateListener.LISTEN_NONE)
+        } catch (e: Exception) {}
     }
 
     override fun onResume() {
@@ -86,6 +150,12 @@ class AzanFullScreenActivity : ComponentActivity() {
         super.onPause()
         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         unregisterReceiver(azanDoneReceiver)
+    }
+
+    override fun onDestroy() {
+        unregisterPhoneStateListener()
+        callTimeoutHandler.removeCallbacksAndMessages(null)
+        super.onDestroy()
     }
 
     companion object {
@@ -127,7 +197,7 @@ fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
         label = "crossfade"
     )
 
-        LaunchedEffect(Unit) {
+    LaunchedEffect(Unit) {
         while (true) {
             delay(5000)
             crossfadeAlpha = 1f
@@ -137,6 +207,7 @@ fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
             crossfadeAlpha = 0f
         }
     }
+
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val scale by infiniteTransition.animateFloat(
         initialValue = 1f, targetValue = 1.18f,
@@ -164,18 +235,17 @@ fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
     var lineVisible by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
-    while (true) {
-        delay(8000)
-        lineVisible = false
-        delay(800)
-        currentLineIndex = (currentLineIndex + 1) % azanLines.size
-        lineVisible = true
+        while (true) {
+            delay(6000)
+            lineVisible = false
+            delay(600)
+            currentLineIndex = (currentLineIndex + 1) % azanLines.size
+            lineVisible = true
+        }
     }
-}
 
     Box(modifier = Modifier.fillMaxSize()) {
 
-        // الصورة الحالية
         Image(
             painter = painterResource(images[currentIndex]),
             contentDescription = null,
@@ -183,7 +253,6 @@ fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
             modifier = Modifier.fillMaxSize()
         )
 
-        // الصورة الجديدة بتظهر فوقها بـ crossfade
         Image(
             painter = painterResource(images[nextIndex]),
             contentDescription = null,
@@ -191,7 +260,6 @@ fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
             modifier = Modifier.fillMaxSize().alpha(animCrossfade)
         )
 
-        // gradient داكن
         Box(
             modifier = Modifier.fillMaxSize().background(
                 Brush.verticalGradient(
@@ -200,7 +268,6 @@ fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
             )
         )
 
-        // دايرة توهج ذهبية
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
@@ -214,7 +281,6 @@ fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
             modifier = Modifier.fillMaxSize().padding(32.dp)
         ) {
 
-            // أيقونة المسجد النابضة
             Box(
                 modifier = Modifier.scale(scale).size(130.dp)
                     .background(Color(0x33C9A84C), CircleShape),
@@ -229,7 +295,6 @@ fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
 
             Spacer(Modifier.height(28.dp))
 
-            // اسم الصلاة
             Text(
                 "أذان $prayerName",
                 fontSize = 28.sp,
@@ -240,7 +305,6 @@ fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
 
             Spacer(Modifier.height(28.dp))
 
-            // نص الأذان بيتغير
             AnimatedVisibility(
                 visible = lineVisible,
                 enter = fadeIn(tween(800, easing = FastOutSlowInEasing)),
