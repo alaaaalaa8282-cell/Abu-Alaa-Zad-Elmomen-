@@ -52,23 +52,14 @@ if (intent?.action == ACTION_UPDATE_VOLUME) {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
     val req = android.media.AudioFocusRequest.Builder(android.media.AudioManager.AUDIOFOCUS_GAIN)
-    .setOnAudioFocusChangeListener { focusChange ->
-        when (focusChange) {
-            android.media.AudioManager.AUDIOFOCUS_LOSS,
-            android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT,
-            android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
-                mediaPlayer?.stop()
-                mediaPlayer?.release()
-                mediaPlayer = null
-            }
-            android.media.AudioManager.AUDIOFOCUS_GAIN -> {
-                val logVol = if (volume <= 0f) 0f
-                    else (1 - (Math.log((1 + (1 - volume) * 99).toDouble()) / Math.log(100.0))).toFloat()
-                mediaPlayer?.setVolume(logVol, logVol)
+        .setOnAudioFocusChangeListener { focusChange ->
+            when (focusChange) {
+                android.media.AudioManager.AUDIOFOCUS_LOSS -> stopDhikr()
+                android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> mediaPlayer?.pause()
+                android.media.AudioManager.AUDIOFOCUS_GAIN -> if (running) mediaPlayer?.start()
             }
         }
-    }
-    .build()
+        .build()
     (getSystemService(AUDIO_SERVICE) as android.media.AudioManager).requestAudioFocus(req)
 } else {
     @Suppress("DEPRECATION")
