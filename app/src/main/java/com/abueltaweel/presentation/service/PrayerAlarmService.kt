@@ -54,6 +54,15 @@ class PrayerAlarmService : Service() {
 
         // ← الإشعار الصامت المخفي فقط عشان startForeground يشتغل
         startForeground(1, createSilentNotification())
+       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+    val req = android.media.AudioFocusRequest.Builder(android.media.AudioManager.AUDIOFOCUS_GAIN)
+        .setOnAudioFocusChangeListener {}
+        .build()
+    audioManager.requestAudioFocus(req)
+} else {
+    @Suppress("DEPRECATION")
+    audioManager.requestAudioFocus(null, android.media.AudioManager.STREAM_MUSIC, android.media.AudioManager.AUDIOFOCUS_GAIN)
+       }
         isPlaying = true         // فتح شاشة الأذان
         if (canShowOverlay()) {
             startActivity(AzanFullScreenActivity.newIntent(this, prayerEnum.getArabicName()))
