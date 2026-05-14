@@ -215,7 +215,7 @@ fun DhikrScreen(viewModel: DhikrViewModel = koinViewModel()) {
 
             // ─── مستوى الصوت ───
             item {
-                Text("مستوى الصوت: ${(state.volume * 79).roundToInt()}%",
+                Text("مستوى الصوت: ${(state.volume * 59).roundToInt()}%",
                     color = Color(0xFFC9A84C), fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 Slider(
                    value = state.volume,
