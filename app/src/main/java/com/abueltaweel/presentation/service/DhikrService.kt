@@ -57,8 +57,8 @@ if (intent?.action == ACTION_UPDATE_VOLUME) {
             focusChange == android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
             mediaPlayer?.pause()
         } else if (focusChange == android.media.AudioManager.AUDIOFOCUS_GAIN) {
-            mediaPlayer?.start()
-        }
+    if (running) mediaPlayer?.start()
+}
     }
     .build()
     (getSystemService(AUDIO_SERVICE) as android.media.AudioManager).requestAudioFocus(req)
