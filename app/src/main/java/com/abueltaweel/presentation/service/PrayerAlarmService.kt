@@ -30,7 +30,8 @@ class PrayerAlarmService : Service() {
 
     private lateinit var mediaPlayer: MediaPlayer
     private val settingsRepository: SettingsRepository by inject()
-
+    private val audioManager by lazy { getSystemService(AUDIO_SERVICE) as android.media.AudioManager }
+ 
     // channel مخصوص للـ foreground بدون ظهور
     private val SILENT_CHANNEL_ID   = "azan_silent_fg"
     private val SILENT_CHANNEL_NAME = "أذان (خلفية)"
