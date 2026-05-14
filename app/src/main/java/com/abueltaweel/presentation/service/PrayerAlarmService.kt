@@ -57,7 +57,13 @@ class PrayerAlarmService : Service() {
         startForeground(1, createSilentNotification())
        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
     val req = android.media.AudioFocusRequest.Builder(android.media.AudioManager.AUDIOFOCUS_GAIN)
-        .setOnAudioFocusChangeListener {}
+.setOnAudioFocusChangeListener { focusChange ->
+    if (focusChange == android.media.AudioManager.AUDIOFOCUS_LOSS ||
+        focusChange == android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
+        stopAzan()
+        isPlaying = false
+    }
+}
         .build()
     audioManager.requestAudioFocus(req)
 } else {
