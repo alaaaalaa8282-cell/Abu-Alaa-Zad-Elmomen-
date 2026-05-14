@@ -49,23 +49,6 @@ if (intent?.action == ACTION_UPDATE_VOLUME) {
         currentIndex = 0
         running      = true
         isRunning    = true   // ← static flag
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-    val req = android.media.AudioFocusRequest.Builder(android.media.AudioManager.AUDIOFOCUS_GAIN)
-        .setOnAudioFocusChangeListener { focusChange ->
-            when (focusChange) {
-                android.media.AudioManager.AUDIOFOCUS_LOSS -> stopDhikr()
-                android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> mediaPlayer?.pause()
-                android.media.AudioManager.AUDIOFOCUS_GAIN -> if (running) mediaPlayer?.start()
-            }
-        }
-        .build()
-    (getSystemService(AUDIO_SERVICE) as android.media.AudioManager).requestAudioFocus(req)
-} else {
-    @Suppress("DEPRECATION")
-    (getSystemService(AUDIO_SERVICE) as android.media.AudioManager)
-        .requestAudioFocus(null, android.media.AudioManager.STREAM_MUSIC, android.media.AudioManager.AUDIOFOCUS_GAIN)
-}
         
         acquireWakeLock()
         createChannel()
