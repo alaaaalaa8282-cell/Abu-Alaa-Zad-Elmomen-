@@ -40,7 +40,7 @@ val allDhikrs = listOf(
     DhikrItem(4, "لا حول ولا قوة إلا بالله",  R.raw.lahawla_wlaqowat),
     DhikrItem(5, "الصلاة على النبي",           R.raw.nozaker_salt_ala_habib),
     DhikrItem(6, "ربنا اغفر لي",              R.raw.rbna_ighfer_li),
-    DhikrItem(7, "سبحان الله وبحمده",          R.raw.sobhanallah_wabehamdeh)
+    DhikrItem(7, "سبحان الله وبحمده",          R.raw.sobhanallah_wabehamdeh), 
     DhikrItem(8, "الله أكبر",          R.raw.allah_akbar),
     DhikrItem(9, "أستغفر الله",        R.raw.astaghfer_allah),
     DhikrItem(10, "لا إله إلا الله",   R.raw.la_ilah_ela_allah),
