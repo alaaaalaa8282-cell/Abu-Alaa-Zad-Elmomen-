@@ -20,12 +20,12 @@ class DhikrService : Service() {
     private var wakeLock: PowerManager.WakeLock? = null
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
-    private var dhikrResIds  = intArrayOf()
-    private var dhikrTexts   = arrayOf<String>()
-    private var intervalMs   = 5 * 60 * 1000L
-    private var volume       = 1f
-    private var currentIndex = 0
-    private var running      = false
+    private var dhikrResIds   = intArrayOf()
+    private var dhikrTexts    = arrayOf<String>()
+    private var intervalMs    = 5 * 60 * 1000L  // محسوب من الدقايق جوا
+    private var volume        = 1f
+    private var currentIndex  = 0
+    private var running       = false
 
     override fun onBind(intent: Intent?) = null
 
@@ -34,22 +34,24 @@ class DhikrService : Service() {
             stopDhikr()
             return START_NOT_STICKY
         }
-if (intent?.action == ACTION_UPDATE_VOLUME) {
-    volume = intent.getFloatExtra(EXTRA_VOLUME, volume)
-    val logVol = if (volume <= 0f) 0f
-    else (1 - (Math.log((1 + (1 - volume) * 99).toDouble()) / Math.log(100.0))).toFloat()
-    mediaPlayer?.setVolume(logVol, logVol)
-    return START_STICKY
-}
- 
+
+        if (intent?.action == ACTION_UPDATE_VOLUME) {
+            volume = intent.getFloatExtra(EXTRA_VOLUME, volume)
+            mediaPlayer?.setVolume(toLogVolume(volume), toLogVolume(volume))
+            return START_STICKY
+        }
+
         dhikrResIds  = intent?.getIntArrayExtra(EXTRA_RES_IDS) ?: return START_NOT_STICKY
         dhikrTexts   = intent.getStringArrayExtra(EXTRA_TEXTS) ?: arrayOf()
-        intervalMs   = intent.getLongExtra(EXTRA_INTERVAL_MS, 5 * 60 * 1000L)
         volume       = intent.getFloatExtra(EXTRA_VOLUME, 1f)
         currentIndex = 0
         running      = true
-        isRunning    = true   // ← static flag
-        
+        isRunning    = true
+
+        // ← الـ UI بيبعت دقايق مباشرة، والـ Service يحولها لـ ms هنا
+        val intervalMinutes = intent.getIntExtra(EXTRA_INTERVAL_MINUTES, 5)
+        intervalMs = intervalMinutes * 60 * 1000L
+
         acquireWakeLock()
         createChannel()
         startForeground(NOTIF_ID, buildNotification(currentIndex))
@@ -57,19 +59,25 @@ if (intent?.action == ACTION_UPDATE_VOLUME) {
 
         return START_STICKY
     }
-private fun isInCall(): Boolean {
-    return try {
-        val tm = getSystemService(TELEPHONY_SERVICE) as android.telephony.TelephonyManager
-        tm.callState != android.telephony.TelephonyManager.CALL_STATE_IDLE
-    } catch (e: SecurityException) {
-        false
+
+    private fun toLogVolume(v: Float): Float {
+        return if (v <= 0f) 0f
+        else (1 - (Math.log((1 + (1 - v) * 99).toDouble()) / Math.log(100.0))).toFloat()
     }
-}
+
+    private fun isInCall(): Boolean {
+        return try {
+            val tm = getSystemService(TELEPHONY_SERVICE) as android.telephony.TelephonyManager
+            tm.callState != android.telephony.TelephonyManager.CALL_STATE_IDLE
+        } catch (e: SecurityException) {
+            false
+        }
+    }
+
     private fun playCurrentDhikr() {
         if (!running || dhikrResIds.isEmpty() || PrayerAlarmService.isPlaying || isInCall()) return
-        val resId = dhikrResIds[currentIndex]
-        val logVol = if (volume <= 0f) 0f
-        else (1 - (Math.log((1 + (1 - volume) * 99).toDouble()) / Math.log(100.0))).toFloat()
+        val resId  = dhikrResIds[currentIndex]
+        val logVol = toLogVolume(volume)
 
         updateNotification(currentIndex)
 
@@ -112,7 +120,7 @@ private fun isInCall(): Boolean {
 
     private fun stopDhikr() {
         running   = false
-        isRunning = false   // ← static flag
+        isRunning = false
         scope.cancel()
         try {
             mediaPlayer?.stop()
@@ -164,12 +172,12 @@ private fun isInCall(): Boolean {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         val openPi = PendingIntent.getActivity(
-    this, 1,
-    Intent(this, MainActivity::class.java).apply {
-        flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-    },
-    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-)
+            this, 1,
+            Intent(this, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            },
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_azkar)
             .setContentTitle("أذكاري — ${index + 1}/${dhikrResIds.size}")
@@ -190,35 +198,35 @@ private fun isInCall(): Boolean {
 
     override fun onDestroy() {
         running   = false
-        isRunning = false   // ← static flag
+        isRunning = false
         scope.cancel()
         try { mediaPlayer?.release() } catch (_: Exception) {}
         mediaPlayer = null
         releaseWakeLock()
         super.onDestroy()
     }
-  override fun onTaskRemoved(rootIntent: Intent?) {
-    val restart = Intent(applicationContext, DhikrService::class.java).apply {
-        putExtra(EXTRA_RES_IDS, dhikrResIds)
-        putExtra(EXTRA_TEXTS, dhikrTexts)
-        putExtra(EXTRA_INTERVAL_MS, intervalMs)
-        putExtra(EXTRA_VOLUME, volume)
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        val restart = Intent(applicationContext, DhikrService::class.java).apply {
+            putExtra(EXTRA_RES_IDS, dhikrResIds)
+            putExtra(EXTRA_TEXTS, dhikrTexts)
+            putExtra(EXTRA_INTERVAL_MINUTES, (intervalMs / 60_000).toInt())
+            putExtra(EXTRA_VOLUME, volume)
+        }
+        startService(restart)
+        super.onTaskRemoved(rootIntent)
     }
-    startService(restart)
-    super.onTaskRemoved(rootIntent)
-  }
-    
+
     companion object {
-        const val CHANNEL_ID        = "dhikr_channel"
-        const val NOTIF_ID          = 42
-        const val ACTION_STOP       = "com.abueltaweel.STOP_DHIKR"
-        const val EXTRA_RES_IDS     = "dhikr_res_ids"
-        const val EXTRA_TEXTS       = "dhikr_texts"
-        const val EXTRA_INTERVAL_MS = "dhikr_interval_ms"
-        const val EXTRA_VOLUME      = "dhikr_volume"
-     const val ACTION_UPDATE_VOLUME = "com.abueltaweel.UPDATE_VOLUME"
-        
-        // ← static flag يقدر الـ ViewModel يقرأه
+        const val CHANNEL_ID             = "dhikr_channel"
+        const val NOTIF_ID               = 42
+        const val ACTION_STOP            = "com.abueltaweel.STOP_DHIKR"
+        const val ACTION_UPDATE_VOLUME   = "com.abueltaweel.UPDATE_VOLUME"
+        const val EXTRA_RES_IDS          = "dhikr_res_ids"
+        const val EXTRA_TEXTS            = "dhikr_texts"
+        const val EXTRA_INTERVAL_MINUTES = "dhikr_interval_minutes"  // ← دقايق مباشرة
+        const val EXTRA_VOLUME           = "dhikr_volume"
+
         @Volatile var isRunning: Boolean = false
     }
 }
