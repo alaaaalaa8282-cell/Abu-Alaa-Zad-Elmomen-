@@ -188,16 +188,13 @@ fun DhikrScreen(viewModel: DhikrViewModel = koinViewModel()) {
             // ─── الفترة بين كل ذكر ───
             item {
                 Spacer(Modifier.height(4.dp))
-                val mins = state.intervalSec / 60
-                val secs = state.intervalSec % 60
-                val lbl = when { mins > 0 && secs > 0 -> "$mins د $secs ث"; mins > 0 -> "$mins دقيقة"; else -> "$secs ثانية" }
-                Text("الفترة بين كل ذكر: $lbl", color = Color(0xFFC9A84C), fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Text("الفترة بين كل ذكر: ${state.intervalMin} دقيقة", color = Color(0xFFC9A84C), fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                    listOf("1 د" to 60, "5 د" to 300, "10 د" to 600, "30 د" to 1800).forEach { (l, sec) ->
-                        val isSel = state.intervalSec == sec
+                    listOf("1 د" to 1, "5 د" to 5, "10 د" to 10, "30 د" to 30).forEach { (l, min) ->
+                        val isSel = state.intervalMin == min
                         Button(
-                            onClick = { if (!state.isRunning) viewModel.setInterval(sec) },
+                            onClick = { if (!state.isRunning) viewModel.setInterval(min) },
                             enabled = !state.isRunning,
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = if (isSel) Color(0xFFC9A84C) else Color(0xFF1B3A4B),
