@@ -115,7 +115,16 @@ class AzanFullScreenActivity : ComponentActivity() {
             false
         }
     }
-
+private fun playAzan(prayerName: String) {
+    val intent = Intent(this, PrayerAlarmService::class.java).apply {
+        putExtra(Constants.PRAYER_NAME_KEY, prayerName)
+    }
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        startForegroundService(intent)
+    } else {
+        startService(intent)
+    }
+}
     private fun stopAzan() {
         startService(Intent(this, PrayerAlarmService::class.java).apply {
             action = Constants.ACTION_STOP_AZAN
