@@ -67,6 +67,7 @@ class AzanFullScreenActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // ── فتح الشاشة فوق lock screen ──────────────────────────────────
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
             setTurnScreenOn(true)
@@ -94,10 +95,9 @@ class AzanFullScreenActivity : ComponentActivity() {
                 }
             }, 4 * 60 * 1000L)
         } else {
-            } else {
-    athanPlayed = true
-    playAzan(prayerName)
-} 
+            athanPlayed = true
+            playAzan(prayerName)
+        }
 
         setContent {
             AzanFullScreenContent(prayerName = prayerName, onStop = {
@@ -115,16 +115,18 @@ class AzanFullScreenActivity : ComponentActivity() {
             false
         }
     }
-private fun playAzan(prayerName: String) {
-    val intent = Intent(this, PrayerAlarmService::class.java).apply {
-        putExtra(Constants.PRAYER_NAME_KEY, prayerName)
+
+    private fun playAzan(prayerName: String) {
+        val intent = Intent(this, PrayerAlarmService::class.java).apply {
+            putExtra(Constants.PRAYER_NAME_KEY, prayerName)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent)
+        } else {
+            startService(intent)
+        }
     }
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        startForegroundService(intent)
-    } else {
-        startService(intent)
-    }
-}
+
     private fun stopAzan() {
         startService(Intent(this, PrayerAlarmService::class.java).apply {
             action = Constants.ACTION_STOP_AZAN
@@ -153,7 +155,7 @@ private fun playAzan(prayerName: String) {
     override fun onPause() {
         super.onPause()
         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        unregisterReceiver(azanDoneReceiver)
+        runCatching { unregisterReceiver(azanDoneReceiver) }
     }
 
     override fun onDestroy() {
@@ -261,15 +263,19 @@ fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
             painter = painterResource(images[nextIndex]),
             contentDescription = null,
             contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize().alpha(animCrossfade)
+            modifier = Modifier
+                .fillMaxSize()
+                .alpha(animCrossfade)
         )
 
         Box(
-            modifier = Modifier.fillMaxSize().background(
-                Brush.verticalGradient(
-                    listOf(Color(0x66000000), Color(0xBB000000), Color(0xEE000000))
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color(0x66000000), Color(0xBB000000), Color(0xEE000000))
+                    )
                 )
-            )
         )
 
         Box(
@@ -282,11 +288,15 @@ fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
-            modifier = Modifier.fillMaxSize().padding(32.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(32.dp)
         ) {
 
             Box(
-                modifier = Modifier.scale(scale).size(130.dp)
+                modifier = Modifier
+                    .scale(scale)
+                    .size(130.dp)
                     .background(Color(0x33C9A84C), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
@@ -337,7 +347,9 @@ fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
             Button(
                 onClick = onStop,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC9A84C)),
-                modifier = Modifier.fillMaxWidth(0.6f).height(52.dp),
+                modifier = Modifier
+                    .fillMaxWidth(0.6f)
+                    .height(52.dp),
                 shape = CircleShape
             ) {
                 Text("إيقاف الأذان", color = Color.Black, fontSize = 16.sp, fontWeight = FontWeight.Bold)
