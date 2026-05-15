@@ -54,17 +54,33 @@ class PrayerAlarmService : Service() {
         }.getOrDefault(Prayer.PrayerName.FAJR)
 
         // ← الإشعار الصامت المخفي فقط عشان startForeground يشتغل
-        startForeground(1, createSilentNotification())
-       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-    val req = android.media.AudioFocusRequest.Builder(android.media.AudioManager.AUDIOFOCUS_GAIN)
-.setOnAudioFocusChangeListener { focusChange ->
-    if (focusChange == android.media.AudioManager.AUDIOFOCUS_LOSS ||
-    focusChange == android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
-    stopAzan()
-    isPlaying = false
-}
-}
+        private fun createSilentNotification(): Notification {
+    val openIntent = PendingIntent.getActivity(
+        this, 0,
+        Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        },
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+    )
+    val stopIntent = PendingIntent.getService(
+        this, 1,
+        Intent(this, PrayerAlarmService::class.java).apply {
+            action = Constants.ACTION_STOP_AZAN
+        },
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+    )
+    return NotificationCompat.Builder(this, SILENT_CHANNEL_ID)
+        .setContentTitle("أذان")
+        .setContentText("")
+        .setSmallIcon(R.drawable.mosque_02)
+        .setContentIntent(openIntent)
+        .setOngoing(true)
+        .addAction(R.drawable.ic_close_circle, "إيقاف", stopIntent)
+        .setPriority(NotificationCompat.PRIORITY_MIN)
+        .setSilent(true)
+        .setVisibility(NotificationCompat.VISIBILITY_SECRET)
         .build()
+        }
     audioManager.requestAudioFocus(req)
 } else {
     @Suppress("DEPRECATION")
