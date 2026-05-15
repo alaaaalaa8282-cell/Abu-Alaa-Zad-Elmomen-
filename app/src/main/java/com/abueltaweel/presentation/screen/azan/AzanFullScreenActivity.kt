@@ -94,8 +94,10 @@ class AzanFullScreenActivity : ComponentActivity() {
                 }
             }, 4 * 60 * 1000L)
         } else {
-            athanPlayed = true
-        }
+            } else {
+    athanPlayed = true
+    playAzan(prayerName)
+} 
 
         setContent {
             AzanFullScreenContent(prayerName = prayerName, onStop = {
