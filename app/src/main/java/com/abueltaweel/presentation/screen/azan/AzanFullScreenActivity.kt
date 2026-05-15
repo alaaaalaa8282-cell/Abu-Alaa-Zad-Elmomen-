@@ -95,7 +95,6 @@ class AzanFullScreenActivity : ComponentActivity() {
             }, 4 * 60 * 1000L)
         } else {
             athanPlayed = true
-            playAzan(prayerName)
         }
 
         setContent {
@@ -113,12 +112,6 @@ class AzanFullScreenActivity : ComponentActivity() {
         } catch (e: SecurityException) {
             false
         }
-    }
-
-    private fun playAzan(prayerName: String) {
-        startService(Intent(this, PrayerAlarmService::class.java).apply {
-            putExtra(Constants.PRAYER_NAME_KEY, prayerName)
-        })
     }
 
     private fun stopAzan() {
