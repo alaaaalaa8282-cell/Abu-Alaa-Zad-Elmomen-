@@ -22,7 +22,7 @@ data class DhikrItem(
 data class DhikrUiState(
     val dhikrList: List<DhikrItem> = allDhikrs,
     val selectedDhikr: DhikrItem = allDhikrs.first(),
-    val intervalSec: Int = 60,
+    val intervalMin: Int = 5,
     val volume: Float = 0.8f,
     val isRunning: Boolean = false,
     // ─── وقت التشغيل التلقائي ───
@@ -66,7 +66,7 @@ class DhikrViewModel(app: Application) : AndroidViewModel(app) {
     private val _uiState = MutableStateFlow(
         DhikrUiState(
             selectedDhikr = allDhikrs.firstOrNull { it.id == prefs.getInt(KEY_DHIKR_ID, 1) } ?: allDhikrs.first(),
-            intervalSec   = prefs.getInt(KEY_INTERVAL, 60),
+            intervalMin   = prefs.getInt(KEY_INTERVAL, 5),
             volume        = prefs.getFloat(KEY_VOLUME, 0.8f),
             isRunning     = DhikrService.isRunning,
             autoEnabled   = prefs.getBoolean(KEY_AUTO, false),
@@ -83,10 +83,10 @@ class DhikrViewModel(app: Application) : AndroidViewModel(app) {
         _uiState.value = _uiState.value.copy(selectedDhikr = item)
     }
 
-    fun setInterval(sec: Int) {
-        val v = sec.coerceIn(10, 3600)
+    fun setInterval(minutes: Int) {
+        val v = minutes.coerceIn(1, 60)
         prefs.edit().putInt(KEY_INTERVAL, v).apply()
-        _uiState.value = _uiState.value.copy(intervalSec = v)
+        _uiState.value = _uiState.value.copy(intervalMin = v)
     }
 
     fun setVolume(v: Float, context: Context) {
@@ -134,7 +134,7 @@ class DhikrViewModel(app: Application) : AndroidViewModel(app) {
                 putExtra(DhikrService.EXTRA_TEXTS,       allDhikrs.map { it.textAr }.toTypedArray())
                 putExtra(DhikrService.EXTRA_RES_IDS,     allDhikrs.map { it.rawResId }.toIntArray())
                 putExtra(DhikrService.EXTRA_VOLUME,      _uiState.value.volume)
-                putExtra(DhikrService.EXTRA_INTERVAL_MS, _uiState.value.intervalSec * 1000L)
+                putExtra(DhikrService.EXTRA_INTERVAL_MINUTES, _uiState.value.intervalMin)
             }
         )
         _uiState.value = state.copy(isRunning = true)
