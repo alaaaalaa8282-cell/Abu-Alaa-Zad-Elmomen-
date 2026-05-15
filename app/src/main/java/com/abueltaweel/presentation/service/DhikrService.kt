@@ -20,12 +20,12 @@ class DhikrService : Service() {
     private var wakeLock: PowerManager.WakeLock? = null
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
-    private var dhikrResIds   = intArrayOf()
-    private var dhikrTexts    = arrayOf<String>()
-    private var intervalMs    = 5 * 60 * 1000L  // محسوب من الدقايق جوا
-    private var volume        = 1f
-    private var currentIndex  = 0
-    private var running       = false
+    private var dhikrResIds     = intArrayOf()
+    private var dhikrTexts      = arrayOf<String>()
+    private var intervalMinutes = 5
+    private var volume          = 1f
+    private var currentIndex    = 0
+    private var running         = false
 
     override fun onBind(intent: Intent?) = null
 
@@ -41,16 +41,13 @@ class DhikrService : Service() {
             return START_STICKY
         }
 
-        dhikrResIds  = intent?.getIntArrayExtra(EXTRA_RES_IDS) ?: return START_NOT_STICKY
-        dhikrTexts   = intent.getStringArrayExtra(EXTRA_TEXTS) ?: arrayOf()
-        volume       = intent.getFloatExtra(EXTRA_VOLUME, 1f)
-        currentIndex = 0
-        running      = true
-        isRunning    = true
-
-        // ← الـ UI بيبعت دقايق مباشرة، والـ Service يحولها لـ ms هنا
-        val intervalMinutes = intent.getIntExtra(EXTRA_INTERVAL_MINUTES, 5)
-        intervalMs = intervalMinutes * 60 * 1000L
+        dhikrResIds     = intent?.getIntArrayExtra(EXTRA_RES_IDS) ?: return START_NOT_STICKY
+        dhikrTexts      = intent.getStringArrayExtra(EXTRA_TEXTS) ?: arrayOf()
+        volume          = intent.getFloatExtra(EXTRA_VOLUME, 1f)
+        intervalMinutes = intent.getIntExtra(EXTRA_INTERVAL_MINUTES, 5)
+        currentIndex    = 0
+        running         = true
+        isRunning       = true
 
         acquireWakeLock()
         createChannel()
@@ -59,6 +56,8 @@ class DhikrService : Service() {
 
         return START_STICKY
     }
+
+    private suspend fun waitMinutes(n: Int) = delay(n * 60_000L)
 
     private fun toLogVolume(v: Float): Float {
         return if (v <= 0f) 0f
@@ -76,6 +75,7 @@ class DhikrService : Service() {
 
     private fun playCurrentDhikr() {
         if (!running || dhikrResIds.isEmpty() || PrayerAlarmService.isPlaying || isInCall()) return
+
         val resId  = dhikrResIds[currentIndex]
         val logVol = toLogVolume(volume)
 
@@ -88,7 +88,7 @@ class DhikrService : Service() {
                 setWakeMode(this@DhikrService, PowerManager.PARTIAL_WAKE_LOCK)
                 setOnCompletionListener {
                     scope.launch {
-                        delay(intervalMs)
+                        waitMinutes(intervalMinutes)
                         if (running) {
                             currentIndex = (currentIndex + 1) % dhikrResIds.size
                             playCurrentDhikr()
@@ -97,7 +97,7 @@ class DhikrService : Service() {
                 }
                 setOnErrorListener { _, _, _ ->
                     scope.launch {
-                        delay(intervalMs)
+                        waitMinutes(intervalMinutes)
                         if (running) {
                             currentIndex = (currentIndex + 1) % dhikrResIds.size
                             playCurrentDhikr()
@@ -109,7 +109,7 @@ class DhikrService : Service() {
             }
         } catch (e: Exception) {
             scope.launch {
-                delay(intervalMs)
+                waitMinutes(intervalMinutes)
                 if (running) {
                     currentIndex = (currentIndex + 1) % dhikrResIds.size
                     playCurrentDhikr()
@@ -208,10 +208,10 @@ class DhikrService : Service() {
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         val restart = Intent(applicationContext, DhikrService::class.java).apply {
-            putExtra(EXTRA_RES_IDS, dhikrResIds)
-            putExtra(EXTRA_TEXTS, dhikrTexts)
-            putExtra(EXTRA_INTERVAL_MINUTES, (intervalMs / 60_000).toInt())
-            putExtra(EXTRA_VOLUME, volume)
+            putExtra(EXTRA_RES_IDS,          dhikrResIds)
+            putExtra(EXTRA_TEXTS,            dhikrTexts)
+            putExtra(EXTRA_INTERVAL_MINUTES, intervalMinutes)
+            putExtra(EXTRA_VOLUME,           volume)
         }
         startService(restart)
         super.onTaskRemoved(rootIntent)
@@ -224,7 +224,7 @@ class DhikrService : Service() {
         const val ACTION_UPDATE_VOLUME   = "com.abueltaweel.UPDATE_VOLUME"
         const val EXTRA_RES_IDS          = "dhikr_res_ids"
         const val EXTRA_TEXTS            = "dhikr_texts"
-        const val EXTRA_INTERVAL_MINUTES = "dhikr_interval_minutes"  // ← دقايق مباشرة
+        const val EXTRA_INTERVAL_MINUTES = "dhikr_interval_minutes"
         const val EXTRA_VOLUME           = "dhikr_volume"
 
         @Volatile var isRunning: Boolean = false
