@@ -54,7 +54,7 @@ class PrayerAlarmService : Service() {
         }.getOrDefault(Prayer.PrayerName.FAJR)
 
         // ← الإشعار الصامت المخفي فقط عشان startForeground يشتغل
-        startForeground(1, createSilentNotification())
+        startForeground(1, createAzanNotification(prayerEnum))
        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
     val req = android.media.AudioFocusRequest.Builder(android.media.AudioManager.AUDIOFOCUS_GAIN)
 .setOnAudioFocusChangeListener { focusChange ->
@@ -152,25 +152,31 @@ companion object {
     }
 
     // ← إشعار صامت ومخفي - فقط عشان startForeground
-    private fun createSilentNotification(): Notification {
-        val openIntent = PendingIntent.getActivity(
-            this, 0,
-            Intent(this, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            },
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-        return NotificationCompat.Builder(this, SILENT_CHANNEL_ID)
-            .setContentTitle("أذان")
-            .setContentText("")
-            .setSmallIcon(R.drawable.mosque_02)
-            .setContentIntent(openIntent)
-            .setOngoing(true)
-            .setPriority(NotificationCompat.PRIORITY_MIN)   // ← أدنى أولوية
-            .setSilent(true)                                // ← صامت
-            .setVisibility(NotificationCompat.VISIBILITY_SECRET) // ← مخفي من شاشة القفل
-            .build()
-    }
+    @SuppressLint("FullScreenIntentPolicy")
+private fun createAzanNotification(prayer: Prayer.PrayerName): Notification {
+    val fullScreenIntent = PendingIntent.getActivity(
+        this, 0,
+        AzanFullScreenActivity.newIntent(this, prayer.getArabicName()),
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+    )
+    val stopIntent = PendingIntent.getService(
+        this, 1,
+        Intent(this, PrayerAlarmService::class.java).apply {
+            action = Constants.ACTION_STOP_AZAN
+        },
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+    )
+    return NotificationCompat.Builder(this, AZAN_CHANNEL_ID)
+        .setSmallIcon(R.drawable.mosque_02)
+        .setContentTitle("أذان ${prayer.getArabicName()}")
+        .setContentText("حان وقت الصلاة")
+        .setFullScreenIntent(fullScreenIntent, true)
+        .setCategory(NotificationCompat.CATEGORY_ALARM)
+        .setPriority(NotificationCompat.PRIORITY_HIGH)
+        .setOngoing(true)
+        .addAction(R.drawable.ic_close_circle, "إيقاف", stopIntent)
+        .build()
+}
 
     private fun playAzanForPrayer(prayer: Prayer.PrayerName) {
         val selectedFileName = runBlocking {
