@@ -196,49 +196,60 @@ fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
         R.drawable.father_bg7,
     )
 
+    // ── الصور: تتبدل كل 12 ثانية ──
     var currentIndex by remember { mutableStateOf(0) }
     var nextIndex by remember { mutableStateOf(1) }
     var crossfadeAlpha by remember { mutableStateOf(0f) }
+    var slideFromLeft by remember { mutableStateOf(true) }
 
     val animCrossfade by animateFloatAsState(
         targetValue = crossfadeAlpha,
-        animationSpec = tween(5000),
+        animationSpec = tween(3000), // انتقال 3 ثواني
         label = "crossfade"
+    )
+
+    // offset للصورة الجاية
+    val imageOffsetX by animateIntAsState(
+        targetValue = if (crossfadeAlpha == 1f) 0 else if (slideFromLeft) 300 else -300,
+        animationSpec = tween(3000),
+        label = "imageSlide"
     )
 
     LaunchedEffect(Unit) {
         while (true) {
-            delay(5000)
+            delay(12000) // كل صورة 12 ثانية
+            slideFromLeft = !slideFromLeft
             crossfadeAlpha = 1f
-            delay(2000)
+            delay(3000)
             currentIndex = nextIndex
             nextIndex = (nextIndex + 1) % images.size
             crossfadeAlpha = 0f
         }
     }
 
+    // ── النبض ──
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val scale by infiniteTransition.animateFloat(
         initialValue = 1f, targetValue = 1.18f,
         animationSpec = infiniteRepeatable(tween(900, easing = LinearEasing), RepeatMode.Reverse),
         label = "scale"
     )
-
     val glowAlpha by infiniteTransition.animateFloat(
         initialValue = 0.2f, targetValue = 0.6f,
         animationSpec = infiniteRepeatable(tween(1500, easing = LinearEasing), RepeatMode.Reverse),
         label = "glow"
     )
 
+    // ── كلمات الأذان ──
     val azanLines = listOf(
         "اللهُ أَكْبَر، اللهُ أَكْبَر",
-         "اللهُ أَكْبَر، اللهُ أَكْبَر",
+        "اللهُ أَكْبَر، اللهُ أَكْبَر",
         "أَشْهَدُ أَن لَّا إِلَٰهَ إِلَّا اللَّه",
-        "أَشْهَدُ أَن لَّا إِلَٰهَ إِلَّا اللَّه", 
+        "أَشْهَدُ أَن لَّا إِلَٰهَ إِلَّا اللَّه",
         "أَشْهَدُ أَنَّ مُحَمَّدًا رَسُولُ اللَّه",
         "أَشْهَدُ أَنَّ مُحَمَّدًا رَسُولُ اللَّه",
         "حَيَّ عَلَى الصَّلَاة",
-        "حَيَّ عَلَى الصَّلَاة", 
+        "حَيَّ عَلَى الصَّلَاة",
         "حَيَّ عَلَى الْفَلَاح",
         "حَيَّ عَلَى الْفَلَاح",
         "اللهُ أَكْبَر",
@@ -246,20 +257,39 @@ fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
     )
 
     var currentLineIndex by remember { mutableStateOf(0) }
-    var lineVisible by remember { mutableStateOf(true) }
+    // بالتبادل: true = من تحت، false = من اليمين
+    var slideUp by remember { mutableStateOf(true) }
 
+    // offset للكلمة
+    val lineOffsetY by animateIntAsState(
+        targetValue = 0,
+        animationSpec = tween(600, easing = FastOutSlowInEasing),
+        label = "lineY"
+    )
+    val lineOffsetX by animateIntAsState(
+        targetValue = 0,
+        animationSpec = tween(600, easing = FastOutSlowInEasing),
+        label = "lineX"
+    )
+
+    var lineVisible by remember { mutableStateOf(true) }
     LaunchedEffect(Unit) {
         while (true) {
-            delay(7000)
+            delay(13000) // كل كلمة 13 ثانية
+            // اخفاء
             lineVisible = false
-            delay(700)
+            delay(400)
+            // جهز الكلمة الجاية
             currentLineIndex = (currentLineIndex + 1) % azanLines.size
+            slideUp = !slideUp
+            // ظهور
             lineVisible = true
         }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
 
+        // الصورة الحالية
         Image(
             painter = painterResource(images[currentIndex]),
             contentDescription = null,
@@ -267,15 +297,18 @@ fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
             modifier = Modifier.fillMaxSize()
         )
 
+        // الصورة الجاية مع slide
         Image(
             painter = painterResource(images[nextIndex]),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .fillMaxSize()
+                .offset(x = imageOffsetX.dp)
                 .alpha(animCrossfade)
         )
 
+        // تدرج داكن
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -286,6 +319,7 @@ fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
                 )
         )
 
+        // توهج خلف الأيقونة
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
@@ -301,6 +335,7 @@ fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
                 .padding(32.dp)
         ) {
 
+            // أيقونة نابضة
             Box(
                 modifier = Modifier
                     .scale(scale)
@@ -327,10 +362,29 @@ fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
 
             Spacer(Modifier.height(28.dp))
 
+            // كلمات الأذان مع slide
             AnimatedVisibility(
                 visible = lineVisible,
-                enter = fadeIn(tween(800, easing = FastOutSlowInEasing)),
-                exit = fadeOut(tween(800, easing = FastOutSlowInEasing))
+                enter = if (slideUp)
+                    slideInVertically(
+                        initialOffsetY = { it }, // من تحت لفوق
+                        animationSpec = tween(600, easing = FastOutSlowInEasing)
+                    ) + fadeIn(tween(600))
+                else
+                    slideInHorizontally(
+                        initialOffsetX = { it }, // من اليمين لليسار
+                        animationSpec = tween(600, easing = FastOutSlowInEasing)
+                    ) + fadeIn(tween(600)),
+                exit = if (slideUp)
+                    slideOutVertically(
+                        targetOffsetY = { -it }, // يخرج لفوق
+                        animationSpec = tween(400)
+                    ) + fadeOut(tween(400))
+                else
+                    slideOutHorizontally(
+                        targetOffsetX = { -it }, // يخرج لليسار
+                        animationSpec = tween(400)
+                    ) + fadeOut(tween(400))
             ) {
                 Text(
                     azanLines[currentLineIndex],
