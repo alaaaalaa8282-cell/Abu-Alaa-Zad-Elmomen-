@@ -72,7 +72,7 @@
             android:name=".presentation.screen.azan.AzanFullScreenActivity"
             android:exported="false"
             android:showOnLockScreen="true"
-            android:turnScreenOn="true"
+            android:showWhenLocked="true"
             android:theme="@style/Theme.MehrabAlMomen"
             android:launchMode="singleTask" />
 
@@ -87,12 +87,6 @@
     android:exported="false"
     android:foregroundServiceType="specialUse"
     tools:targetApi="34" />
-   <activity
-    android:name=".presentation.screen.azan.AzanFullScreenActivity"
-    android:showWhenLocked="true"
-    android:turnScreenOn="true"
-    android:excludeFromRecents="true"
-    android:exported="false" />
     </application>
 
 </manifest>
