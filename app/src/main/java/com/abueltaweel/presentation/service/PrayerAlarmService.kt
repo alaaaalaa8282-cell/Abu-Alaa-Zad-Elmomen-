@@ -55,9 +55,7 @@ class PrayerAlarmService : Service() {
         createChannels()
 
         val prayerNameStr = intent?.getStringExtra(PRAYER_NAME_KEY) ?: return START_NOT_STICKY
-        val prayerEnum = runCatching {
-            Prayer.PrayerName.valueOf(prayerNameStr)
-        }.getOrDefault(Prayer.PrayerName.FAJR)
+        val prayerEnum = Prayer.PrayerName.entries.firstOrNull { it.getArabicName() == prayerNameStr } ?: Prayer.PrayerName.FAJR
 
         // startForeground بالإشعار الصامت فقط
         startForeground(1, createSilentNotification())
