@@ -51,8 +51,14 @@ class AzanFullScreenActivity : ComponentActivity() {
 
     private val azanDoneReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            moveTaskToBack(true)
-                finish()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+    setShowWhenLocked(false)
+    setTurnScreenOn(false)
+}
+window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+stopAzan()
+moveTaskToBack(true)
+finish()
         }
     }
 
@@ -109,9 +115,14 @@ class AzanFullScreenActivity : ComponentActivity() {
 
         setContent {
             AzanFullScreenContent(prayerName = prayerName, onStop = {
-                stopAzan()
-                moveTaskToBack(true)
-                finish()
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+    setShowWhenLocked(false)
+    setTurnScreenOn(false)
+}
+window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+stopAzan()
+moveTaskToBack(true)
+finish()
             })
         }
     }
