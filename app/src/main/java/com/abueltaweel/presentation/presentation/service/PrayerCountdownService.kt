@@ -124,6 +124,7 @@ class PrayerCountdownService : Service() {
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setSilent(true)
+           .setVisibility(NotificationCompat.VISIBILITY_PUBLIC) 
             .build()
     }
 
@@ -134,7 +135,7 @@ class PrayerCountdownService : Service() {
                 nm.createNotificationChannel(
                     NotificationChannel(
                         CHANNEL_ID, "عداد الصلاة",
-                        NotificationManager.IMPORTANCE_LOW
+                        NotificationManager.IMPORTANCE_DEFAULT 
                     ).apply {
                         setSound(null, null)
                         enableVibration(false)
