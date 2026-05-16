@@ -53,7 +53,14 @@ class DhikrService : Service() {
         acquireWakeLock()
         createChannel()
         startForeground(NOTIF_ID, buildNotification(currentIndex))
+        if (PrayerAlarmService.isPlaying) {
+    scope.launch {
+        while (PrayerAlarmService.isPlaying) delay(5000)
         playCurrentDhikr()
+    }
+} else {
+    playCurrentDhikr()
+}
 
         return START_STICKY
     }
