@@ -10,7 +10,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -191,8 +190,8 @@ fun DhikrScreen(viewModel: DhikrViewModel = koinViewModel()) {
                 Spacer(Modifier.height(4.dp))
                 Text("الفترة بين كل ذكر: ${state.intervalMin} دقيقة", color = Color(0xFFC9A84C), fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(8.dp))
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                    listOf("1 د" to 1, "5 د" to 5, "10 د" to 10, "30 د" to 30, "45 د" to 45, "60 د" to 60, "90 د" to 90, "120 د" to 120).forEach { (l, min) ->
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    listOf("1 د" to 1, "5 د" to 5, "10 د" to 10, "30 د" to 30).forEach { (l, min) ->
                         val isSel = state.intervalMin == min
                         Button(
                             onClick = { if (!state.isRunning) viewModel.setInterval(min) },
