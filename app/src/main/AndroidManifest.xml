@@ -87,6 +87,12 @@
     android:exported="false"
     android:foregroundServiceType="specialUse"
     tools:targetApi="34" />
+   <activity
+    android:name=".presentation.screen.azan.AzanFullScreenActivity"
+    android:showWhenLocked="true"
+    android:turnScreenOn="true"
+    android:excludeFromRecents="true"
+    android:exported="false" />
     </application>
 
 </manifest>
