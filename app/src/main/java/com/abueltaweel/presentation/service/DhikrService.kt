@@ -97,6 +97,14 @@ if (intent?.action == ACTION_RESUME_FOR_AZAN) {
 
     private fun playCurrentDhikr() {
         if (!running || dhikrResIds.isEmpty()) return
+if (isInCall()) {
+    scope.launch {
+        while (isInCall()) delay(5000)
+        if (running && !pausedForAzan) mediaPlayer?.start()
+    }
+    mediaPlayer?.pause()
+    return
+}
         val resId  = dhikrResIds[currentIndex]
         val logVol = toLogVolume(volume)
 
