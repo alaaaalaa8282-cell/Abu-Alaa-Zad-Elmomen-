@@ -59,12 +59,11 @@ class PrayerAlarmService : Service() {
             Prayer.PrayerName.valueOf(prayerNameStr)
         }.getOrDefault(Prayer.PrayerName.FAJR)
 
-        // startForeground بالإشعار الصامت أولاً
+        // startForeground بالإشعار الصامت فقط
         startForeground(1, createSilentNotification())
 
-        // ثم إشعار الأذان الكامل مع fullScreenIntent
-        val nm = getSystemService(NotificationManager::class.java)
-        nm.notify(2, createAzanNotification(prayerEnum))
+        // فتح شاشة الأذان مباشرة
+        startActivity(AzanFullScreenActivity.newIntent(this, prayerEnum.getArabicName()))
 
         requestAudioFocus()
 
@@ -216,7 +215,7 @@ class PrayerAlarmService : Service() {
             prepare()
             start()
             setOnCompletionListener {
-                isPlaying = false
+                PrayerAlarmService.isPlaying = false
                 sendBroadcast(Intent(Constants.ACTION_STOP_AZAN))
                 stopForeground(true)
                 stopSelf()
