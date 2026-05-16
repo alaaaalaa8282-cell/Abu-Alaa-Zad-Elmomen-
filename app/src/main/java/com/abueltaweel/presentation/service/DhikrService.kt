@@ -37,7 +37,7 @@ class DhikrService : Service() {
 
         if (intent?.action == ACTION_UPDATE_VOLUME) {
             volume = intent.getFloatExtra(EXTRA_VOLUME, volume)
-            mediaPlayer?.setVolume(toLogVolume(volume), toLogVolume(volume))
+            runCatching { mediaPlayer?.setVolume(toLogVolume(volume), toLogVolume(volume)) }
             return START_STICKY
         }
 
