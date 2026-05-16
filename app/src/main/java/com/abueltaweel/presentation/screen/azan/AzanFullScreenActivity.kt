@@ -242,9 +242,9 @@ fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
 
     LaunchedEffect(Unit) {
         while (true) {
-            delay(6000)
+            delay(7000)
             lineVisible = false
-            delay(600)
+            delay(700)
             currentLineIndex = (currentLineIndex + 1) % azanLines.size
             lineVisible = true
         }
