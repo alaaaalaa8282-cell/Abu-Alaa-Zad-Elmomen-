@@ -163,7 +163,7 @@ class DhikrService : Service() {
                 nm.createNotificationChannel(
                     NotificationChannel(
                         CHANNEL_ID, "الأذكار الصوتية",
-                        NotificationManager.IMPORTANCE_LOW
+                        NotificationManager.IMPORTANCE_DEFAULT
                     ).apply { setSound(null, null); enableVibration(false) }
                 )
             }
@@ -194,6 +194,7 @@ class DhikrService : Service() {
             .setOngoing(true)
             .addAction(R.drawable.ic_close_circle, "إيقاف", stopPi)
             .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .build()
     }
 
