@@ -34,7 +34,9 @@ class DhikrService : Service() {
         if (intent?.action == ACTION_STOP) {
             stopDhikr()
             return START_NOT_STICKY
-        }if (intent?.action == ACTION_PAUSE_FOR_AZAN) {
+        }
+
+        if (intent?.action == ACTION_PAUSE_FOR_AZAN) {
     pausedForAzan = true
     mediaPlayer?.pause()
     return START_STICKY
