@@ -66,6 +66,11 @@ class PrayerAlarmService : Service() {
         requestAudioFocus()
 
         isPlaying = true
+      if (DhikrService.isRunning) {
+    startService(Intent(this, DhikrService::class.java).apply {
+        action = DhikrService.ACTION_PAUSE_FOR_AZAN
+    })
+      }
         playAzanForPrayer(prayerEnum)
 
         return START_NOT_STICKY
@@ -214,6 +219,11 @@ class PrayerAlarmService : Service() {
             start()
             setOnCompletionListener {
                 PrayerAlarmService.isPlaying = false
+           if (DhikrService.isRunning) {
+    startService(Intent(this@PrayerAlarmService, DhikrService::class.java).apply {
+        action = DhikrService.ACTION_RESUME_FOR_AZAN
+    })
+           }
                 sendBroadcast(Intent(Constants.ACTION_STOP_AZAN))
                 stopForeground(true)
                 stopSelf()
