@@ -18,7 +18,7 @@ class DhikrService : Service() {
 
     private var mediaPlayer: MediaPlayer? = null
     private var wakeLock: PowerManager.WakeLock? = null
-    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+   private var scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     private var dhikrResIds     = intArrayOf()
     private var dhikrTexts      = arrayOf<String>()
@@ -48,7 +48,8 @@ class DhikrService : Service() {
         currentIndex    = 0
         running         = true
         isRunning       = true
-
+        scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+        
         acquireWakeLock()
         createChannel()
         startForeground(NOTIF_ID, buildNotification(currentIndex))
