@@ -40,6 +40,12 @@ import com.abueltaweel.R
 import com.abueltaweel.presentation.service.PrayerAlarmService
 import com.abueltaweel.presentation.utils.Constants
 import kotlinx.coroutines.delay
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.animation.core.animateIntAsState
 
 class AzanFullScreenActivity : ComponentActivity() {
 
