@@ -292,7 +292,7 @@ fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
     var lineVisible by remember { mutableStateOf(true) }
     LaunchedEffect(Unit) {
         while (true) {
-            delay(13000) // كل كلمة 13 ثانية
+            delay(11000) // كل كلمة 11 ثانية
             // اخفاء
             lineVisible = false
             delay(400)
