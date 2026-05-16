@@ -45,7 +45,8 @@ class AzanFullScreenActivity : ComponentActivity() {
 
     private val azanDoneReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            finish()
+            moveTaskToBack(true)
+                finish()
         }
     }
 
@@ -170,7 +171,7 @@ class AzanFullScreenActivity : ComponentActivity() {
         fun newIntent(context: Context, prayerName: String) =
             Intent(context, AzanFullScreenActivity::class.java).apply {
                 putExtra(Constants.PRAYER_NAME_KEY, prayerName)
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
             }
     }
 }
