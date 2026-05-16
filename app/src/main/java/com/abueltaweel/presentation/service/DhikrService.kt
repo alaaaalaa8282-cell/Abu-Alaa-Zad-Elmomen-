@@ -75,8 +75,7 @@ class DhikrService : Service() {
     }
 
     private fun playCurrentDhikr() {
-        if (!running || dhikrResIds.isEmpty() || PrayerAlarmService.isPlaying || isInCall()) return
-
+        if (!running || dhikrResIds.isEmpty()) return
         val resId  = dhikrResIds[currentIndex]
         val logVol = toLogVolume(volume)
 
