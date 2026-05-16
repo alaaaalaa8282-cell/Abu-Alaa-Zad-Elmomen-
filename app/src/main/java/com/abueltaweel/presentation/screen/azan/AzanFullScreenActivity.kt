@@ -91,6 +91,7 @@ class AzanFullScreenActivity : ComponentActivity() {
             callTimeoutHandler.postDelayed({
                 if (!athanPlayed) {
                     athanPlayed = true
+                    moveTaskToBack(true)
                     finish()
                 }
             }, 4 * 60 * 1000L)
@@ -102,6 +103,7 @@ class AzanFullScreenActivity : ComponentActivity() {
         setContent {
             AzanFullScreenContent(prayerName = prayerName, onStop = {
                 stopAzan()
+                moveTaskToBack(true)
                 finish()
             })
         }
