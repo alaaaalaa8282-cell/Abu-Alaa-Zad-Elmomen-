@@ -83,7 +83,6 @@ class DhikrService : Service() {
         updateNotification(currentIndex)
 
         try {
-            mediaPlayer?.release()
             mediaPlayer = MediaPlayer.create(this, resId)?.apply {
                 setVolume(logVol, logVol)
                 setWakeMode(this@DhikrService, PowerManager.PARTIAL_WAKE_LOCK)
