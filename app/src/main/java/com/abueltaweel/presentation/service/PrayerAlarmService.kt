@@ -168,7 +168,7 @@ class PrayerAlarmService : Service() {
             .addAction(R.drawable.ic_close_circle, "إيقاف", stopIntent)
             .setPriority(NotificationCompat.PRIORITY_MIN)
             .setSilent(true)
-            .setVisibility(NotificationCompat.VISIBILITY_SECRET)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .build()
     }
 
