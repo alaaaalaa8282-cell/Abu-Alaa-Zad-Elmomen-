@@ -13,6 +13,7 @@ import androidx.core.app.NotificationCompat
 import com.abueltaweel.R
 import com.abueltaweel.presentation.base.MainActivity
 import kotlinx.coroutines.*
+private var pausedForAzan = false
 
 class DhikrService : Service() {
 
@@ -33,8 +34,19 @@ class DhikrService : Service() {
         if (intent?.action == ACTION_STOP) {
             stopDhikr()
             return START_NOT_STICKY
-        }
-
+        }if (intent?.action == ACTION_PAUSE_FOR_AZAN) {
+    pausedForAzan = true
+    mediaPlayer?.pause()
+    return START_STICKY
+}
+if (intent?.action == ACTION_RESUME_FOR_AZAN) {
+    if (pausedForAzan) {
+        pausedForAzan = false
+        if (running) mediaPlayer?.start()
+    }
+    return START_STICKY
+}
+        
         if (intent?.action == ACTION_UPDATE_VOLUME) {
             volume = intent.getFloatExtra(EXTRA_VOLUME, volume)
             runCatching { mediaPlayer?.setVolume(toLogVolume(volume), toLogVolume(volume)) }
@@ -235,7 +247,9 @@ class DhikrService : Service() {
         const val EXTRA_TEXTS            = "dhikr_texts"
         const val EXTRA_INTERVAL_MINUTES = "dhikr_interval_minutes"
         const val EXTRA_VOLUME           = "dhikr_volume"
-
+        const val ACTION_PAUSE_FOR_AZAN  = "com.abueltaweel.PAUSE_DHIKR_FOR_AZAN"
+        const val ACTION_RESUME_FOR_AZAN = "com.abueltaweel.RESUME_DHIKR_FOR_AZAN"
+        
         @Volatile var isRunning: Boolean = false
     }
 }
