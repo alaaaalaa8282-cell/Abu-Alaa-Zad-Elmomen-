@@ -9,7 +9,14 @@ import com.abueltaweel.presentation.utils.Constants.PRAYER_NAME_KEY
 
 class AzanAlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
-        val prayerName = intent?.getStringExtra(PRAYER_NAME_KEY) ?: "Unknown"
+        val prayerName = when(intent?.getStringExtra(PRAYER_NAME_KEY)) {
+    "FAJR"    -> "الفجر"
+    "ZUHR"    -> "الظهر"
+    "ASR"     -> "العصر"
+    "MAGHRIB" -> "المغرب"
+    "ISHA"    -> "العشاء"
+    else      -> "الصلاة"
+}
         val isCallInProgress = try {
             val tm = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
             tm.callState != TelephonyManager.CALL_STATE_IDLE
