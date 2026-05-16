@@ -156,10 +156,10 @@ class DhikrViewModel(app: Application) : AndroidViewModel(app) {
 
         // Start Intent
         val startIntent = Intent(context, DhikrService::class.java).apply {
-           val resIds = allDhikrs.map { it.rawResId }.toIntArray()
-           val texts  = allDhikrs.map { it.textAr }.toTypedArray()
-             putExtra(DhikrService.EXTRA_RES_IDS, resIds)
-             putExtra(DhikrService.EXTRA_TEXTS,   texts)
+            putExtra(DhikrService.EXTRA_RES_IDS,          allDhikrs.map { it.rawResId }.toIntArray())
+            putExtra(DhikrService.EXTRA_TEXTS,            allDhikrs.map { it.textAr }.toTypedArray())
+            putExtra(DhikrService.EXTRA_INTERVAL_MINUTES, _uiState.value.intervalMin)
+            putExtra(DhikrService.EXTRA_VOLUME,           _uiState.value.volume)
         }
         val startPi = PendingIntent.getForegroundService(
             context, REQ_START, startIntent,
