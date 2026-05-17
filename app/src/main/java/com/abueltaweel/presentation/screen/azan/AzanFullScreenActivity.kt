@@ -234,7 +234,7 @@ fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
 
     LaunchedEffect(Unit) {
         while (true) {
-            delay(12000)
+            delay(11000)
             slideFromLeft = !slideFromLeft
             crossfadeAlpha = 1f
             delay(3000)
@@ -269,7 +269,7 @@ fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
         "حَيَّ عَلَى الصَّلَاة",
         "حَيَّ عَلَى الْفَلَاح",
         "حَيَّ عَلَى الْفَلَاح",
-        "اللهُ أَكْبَر",
+        "اللهُ أَكْبَر، اللهُ أَكْبَر",
         "لَا إِلَٰهَ إِلَّا اللَّه"
     )
 
