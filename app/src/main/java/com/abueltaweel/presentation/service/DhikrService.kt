@@ -13,13 +13,14 @@ import androidx.core.app.NotificationCompat
 import com.abueltaweel.R
 import com.abueltaweel.presentation.base.MainActivity
 import kotlinx.coroutines.*
+
 private var pausedForAzan = false
 
 class DhikrService : Service() {
 
     private var mediaPlayer: MediaPlayer? = null
     private var wakeLock: PowerManager.WakeLock? = null
-   private var scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private var scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     private var dhikrResIds     = intArrayOf()
     private var dhikrTexts      = arrayOf<String>()
@@ -37,18 +38,20 @@ class DhikrService : Service() {
         }
 
         if (intent?.action == ACTION_PAUSE_FOR_AZAN) {
-    pausedForAzan = true
-    mediaPlayer?.pause()
-    return START_STICKY
-}
-if (intent?.action == ACTION_RESUME_FOR_AZAN) {
-    if (pausedForAzan) {
-        pausedForAzan = false
-        if (running) mediaPlayer?.start()
-    }
-    return START_STICKY
-}
-        
+            pausedForAzan = true
+            // وقّف الذكر الحالي وحرّره — الذكر الجاي هيشتغل في وقته بعد الـ interval
+            mediaPlayer?.stop()
+            mediaPlayer?.release()
+            mediaPlayer = null
+            return START_STICKY
+        }
+
+        if (intent?.action == ACTION_RESUME_FOR_AZAN) {
+            pausedForAzan = false
+            // مش بنعمل حاجة — الـ coroutine شغال وهيشغّل الذكر الجاي في وقته
+            return START_STICKY
+        }
+
         if (intent?.action == ACTION_UPDATE_VOLUME) {
             volume = intent.getFloatExtra(EXTRA_VOLUME, volume)
             runCatching { mediaPlayer?.setVolume(toLogVolume(volume), toLogVolume(volume)) }
@@ -63,18 +66,18 @@ if (intent?.action == ACTION_RESUME_FOR_AZAN) {
         running         = true
         isRunning       = true
         if (!scope.isActive) scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
-        
+
         acquireWakeLock()
         createChannel()
         startForeground(NOTIF_ID, buildNotification(currentIndex))
         if (PrayerAlarmService.isPlaying) {
-    scope.launch {
-        while (PrayerAlarmService.isPlaying) delay(5000)
-        playCurrentDhikr()
-    }
-} else {
-    playCurrentDhikr()
-}
+            scope.launch {
+                while (PrayerAlarmService.isPlaying) delay(5000)
+                playCurrentDhikr()
+            }
+        } else {
+            playCurrentDhikr()
+        }
 
         return START_STICKY
     }
@@ -97,43 +100,43 @@ if (intent?.action == ACTION_RESUME_FOR_AZAN) {
 
     private fun playCurrentDhikr() {
         if (!running || dhikrResIds.isEmpty()) return
-if (isInCall()) {
-    scope.launch {
-        while (isInCall()) delay(5000)
-        if (running && !pausedForAzan) mediaPlayer?.start()
-    }
-    mediaPlayer?.pause()
-    return
-}
+        if (isInCall()) {
+            scope.launch {
+                while (isInCall()) delay(5000)
+                if (running && !pausedForAzan) mediaPlayer?.start()
+            }
+            mediaPlayer?.pause()
+            return
+        }
         val resId  = dhikrResIds[currentIndex]
         val logVol = toLogVolume(volume)
 
         updateNotification(currentIndex)
 
         try {
-          val audioManager = getSystemService(AUDIO_SERVICE) as android.media.AudioManager
-if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-    val focusRequest = android.media.AudioFocusRequest.Builder(
-        android.media.AudioManager.AUDIOFOCUS_GAIN
-    )
-    .setAudioAttributes(
-        android.media.AudioAttributes.Builder()
-            .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
-            .setContentType(android.media.AudioAttributes.CONTENT_TYPE_MUSIC)
-            .build()
-    )
-    .setWillPauseWhenDucked(true)
-    .setOnAudioFocusChangeListener {}
-    .build()
-    audioManager.requestAudioFocus(focusRequest)
-} else {
-    @Suppress("DEPRECATION")
-    audioManager.requestAudioFocus(
-        null,
-        android.media.AudioManager.STREAM_MUSIC,
-        android.media.AudioManager.AUDIOFOCUS_GAIN
-    )
-}
+            val audioManager = getSystemService(AUDIO_SERVICE) as android.media.AudioManager
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                val focusRequest = android.media.AudioFocusRequest.Builder(
+                    android.media.AudioManager.AUDIOFOCUS_GAIN
+                )
+                    .setAudioAttributes(
+                        android.media.AudioAttributes.Builder()
+                            .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
+                            .setContentType(android.media.AudioAttributes.CONTENT_TYPE_MUSIC)
+                            .build()
+                    )
+                    .setWillPauseWhenDucked(true)
+                    .setOnAudioFocusChangeListener {}
+                    .build()
+                audioManager.requestAudioFocus(focusRequest)
+            } else {
+                @Suppress("DEPRECATION")
+                audioManager.requestAudioFocus(
+                    null,
+                    android.media.AudioManager.STREAM_MUSIC,
+                    android.media.AudioManager.AUDIOFOCUS_GAIN
+                )
+            }
             mediaPlayer = MediaPlayer.create(this, resId)?.apply {
                 setVolume(logVol, logVol)
                 setWakeMode(this@DhikrService, PowerManager.PARTIAL_WAKE_LOCK)
@@ -281,7 +284,7 @@ if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
         const val EXTRA_VOLUME           = "dhikr_volume"
         const val ACTION_PAUSE_FOR_AZAN  = "com.abueltaweel.PAUSE_DHIKR_FOR_AZAN"
         const val ACTION_RESUME_FOR_AZAN = "com.abueltaweel.RESUME_DHIKR_FOR_AZAN"
-        
+
         @Volatile var isRunning: Boolean = false
     }
 }
