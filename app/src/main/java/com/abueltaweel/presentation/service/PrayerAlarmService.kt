@@ -55,22 +55,24 @@ class PrayerAlarmService : Service() {
         createChannels()
 
         val prayerNameStr = intent?.getStringExtra(PRAYER_NAME_KEY) ?: return START_NOT_STICKY
-        val prayerEnum = Prayer.PrayerName.entries.firstOrNull { it.getArabicName() == prayerNameStr } ?: Prayer.PrayerName.FAJR
+        val prayerEnum = Prayer.PrayerName.entries.firstOrNull {
+            it.getArabicName() == prayerNameStr
+        } ?: Prayer.PrayerName.FAJR
 
-        // startForeground بالإشعار الصامت فقط
+        // FIX: ارفع isPlaying أول حاجة عشان نتجنب الـ race condition
+        isPlaying = true
+
         startForeground(1, createSilentNotification())
 
-        // فتح شاشة الأذان مباشرة
-        startActivity(AzanFullScreenActivity.newIntent(this, prayerEnum.getArabicName()))
-
+        // FIX: اتشالت startActivity — الشاشة بتتفتح من AzanAlarmReceiver بس
         requestAudioFocus()
 
-        isPlaying = true
-      if (DhikrService.isRunning) {
-    startService(Intent(this, DhikrService::class.java).apply {
-        action = DhikrService.ACTION_PAUSE_FOR_AZAN
-    })
-      }
+        if (DhikrService.isRunning) {
+            startService(Intent(this, DhikrService::class.java).apply {
+                action = DhikrService.ACTION_PAUSE_FOR_AZAN
+            })
+        }
+
         playAzanForPrayer(prayerEnum)
 
         return START_NOT_STICKY
@@ -218,12 +220,12 @@ class PrayerAlarmService : Service() {
             prepare()
             start()
             setOnCompletionListener {
-                PrayerAlarmService.isPlaying = false
-           if (DhikrService.isRunning) {
-    startService(Intent(this@PrayerAlarmService, DhikrService::class.java).apply {
-        action = DhikrService.ACTION_RESUME_FOR_AZAN
-    })
-           }
+                isPlaying = false
+                if (DhikrService.isRunning) {
+                    startService(Intent(this@PrayerAlarmService, DhikrService::class.java).apply {
+                        action = DhikrService.ACTION_RESUME_FOR_AZAN
+                    })
+                }
                 sendBroadcast(Intent(Constants.ACTION_STOP_AZAN))
                 stopForeground(true)
                 stopSelf()
