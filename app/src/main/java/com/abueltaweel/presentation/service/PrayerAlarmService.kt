@@ -224,7 +224,7 @@ class PrayerAlarmService : Service() {
         action = DhikrService.ACTION_RESUME_FOR_AZAN
     })
            }
-                registerReceiver(azanDoneReceiver, IntentFilter("com.abueltaweel.AZAN_COMPLETE"))
+                sendBroadcast(Intent("com.abueltaweel.AZAN_COMPLETE"))
                 stopForeground(true)
                 stopSelf()
             }
