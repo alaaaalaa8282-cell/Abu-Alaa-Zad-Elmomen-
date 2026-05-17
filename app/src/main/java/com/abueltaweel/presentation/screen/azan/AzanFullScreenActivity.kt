@@ -60,7 +60,6 @@ class AzanFullScreenActivity : ComponentActivity() {
         finish()
     }
 }
-}
 
     private var telephonyManager: TelephonyManager? = null
     private var athanPlayed = false
