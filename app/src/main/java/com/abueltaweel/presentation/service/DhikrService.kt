@@ -38,19 +38,25 @@ class DhikrService : Service() {
         }
 
         if (intent?.action == ACTION_PAUSE_FOR_AZAN) {
-            pausedForAzan = true
-            // وقّف الذكر الحالي وحرّره — الذكر الجاي هيشتغل في وقته بعد الـ interval
-            mediaPlayer?.stop()
-            mediaPlayer?.release()
-            mediaPlayer = null
-            return START_STICKY
+    pausedForAzan = true
+    mediaPlayer?.stop()
+    mediaPlayer?.release()
+    mediaPlayer = null
+    // شغّل الـ interval في coroutine مستقل
+    scope.launch {
+        waitMinutes(intervalMinutes)
+        if (running && !pausedForAzan) {
+            currentIndex = (currentIndex + 1) % dhikrResIds.size
+            playCurrentDhikr()
+        }
+    }
+    return START_STICKY
         }
 
         if (intent?.action == ACTION_RESUME_FOR_AZAN) {
-            pausedForAzan = false
-            // مش بنعمل حاجة — الـ coroutine شغال وهيشغّل الذكر الجاي في وقته
-            return START_STICKY
-        }
+    pausedForAzan = false
+    return START_STICKY
+}
 
         if (intent?.action == ACTION_UPDATE_VOLUME) {
             volume = intent.getFloatExtra(EXTRA_VOLUME, volume)
