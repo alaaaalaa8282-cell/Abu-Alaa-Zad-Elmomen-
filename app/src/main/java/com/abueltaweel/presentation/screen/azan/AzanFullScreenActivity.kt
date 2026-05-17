@@ -165,7 +165,7 @@ finish()
     override fun onResume() {
         super.onResume()
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        registerReceiver(azanDoneReceiver, IntentFilter(Constants.ACTION_STOP_AZAN))
+        registerReceiver(azanDoneReceiver, IntentFilter("com.abueltaweel.AZAN_COMPLETE"))
     }
 
     override fun onPause() {
