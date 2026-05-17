@@ -44,23 +44,21 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.animation.core.animateIntAsState
 import com.abueltaweel.presentation.service.DhikrService
 
 class AzanFullScreenActivity : ComponentActivity() {
 
     private val azanDoneReceiver = object : BroadcastReceiver() {
-    override fun onReceive(context: Context?, intent: Intent?) {
-        if (PrayerAlarmService.isPlaying) return
-        // استأنف الذكر
-        startService(Intent(this@AzanFullScreenActivity, DhikrService::class.java).apply {
-            action = DhikrService.ACTION_RESUME_FOR_AZAN
-        })
-        moveTaskToBack(true)
-        finish()
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (PrayerAlarmService.isPlaying) return
+            startService(Intent(this@AzanFullScreenActivity, DhikrService::class.java).apply {
+                action = DhikrService.ACTION_RESUME_FOR_AZAN
+            })
+            moveTaskToBack(true)
+            finish()
+        }
     }
-}
 
     private var telephonyManager: TelephonyManager? = null
     private var athanPlayed = false
@@ -115,9 +113,14 @@ class AzanFullScreenActivity : ComponentActivity() {
 
         setContent {
             AzanFullScreenContent(prayerName = prayerName, onStop = {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+                    setShowWhenLocked(false)
+                    setTurnScreenOn(false)
+                }
+                window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
                 stopAzan()
-moveTaskToBack(true)
-finish()
+                moveTaskToBack(true)
+                finish()
             })
         }
     }
@@ -132,16 +135,16 @@ finish()
     }
 
     private fun playAzan(prayerName: String) {
-    if (PrayerAlarmService.isPlaying) return
-    val intent = Intent(this, PrayerAlarmService::class.java).apply {
-        putExtra(Constants.PRAYER_NAME_KEY, prayerName)
+        if (PrayerAlarmService.isPlaying) return
+        val intent = Intent(this, PrayerAlarmService::class.java).apply {
+            putExtra(Constants.PRAYER_NAME_KEY, prayerName)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent)
+        } else {
+            startService(intent)
+        }
     }
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        startForegroundService(intent)
-    } else {
-        startService(intent)
-    }
-}
 
     private fun stopAzan() {
         startService(Intent(this, PrayerAlarmService::class.java).apply {
@@ -173,12 +176,7 @@ finish()
         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         runCatching { unregisterReceiver(azanDoneReceiver) }
     }
-override fun onStop() {
-    super.onStop()
-    if (!PrayerAlarmService.isPlaying) {
-        finish()
-    }
-}
+
     override fun onDestroy() {
         unregisterPhoneStateListener()
         callTimeoutHandler.removeCallbacksAndMessages(null)
@@ -189,7 +187,9 @@ override fun onStop() {
         fun newIntent(context: Context, prayerName: String) =
             Intent(context, AzanFullScreenActivity::class.java).apply {
                 putExtra(Constants.PRAYER_NAME_KEY, prayerName)
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                        Intent.FLAG_ACTIVITY_NO_USER_ACTION or
+                        Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
             }
     }
 }
@@ -222,11 +222,10 @@ fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
 
     val animCrossfade by animateFloatAsState(
         targetValue = crossfadeAlpha,
-        animationSpec = tween(3000), // انتقال 3 ثواني
+        animationSpec = tween(3000),
         label = "crossfade"
     )
 
-    // offset للصورة الجاية
     val imageOffsetX by animateIntAsState(
         targetValue = if (crossfadeAlpha == 1f) 0 else if (slideFromLeft) 300 else -300,
         animationSpec = tween(3000),
@@ -235,7 +234,7 @@ fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
 
     LaunchedEffect(Unit) {
         while (true) {
-            delay(12000) // كل صورة 12 ثانية
+            delay(12000)
             slideFromLeft = !slideFromLeft
             crossfadeAlpha = 1f
             delay(3000)
@@ -275,32 +274,16 @@ fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
     )
 
     var currentLineIndex by remember { mutableStateOf(0) }
-    // بالتبادل: true = من تحت، false = من اليمين
     var slideUp by remember { mutableStateOf(true) }
-
-    // offset للكلمة
-    val lineOffsetY by animateIntAsState(
-        targetValue = 0,
-        animationSpec = tween(600, easing = FastOutSlowInEasing),
-        label = "lineY"
-    )
-    val lineOffsetX by animateIntAsState(
-        targetValue = 0,
-        animationSpec = tween(600, easing = FastOutSlowInEasing),
-        label = "lineX"
-    )
-
     var lineVisible by remember { mutableStateOf(true) }
+
     LaunchedEffect(Unit) {
         while (true) {
-            delay(11000) // كل كلمة 11 ثانية
-            // اخفاء
+            delay(11000)
             lineVisible = false
             delay(400)
-            // جهز الكلمة الجاية
             currentLineIndex = (currentLineIndex + 1) % azanLines.size
             slideUp = !slideUp
-            // ظهور
             lineVisible = true
         }
     }
@@ -385,22 +368,22 @@ fun AzanFullScreenContent(prayerName: String, onStop: () -> Unit) {
                 visible = lineVisible,
                 enter = if (slideUp)
                     slideInVertically(
-                        initialOffsetY = { it }, // من تحت لفوق
+                        initialOffsetY = { it },
                         animationSpec = tween(600, easing = FastOutSlowInEasing)
                     ) + fadeIn(tween(600))
                 else
                     slideInHorizontally(
-                        initialOffsetX = { it }, // من اليمين لليسار
+                        initialOffsetX = { it },
                         animationSpec = tween(600, easing = FastOutSlowInEasing)
                     ) + fadeIn(tween(600)),
                 exit = if (slideUp)
                     slideOutVertically(
-                        targetOffsetY = { -it }, // يخرج لفوق
+                        targetOffsetY = { -it },
                         animationSpec = tween(400)
                     ) + fadeOut(tween(400))
                 else
                     slideOutHorizontally(
-                        targetOffsetX = { -it }, // يخرج لليسار
+                        targetOffsetX = { -it },
                         animationSpec = tween(400)
                     ) + fadeOut(tween(400))
             ) {
