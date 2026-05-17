@@ -52,9 +52,14 @@ class AzanFullScreenActivity : ComponentActivity() {
     private val azanDoneReceiver = object : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
         if (PrayerAlarmService.isPlaying) return
+        // استأنف الذكر
+        startService(Intent(this@AzanFullScreenActivity, DhikrService::class.java).apply {
+            action = DhikrService.ACTION_RESUME_FOR_AZAN
+        })
         moveTaskToBack(true)
         finish()
     }
+}
 }
 
     private var telephonyManager: TelephonyManager? = null
