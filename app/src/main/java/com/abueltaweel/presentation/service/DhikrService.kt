@@ -62,7 +62,7 @@ if (intent?.action == ACTION_RESUME_FOR_AZAN) {
         currentIndex    = 0
         running         = true
         isRunning       = true
-        scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+        if (!scope.isActive) scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
         
         acquireWakeLock()
         createChannel()
