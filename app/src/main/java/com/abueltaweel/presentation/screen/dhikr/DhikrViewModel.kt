@@ -25,6 +25,7 @@ data class DhikrUiState(
     val intervalMin: Int = 5,
     val volume: Float = 0.8f,
     val isRunning: Boolean = false,
+    val repeatSingle: Boolean = false,
     // ─── وقت التشغيل التلقائي ───
     val autoEnabled: Boolean = false,
     val startHour: Int = 8,
@@ -74,6 +75,7 @@ class DhikrViewModel(app: Application) : AndroidViewModel(app) {
             startMinute   = prefs.getInt(KEY_START_M, 0),
             stopHour      = prefs.getInt(KEY_STOP_H, 22),
             stopMinute    = prefs.getInt(KEY_STOP_M, 0)
+      repeatSingle = prefs.getBoolean("dhikr_repeat_single", false),
         )
     )
     val uiState: StateFlow<DhikrUiState> = _uiState.asStateFlow()
@@ -82,7 +84,11 @@ class DhikrViewModel(app: Application) : AndroidViewModel(app) {
         prefs.edit().putInt(KEY_DHIKR_ID, item.id).apply()
         _uiState.value = _uiState.value.copy(selectedDhikr = item)
     }
-
+fun setRepeatSingle(repeat: Boolean) {
+    prefs.edit().putBoolean("dhikr_repeat_single", repeat).apply()
+    _uiState.value = _uiState.value.copy(repeatSingle = repeat)
+}
+    
     fun setInterval(minutes: Int) {
         val v = minutes.coerceIn(1, 60)
         prefs.edit().putInt(KEY_INTERVAL, v).apply()
@@ -131,8 +137,10 @@ class DhikrViewModel(app: Application) : AndroidViewModel(app) {
         val state = _uiState.value
         context.startForegroundService(
             Intent(context, DhikrService::class.java).apply {
-                putExtra(DhikrService.EXTRA_TEXTS,       allDhikrs.map { it.textAr }.toTypedArray())
-                putExtra(DhikrService.EXTRA_RES_IDS,     allDhikrs.map { it.rawResId }.toIntArray())
+                val resIds = if (state.repeatSingle) intArrayOf(state.selectedDhikr.rawResId) else allDhikrs.map { it.rawResId }.toIntArray()
+                 val texts = if (state.repeatSingle) arrayOf(state.selectedDhikr.textAr) else allDhikrs.map { it.textAr }.toTypedArray()
+                putExtra(DhikrService.EXTRA_TEXTS, texts)
+                putExtra(DhikrService.EXTRA_RES_IDS, resIds)
                 putExtra(DhikrService.EXTRA_VOLUME,      _uiState.value.volume)
                 putExtra(DhikrService.EXTRA_INTERVAL_MINUTES, _uiState.value.intervalMin)
             }
