@@ -131,7 +131,15 @@ finish()
     }
 
     private fun playAzan(prayerName: String) {
-    // PrayerAlarmService شغال أصلاً
+    if (PrayerAlarmService.isPlaying) return
+    val intent = Intent(this, PrayerAlarmService::class.java).apply {
+        putExtra(Constants.PRAYER_NAME_KEY, prayerName)
+    }
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        startForegroundService(intent)
+    } else {
+        startService(intent)
+    }
 }
 
     private fun stopAzan() {
