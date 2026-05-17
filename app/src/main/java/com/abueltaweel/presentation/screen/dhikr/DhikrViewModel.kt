@@ -74,9 +74,9 @@ class DhikrViewModel(app: Application) : AndroidViewModel(app) {
             startHour     = prefs.getInt(KEY_START_H, 8),
             startMinute   = prefs.getInt(KEY_START_M, 0),
             stopHour      = prefs.getInt(KEY_STOP_H, 22),
-            stopMinute    = prefs.getInt(KEY_STOP_M, 0)
-      repeatSingle = prefs.getBoolean("dhikr_repeat_single", false),
-        )
+            stopMinute    = prefs.getInt(KEY_STOP_M, 0),
+        repeatSingle  = prefs.getBoolean("dhikr_repeat_single", false),
+    )
     )
     val uiState: StateFlow<DhikrUiState> = _uiState.asStateFlow()
 
