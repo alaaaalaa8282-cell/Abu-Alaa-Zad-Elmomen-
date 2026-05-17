@@ -115,7 +115,16 @@ if (isInCall()) {
 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
     val focusRequest = android.media.AudioFocusRequest.Builder(
         android.media.AudioManager.AUDIOFOCUS_GAIN
-    ).build()
+    )
+    .setAudioAttributes(
+        android.media.AudioAttributes.Builder()
+            .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
+            .setContentType(android.media.AudioAttributes.CONTENT_TYPE_MUSIC)
+            .build()
+    )
+    .setWillPauseWhenDucked(true)
+    .setOnAudioFocusChangeListener {}
+    .build()
     audioManager.requestAudioFocus(focusRequest)
 } else {
     @Suppress("DEPRECATION")
@@ -124,7 +133,7 @@ if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
         android.media.AudioManager.STREAM_MUSIC,
         android.media.AudioManager.AUDIOFOCUS_GAIN
     )
-}  
+}
             mediaPlayer = MediaPlayer.create(this, resId)?.apply {
                 setVolume(logVol, logVol)
                 setWakeMode(this@DhikrService, PowerManager.PARTIAL_WAKE_LOCK)
