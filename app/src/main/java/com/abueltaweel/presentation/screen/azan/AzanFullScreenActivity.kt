@@ -50,16 +50,10 @@ import androidx.compose.animation.core.animateIntAsState
 class AzanFullScreenActivity : ComponentActivity() {
 
     private val azanDoneReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-    setShowWhenLocked(false)
-    setTurnScreenOn(false)
+override fun onReceive(context: Context?, intent: Intent?) {
+    moveTaskToBack(true)
+    finish()
 }
-window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-stopAzan()
-moveTaskToBack(true)
-finish()
-        }
     }
 
     private var telephonyManager: TelephonyManager? = null
