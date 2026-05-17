@@ -47,6 +47,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.animation.core.animateIntAsState
 import com.abueltaweel.presentation.service.DhikrService
+
 class AzanFullScreenActivity : ComponentActivity() {
 
     private val azanDoneReceiver = object : BroadcastReceiver() {
@@ -172,7 +173,7 @@ finish()
         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         runCatching { unregisterReceiver(azanDoneReceiver) }
     }
-import com.abueltaweel.presentation.service.DhikrService
+
     override fun onDestroy() {
         unregisterPhoneStateListener()
         callTimeoutHandler.removeCallbacksAndMessages(null)
