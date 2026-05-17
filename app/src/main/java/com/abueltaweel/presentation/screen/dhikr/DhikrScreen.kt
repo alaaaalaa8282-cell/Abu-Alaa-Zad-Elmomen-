@@ -185,29 +185,29 @@ fun DhikrScreen(viewModel: DhikrViewModel = koinViewModel()) {
                         fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
                 }
             }
-          // ─── تكرار ذكر محدد ───
-item {
-    Spacer(Modifier.height(4.dp))
-    Row(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
-            .background(Color(0xFF1B3A4B)).padding(14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Column {
-            Text("تكرار الذكر المحدد فقط", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Medium)
-            Text(
-                if (state.repeatSingle) "يكرر: ${state.selectedDhikr.textAr}" else "يشغل كل الأذكار بالتسلسل",
-                color = Color(0xFFB0BEC5), fontSize = 12.sp
-            )
-        }
-        Switch(
-            checked = state.repeatSingle,
-            onCheckedChange = { if (!state.isRunning) viewModel.setRepeatSingle(it) },
-            colors = SwitchDefaults.colors(checkedThumbColor = Color.Black, checkedTrackColor = Color(0xFFC9A84C))
-        )
-    }
-}
+      // ─── تكرار ذكر محدد ───
+            item {
+                Spacer(Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
+                        .background(Color(0xFF1B3A4B)).padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text("تكرار الذكر المحدد فقط", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+                        Text(
+                            if (state.repeatSingle) "يكرر: ${state.selectedDhikr.textAr}" else "يشغل كل الأذكار بالتسلسل",
+                            color = Color(0xFFB0BEC5), fontSize = 12.sp
+                        )
+                    }
+                    Switch(
+                        checked = state.repeatSingle,
+                        onCheckedChange = { if (!state.isRunning) viewModel.setRepeatSingle(it) },
+                        colors = SwitchDefaults.colors(checkedThumbColor = Color.Black, checkedTrackColor = Color(0xFFC9A84C))
+                    )
+                }
+            }
             
             // ─── الفترة بين كل ذكر ───
             item {
