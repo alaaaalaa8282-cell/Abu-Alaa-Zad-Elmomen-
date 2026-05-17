@@ -173,7 +173,12 @@ finish()
         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         runCatching { unregisterReceiver(azanDoneReceiver) }
     }
-
+override fun onStop() {
+    super.onStop()
+    if (!PrayerAlarmService.isPlaying) {
+        finish()
+    }
+}
     override fun onDestroy() {
         unregisterPhoneStateListener()
         callTimeoutHandler.removeCallbacksAndMessages(null)
