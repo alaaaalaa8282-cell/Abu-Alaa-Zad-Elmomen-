@@ -29,6 +29,9 @@ class DhikrService : Service() {
     private var currentIndex    = 0
     private var running         = false
 
+    // NEW: متغير لحفظ الـ audioFocusRequest عشان نقدر نردها بعد الذكر
+    private var audioFocusRequest: android.media.AudioFocusRequest? = null
+
     override fun onBind(intent: Intent?) = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -38,25 +41,27 @@ class DhikrService : Service() {
         }
 
         if (intent?.action == ACTION_PAUSE_FOR_AZAN) {
-    pausedForAzan = true
-    mediaPlayer?.stop()
-    mediaPlayer?.release()
-    mediaPlayer = null
-    // شغّل الـ interval في coroutine مستقل
-    scope.launch {
-        waitMinutes(intervalMinutes)
-        if (running && !pausedForAzan) {
-            currentIndex = (currentIndex + 1) % dhikrResIds.size
-            playCurrentDhikr()
-        }
-    }
-    return START_STICKY
+            pausedForAzan = true
+            // وقّف الذكر الحالي وحرّره — الذكر الجاي هيشتغل في وقته بعد الـ interval
+            mediaPlayer?.stop()
+            mediaPlayer?.release()
+            mediaPlayer = null
+            // شغّل الـ interval في coroutine مستقل
+            scope.launch {
+                waitMinutes(intervalMinutes)
+                if (running && !pausedForAzan) {
+                    currentIndex = (currentIndex + 1) % dhikrResIds.size
+                    playCurrentDhikr()
+                }
+            }
+            return START_STICKY
         }
 
         if (intent?.action == ACTION_RESUME_FOR_AZAN) {
-    pausedForAzan = false
-    return START_STICKY
-}
+            pausedForAzan = false
+            // مش بنعمل حاجة — الـ coroutine شغال وهيشغّل الذكر الجاي في وقته
+            return START_STICKY
+        }
 
         if (intent?.action == ACTION_UPDATE_VOLUME) {
             volume = intent.getFloatExtra(EXTRA_VOLUME, volume)
@@ -104,6 +109,20 @@ class DhikrService : Service() {
         }
     }
 
+    // NEW: رجّع الأولوية الصوتية للتطبيقات التانية
+    private fun abandonAudioFocus() {
+        try {
+            val am = getSystemService(AUDIO_SERVICE) as android.media.AudioManager
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                audioFocusRequest?.let { am.abandonAudioFocusRequest(it) }
+                audioFocusRequest = null
+            } else {
+                @Suppress("DEPRECATION")
+                am.abandonAudioFocus(null)
+            }
+        } catch (_: Exception) {}
+    }
+
     private fun playCurrentDhikr() {
         if (!running || dhikrResIds.isEmpty()) return
         if (isInCall()) {
@@ -134,6 +153,8 @@ class DhikrService : Service() {
                     .setWillPauseWhenDucked(true)
                     .setOnAudioFocusChangeListener {}
                     .build()
+                // NEW: احفظ الـ focusRequest عشان نقدر نردها بعدين
+                audioFocusRequest = focusRequest
                 audioManager.requestAudioFocus(focusRequest)
             } else {
                 @Suppress("DEPRECATION")
@@ -148,6 +169,8 @@ class DhikrService : Service() {
                 setWakeMode(this@DhikrService, PowerManager.PARTIAL_WAKE_LOCK)
                 setOnCompletionListener {
                     mediaPlayer?.release()
+                    // NEW: رجّع الأولوية الصوتية عشان اليوتيوب وغيره يرجع يشتغل
+                    abandonAudioFocus()
                     scope.launch {
                         waitMinutes(intervalMinutes)
                         if (running) {
@@ -188,6 +211,8 @@ class DhikrService : Service() {
             mediaPlayer?.release()
         } catch (_: Exception) {}
         mediaPlayer = null
+        // NEW: رجّع الأولوية الصوتية عند الإيقاف
+        abandonAudioFocus()
         releaseWakeLock()
         try { stopForeground(true) } catch (_: Exception) {}
         stopSelf()
@@ -264,6 +289,8 @@ class DhikrService : Service() {
         scope.cancel()
         try { mediaPlayer?.release() } catch (_: Exception) {}
         mediaPlayer = null
+        // NEW: رجّع الأولوية الصوتية عند destroy
+        abandonAudioFocus()
         releaseWakeLock()
         super.onDestroy()
     }
