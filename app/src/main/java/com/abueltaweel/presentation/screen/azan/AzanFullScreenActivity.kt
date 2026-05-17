@@ -50,11 +50,12 @@ import androidx.compose.animation.core.animateIntAsState
 class AzanFullScreenActivity : ComponentActivity() {
 
     private val azanDoneReceiver = object : BroadcastReceiver() {
-override fun onReceive(context: Context?, intent: Intent?) {
-    moveTaskToBack(true)
-    finish()
-}
+    override fun onReceive(context: Context?, intent: Intent?) {
+        if (PrayerAlarmService.isPlaying) return
+        moveTaskToBack(true)
+        finish()
     }
+}
 
     private var telephonyManager: TelephonyManager? = null
     private var athanPlayed = false
