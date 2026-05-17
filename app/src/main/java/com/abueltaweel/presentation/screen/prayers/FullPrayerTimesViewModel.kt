@@ -1,310 +1,537 @@
-@file:OptIn(ExperimentalTime::class)
-
 package com.abueltaweel.presentation.screen.prayers
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.app.AlarmManager
+import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
 import android.os.Build
-import android.util.Log
-import androidx.lifecycle.viewModelScope
+import android.os.PowerManager
+import android.provider.Settings
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import com.abueltaweel.R
-import com.abueltaweel.domain.entity.location.Location
-import com.abueltaweel.domain.entity.prayer.Prayer
-import com.abueltaweel.domain.model.RescheduleResult
-import com.abueltaweel.domain.repository.prayer.PrayerNotificationsRepository
-import com.abueltaweel.domain.repository.prayer.PrayerRepository
-import com.abueltaweel.domain.repository.settings.SettingsRepository
-import com.abueltaweel.domain.usecase.PrayerSchedulingUseCase
-import com.abueltaweel.presentation.base.BaseViewModel
-import com.abueltaweel.presentation.screen.prayers.component.toPrayerName
-import com.abueltaweel.presentation.utils.convertMillisToHMS
-import com.abueltaweel.presentation.utils.getTimeDifference
-import com.abueltaweel.presentation.utils.isIgnoringBatteryOptimizations
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atStartOfDayIn
-import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Clock
+import com.abueltaweel.design_system.component.AppBar
+import com.abueltaweel.design_system.theme.Theme
+import com.abueltaweel.presentation.base.localizedString
+import com.abueltaweel.presentation.screen.prayers.component.NextPrayerCard
+import com.abueltaweel.presentation.screen.prayers.component.PrayerItem
+import com.abueltaweel.presentation.utils.CollectEffect
+import org.koin.androidx.compose.koinViewModel
 import kotlin.time.ExperimentalTime
+import androidx.compose.ui.graphics.Color
 
-class FullPrayerTimesViewModel(
-    private val prayerRepository: PrayerRepository,
-    private val settingsRepository: SettingsRepository,
-    private val notificationsRepository: PrayerNotificationsRepository,
-    private val prayerSchedulingUseCase: PrayerSchedulingUseCase,
-    private val context: Context
-) : BaseViewModel<FullPrayerTimesUiState, FullPrayerTimesEffect>(FullPrayerTimesUiState()),
-    FullPrayerTimeInteractionListener {
-    private var countdownJob: Job? = null
-    private val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-    private var exactAlarmRequested = false
-    private var batteryOptRequested = false
-    private var autoStartRequested = false
-    private val isXiaomiDevice: Boolean
-        get() = android.os.Build.MANUFACTURER.equals("Xiaomi", ignoreCase = true)
-    private val _countdownTime =
-        MutableStateFlow(FullPrayerTimesUiState.TimeUiState("00", "00", "00"))
-    val countdownTime: StateFlow<FullPrayerTimesUiState.TimeUiState> = _countdownTime.asStateFlow()
+// ── ألوان المؤذن الإلكتروني ──────────────────────────────────────────────────
+val MosqueCreamy   = Color(0xFFF5E6C0)
+val MosqueBrown    = Color(0xFF6B2A0A)
+val MosqueGold     = Color(0xFFC9A84C)
+val MosqueDarkBg   = Color(0xFF3D1A00)
+val MosqueBorder   = Color(0xFF8B4513)
 
-    init {
-        observePrayerNotifications()
-        getDailyPrayers()
-        scheduleAlarmsIfNeeded()
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+@SuppressLint("BatteryLife")
+@ExperimentalTime
+@Composable
+fun FullPrayerTimesViewScreen(
+    navController: NavController,
+    viewModel: FullPrayerTimesViewModel = koinViewModel()
+) {
+    val state by viewModel.screenState.collectAsStateWithLifecycle()
+    val countdownTime by viewModel.countdownTime.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val notificationLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (!granted) {
+            Toast.makeText(context, "Notification permission denied", Toast.LENGTH_SHORT).show()
+        }
     }
 
-    private fun scheduleAlarmsIfNeeded() {
-        viewModelScope.launch {
-            combine(
-                settingsRepository.observePrayerSettings().distinctUntilChanged(),
-                notificationsRepository.observeAll().distinctUntilChanged()
-            ) { settings, notifications ->
-                settings to notifications
+    CollectEffect(viewModel.effect) { effect ->
+        when (effect) {
+            FullPrayerTimesEffect.RequestExactAlarm -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    context.startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM))
+                }
             }
-                .collect {
-                    val result = prayerSchedulingUseCase.rescheduleTodayPrayerAlarms()
-                    Log.d("AZAN_DEBUG", "Reschedule triggered $result")
-
-                    if (result == RescheduleResult.PermissionRequired && !exactAlarmRequested) {
-                        exactAlarmRequested = true
-                        sendEffect(FullPrayerTimesEffect.RequestExactAlarm)
+            FullPrayerTimesEffect.RequestNotificationPermission -> {
+                notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+            FullPrayerTimesEffect.RequestIgnoreBatteryOptimization -> {
+                context.startActivity(
+                    Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                        data = "package:${context.packageName}".toUri()
                     }
-                }
-        }
-    }
-    fun onScreenOpened() {
-    }
-    private fun getDailyPrayers() {
-        tryToCall(
-            block = ::getDailyPrayersBlock,
-            onSuccess = ::onGetDailyPrayersSuccess,
-            onError = {}
-        )
-    }
-
-    private suspend fun getDailyPrayersBlock(): List<FullPrayerTimesUiState.PrayerUiState> {
-        val settings = settingsRepository.observeAppSettings().first().prayerSettings
-        val prayers = prayerRepository.getDailyPrayers(
-            madhab = settings.madhab,
-            calculationMethod = settings.calculationMethod,
-            location = Location(
-                longitude = settings.location.longitude,
-                latitude = settings.location.latitude,
-            ),
-            date = today
-        )
-        val zone = TimeZone.currentSystemDefault()
-        return prayers.map { it.toPrayerUiState(zone = zone) }
-    }
-
-    private fun onGetDailyPrayersSuccess(prayers: List<FullPrayerTimesUiState.PrayerUiState>) {
-        val now = Clock.System.now().toEpochMilliseconds()
-        val updatedPrayers = calculatePrayerProgress(prayers, now)
-
-        updateState { currentState ->
-            currentState.copy(prayers = updatedPrayers)
-        }
-        getNextPrayer()
-    }
-
-    private fun getNextPrayer() {
-        tryToCall(
-            block = ::getNextPrayerBlock,
-            onSuccess = ::onGetNextPrayerSuccess,
-            onError = {
-                updateState { currentState ->
-                    currentState.copy(nextPrayer = FullPrayerTimesUiState.PrayerUiState())
-                }
-            }
-        )
-    }
-
-    private suspend fun getNextPrayerBlock(): Prayer {
-        val settings = settingsRepository.observeAppSettings().first().prayerSettings
-        val nextPrayer = prayerRepository.getNextPrayer(
-            instant = Clock.System.now(),
-            madhab = settings.madhab,
-            calculationMethod = settings.calculationMethod,
-            location = Location(
-                longitude = settings.location.longitude,
-                latitude = settings.location.latitude,
-            ),
-            date = today
-        )
-        return nextPrayer
-    }
-
-    private fun onGetNextPrayerSuccess(prayer: Prayer) {
-        val zone = TimeZone.currentSystemDefault()
-        val nextUi = prayer.toPrayerUiState(zone).copy(isUpComing = true)
-
-        updateState { current ->
-            val updatedList = current.prayers.map {
-                it.copy(isUpComing = (it.name == nextUi.name))
-            }
-
-            current.copy(
-                prayers = updatedList,
-                nextPrayer = nextUi
-            )
-
-        }
-        val nextInstantMillis = prayer.time.toEpochMilliseconds()
-        startCountdown(nextInstantMillis)
-    }
-
-    private fun startCountdown(nextPrayerMillis: Long) {
-        countdownJob?.cancel()
-        countdownJob = viewModelScope.launch(Dispatchers.IO) {
-            while (true) {
-                val diff = getTimeDifference(nextPrayerMillis)
-                if (diff <= 0) {
-                    _countdownTime.value = FullPrayerTimesUiState.TimeUiState("00", "00", "00")
-                    getNextPrayer()
-                    break
-                }
-                val time = convertMillisToHMS(diff)
-                _countdownTime.value = FullPrayerTimesUiState.TimeUiState(
-                    hours = time.first,
-                    minutes = time.second,
-                    seconds = time.third
                 )
-                delay(1000)
+            }
+            FullPrayerTimesEffect.RequestXiaomiAutoStart -> {
+                openXiaomiAutoStart(context)
+            }
+            FullPrayerTimesEffect.NavigateBack -> {
+                navController.popBackStack()
             }
         }
     }
 
-
-    private fun updateCountdownUi(time: Triple<String, String, String>) {
-        updateState { current ->
-            current.copy(
-                time = FullPrayerTimesUiState.TimeUiState(
-                    hours = time.first,
-                    minutes = time.second,
-                    seconds = time.third
-                )
-            )
-        }
+    LaunchedEffect(Unit) {
+        viewModel.onScreenOpened()
     }
 
-    private fun handleCountdownFinished() {
-        updateState { current ->
-            current.copy(
-                time = FullPrayerTimesUiState.TimeUiState("00", "00", "00")
-            )
-        }
-    }
+    // ── الإطار الخارجي الداكن ──────────────────────────────────────────────
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MosqueDarkBg)
+            .windowInsetsPadding(WindowInsets.systemBars)
+    ) {
+        // ── الإطار الداخلي مع الزخارف ──────────────────────────────────────
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(6.dp)
+                .border(3.dp, MosqueBorder, RoundedCornerShape(4.dp))
+                .border(6.dp, MosqueGold.copy(alpha = 0.3f), RoundedCornerShape(4.dp))
+        ) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MosqueCreamy)
+            ) {
+                // ── القوس في الأعلى ──────────────────────────────────────────
+                item {
+                    MosqueArchHeader()
+                }
 
-    private fun observePrayerNotifications() {
-        viewModelScope.launch {
-            notificationsRepository.observeAll().collect { map ->
-                updateState { current ->
-                    val updatedPrayers = current.prayers.map { prayer ->
-                        val prayerName = prayer.name.toPrayerName()
-                        prayer.copy(
-                            isNotificationEnabled = map[prayerName] ?: false
+                // ── عنوان الصفحة ──────────────────────────────────────────────
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(MosqueBrown)
+                            .padding(vertical = 6.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = localizedString(R.string.prayer_times),
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MosqueGold,
+                            letterSpacing = 2.sp
                         )
                     }
+                }
 
-                    current.copy(
-                        prayers = updatedPrayers
+                // ── فاصل ذهبي ────────────────────────────────────────────────
+                item { IslamicDivider() }
+
+                // ── بطاقة الصلاة القادمة ──────────────────────────────────────
+                item {
+                    NextPrayerCard(
+                        state = state,
+                        countdownTime = countdownTime,
                     )
                 }
-            }
-        }
-    }
 
-    fun Prayer.PrayerName.toStringRes(): Int = when (this) {
-        Prayer.PrayerName.FAJR -> R.string.fajr
-        Prayer.PrayerName.ZUHR -> R.string.dhuhr
-        Prayer.PrayerName.ASR -> R.string.asr
-        Prayer.PrayerName.MAGHRIB -> R.string.maghrib
-        Prayer.PrayerName.ISHA -> R.string.isha
-    }
+                // ── فاصل ذهبي ────────────────────────────────────────────────
+                item { IslamicDivider() }
 
-    fun calculatePrayerProgress(
-        prayers: List<FullPrayerTimesUiState.PrayerUiState>,
-        nowMillis: Long
-    ): List<FullPrayerTimesUiState.PrayerUiState> {
-        val todayStartMillis = prayers.firstOrNull()?.instantTime
-            ?.toLocalDateTime(TimeZone.currentSystemDefault())
-            ?.date
-            ?.atStartOfDayIn(TimeZone.currentSystemDefault())
-            ?.toEpochMilliseconds() ?: 0L
-
-        return prayers.mapIndexed { index, prayer ->
-            val prayerTimeMillis = prayer.instantTime?.toEpochMilliseconds() ?: 0L
-            val previousPrayerTimeMillisCorrected = if (index > 0) {
-                prayers[index - 1].instantTime?.toEpochMilliseconds() ?: 0L
-            } else {
-                todayStartMillis
-            }
-
-            val progress = when {
-                nowMillis >= prayerTimeMillis -> 1f
-                nowMillis < previousPrayerTimeMillisCorrected -> 0f
-                else -> {
-                    val elapsed = nowMillis - previousPrayerTimeMillisCorrected
-                    val duration = prayerTimeMillis - previousPrayerTimeMillisCorrected
-                    (elapsed.toFloat() / duration.toFloat()).coerceIn(0f, 1f)
+                // ── الصلوات ───────────────────────────────────────────────────
+                items(state.prayers) {
+                    PrayerItem(
+                        prayerNameResource = it.name,
+                        prayerTime = it.time.time,
+                        isAm = it.time.isAm,
+                        isNextPrayer = it.isUpComing,
+                        isNotificationEnabled = it.isNotificationEnabled,
+                        onNotificationClick = { prayerName, enabled ->
+                            viewModel.onClickEnablePrayer(prayerName, enabled)
+                        }
+                    )
                 }
+
+                // ── فاصل ذهبي ────────────────────────────────────────────────
+                item { IslamicDivider() }
+
+                // ── زخرفة سفلية ───────────────────────────────────────────────
+                item { BottomIslamicDecoration() }
             }
 
-            prayer.copy(progress = progress)
+            // ── أعمدة على الجانبين ────────────────────────────────────────────
+            MosqueColumns()
         }
     }
+}
 
-    override fun onClickBack() {
-        sendEffect(FullPrayerTimesEffect.NavigateBack)
-    }
-
-    override fun onClickEnablePrayer(
-        prayerName: Prayer.PrayerName,
-        isEnabled: Boolean
+// ── قوس المحراب في الأعلى ────────────────────────────────────────────────────
+@Composable
+fun MosqueArchHeader() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(200.dp)
+            .background(MosqueBrown)
     ) {
-        if (isEnabled) {
-            checkPermissionsBeforeEnable()
+        // زخارف الكورنرات
+        CornerDecoration(modifier = Modifier.align(Alignment.TopStart))
+        CornerDecoration(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .graphicsLayer { scaleX = -1f }
+        )
+
+        // القوس الكريمي
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            drawMosqueArch(size)
         }
-        tryToCall(
-            block = {
-                notificationsRepository.setPrayerEnabled(
-                    prayer = prayerName,
-                    enabled = isEnabled
-                )
-            },
-            onSuccess = {
-            },
-            onError = {}
+
+        // الدعاء جوا القوس
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(0.62f)
+                .align(Alignment.Center)
+                .padding(top = 16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "اللهم اغفر للمرحوم\nمحمد عبد العظيم طرفايه\nوارحمه وعافه واعف عنه\nواجعل قبره روضة من رياض الجنة\nواغفر له ذنوبه وزد حسناته",
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF3D1A00),
+                textAlign = TextAlign.Center,
+                lineHeight = 18.sp
+            )
+        }
+    }
+}
+
+fun DrawScope.drawMosqueArch(size: Size) {
+    val archWidth  = size.width * 0.65f
+    val archLeft   = (size.width - archWidth) / 2f
+    val archBottom = size.height + 20f
+    val archRadius = archWidth / 2f
+
+    // الجزء المستطيل من الأسفل
+    drawRect(
+        color = Color(0xFFF5E6C0),
+        topLeft = Offset(archLeft, size.height * 0.45f),
+        size = Size(archWidth, size.height * 0.6f)
+    )
+
+    // القبة نصف الدائرة
+    drawArc(
+        color = Color(0xFFF5E6C0),
+        startAngle = 180f,
+        sweepAngle = 180f,
+        useCenter = true,
+        topLeft = Offset(archLeft, size.height * 0.45f - archRadius),
+        size = Size(archWidth, archWidth)
+    )
+
+    // حدود القوس الذهبية
+    drawArc(
+        color = Color(0xFFC9A84C),
+        startAngle = 180f,
+        sweepAngle = 180f,
+        useCenter = false,
+        topLeft = Offset(archLeft, size.height * 0.45f - archRadius),
+        size = Size(archWidth, archWidth),
+        style = Stroke(width = 3.dp.toPx())
+    )
+
+    // خطوط جانبية للقوس
+    drawLine(
+        color = Color(0xFFC9A84C),
+        start = Offset(archLeft, size.height * 0.45f),
+        end = Offset(archLeft, size.height),
+        strokeWidth = 3.dp.toPx()
+    )
+    drawLine(
+        color = Color(0xFFC9A84C),
+        start = Offset(archLeft + archWidth, size.height * 0.45f),
+        end = Offset(archLeft + archWidth, size.height),
+        strokeWidth = 3.dp.toPx()
+    )
+
+    // نقاط زخرفية على القوس
+    val centerX = size.width / 2f
+    val centerY = size.height * 0.45f
+    for (i in 0..8) {
+        val angle = Math.PI * i / 8.0
+        val x = (centerX - archRadius * Math.cos(angle)).toFloat()
+        val y = (centerY - archRadius * Math.sin(angle)).toFloat()
+        drawCircle(
+            color = Color(0xFFC9A84C),
+            radius = 4.dp.toPx(),
+            center = Offset(x, y)
         )
     }
+}
 
-    private fun checkPermissionsBeforeEnable() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+// ── زخرفة الكورنر ────────────────────────────────────────────────────────────
+@Composable
+fun CornerDecoration(modifier: Modifier = Modifier) {
+    Canvas(
+        modifier = modifier
+            .size(70.dp)
+    ) {
+        val s = size.minDimension
 
-            sendEffect(FullPrayerTimesEffect.RequestNotificationPermission)
-            return
+        // مربعات متداخلة
+        for (i in 0..2) {
+            val inset = i * 6.dp.toPx()
+            drawRect(
+                color = Color(0xFFC9A84C).copy(alpha = 1f - i * 0.25f),
+                topLeft = Offset(inset, inset),
+                size = Size(s - inset * 2, s - inset * 2),
+                style = Stroke(width = 1.5.dp.toPx())
+            )
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-            if (!alarmManager.canScheduleExactAlarms()) {
-                sendEffect(FullPrayerTimesEffect.RequestExactAlarm)
-                return
+
+        // خطوط قطرية
+        drawLine(
+            color = Color(0xFFC9A84C),
+            start = Offset(0f, 0f),
+            end = Offset(s * 0.5f, 0f),
+            strokeWidth = 2.dp.toPx()
+        )
+        drawLine(
+            color = Color(0xFFC9A84C),
+            start = Offset(0f, 0f),
+            end = Offset(0f, s * 0.5f),
+            strokeWidth = 2.dp.toPx()
+        )
+
+        // دائرة زخرفية
+        drawCircle(
+            color = Color(0xFFC9A84C),
+            radius = 6.dp.toPx(),
+            center = Offset(s * 0.25f, s * 0.25f),
+            style = Stroke(width = 1.5.dp.toPx())
+        )
+        drawCircle(
+            color = Color(0xFFC9A84C),
+            radius = 2.dp.toPx(),
+            center = Offset(s * 0.25f, s * 0.25f)
+        )
+    }
+}
+
+// ── فاصل إسلامي ذهبي ─────────────────────────────────────────────────────────
+@Composable
+fun IslamicDivider() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 10.dp, vertical = 4.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(16.dp)
+        ) {
+            val midY = size.height / 2f
+            val midX = size.width / 2f
+
+            // خط رئيسي
+            drawLine(
+                color = Color(0xFFC9A84C),
+                start = Offset(0f, midY),
+                end = Offset(size.width, midY),
+                strokeWidth = 1.dp.toPx()
+            )
+
+            // نجمة وسط
+            val starR = 5.dp.toPx()
+            for (i in 0..3) {
+                val angle = Math.PI * i / 4.0
+                drawLine(
+                    color = Color(0xFFC9A84C),
+                    start = Offset(
+                        (midX - starR * Math.cos(angle)).toFloat(),
+                        (midY - starR * Math.sin(angle)).toFloat()
+                    ),
+                    end = Offset(
+                        (midX + starR * Math.cos(angle)).toFloat(),
+                        (midY + starR * Math.sin(angle)).toFloat()
+                    ),
+                    strokeWidth = 1.5.dp.toPx()
+                )
+            }
+
+            // نقاط جانبية
+            val dots = listOf(0.2f, 0.3f, 0.7f, 0.8f)
+            dots.forEach { pos ->
+                drawCircle(
+                    color = Color(0xFFC9A84C),
+                    radius = 2.dp.toPx(),
+                    center = Offset(size.width * pos, midY)
+                )
             }
         }
-        if (!isIgnoringBatteryOptimizations(context)) {
-            sendEffect(FullPrayerTimesEffect.ShowBatteryOptimizationDialog)
+    }
+}
+
+// ── أعمدة المسجد على الجانبين ─────────────────────────────────────────────────
+@Composable
+fun MosqueColumns() {
+    Row(
+        modifier = Modifier.fillMaxSize(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        // عمود يسار
+        Canvas(
+            modifier = Modifier
+                .width(8.dp)
+                .fillMaxHeight()
+        ) {
+            val colW = size.width
+            // خطوط العمود
+            for (i in 0..20) {
+                val y = size.height * i / 20f
+                drawLine(
+                    color = Color(0xFF8B4513).copy(alpha = 0.5f),
+                    start = Offset(0f, y),
+                    end = Offset(colW, y),
+                    strokeWidth = 0.5.dp.toPx()
+                )
+            }
+            drawRect(
+                color = Color(0xFF8B4513),
+                style = Stroke(width = 1.dp.toPx())
+            )
+        }
+
+        // عمود يمين
+        Canvas(
+            modifier = Modifier
+                .width(8.dp)
+                .fillMaxHeight()
+        ) {
+            val colW = size.width
+            for (i in 0..20) {
+                val y = size.height * i / 20f
+                drawLine(
+                    color = Color(0xFF8B4513).copy(alpha = 0.5f),
+                    start = Offset(0f, y),
+                    end = Offset(colW, y),
+                    strokeWidth = 0.5.dp.toPx()
+                )
+            }
+            drawRect(
+                color = Color(0xFF8B4513),
+                style = Stroke(width = 1.dp.toPx())
+            )
+        }
+    }
+}
+
+// ── زخرفة سفلية ───────────────────────────────────────────────────────────────
+@Composable
+fun BottomIslamicDecoration() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(40.dp)
+            .background(MosqueBrown),
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val midY = size.height / 2f
+            // نمط هندسي متكرر
+            val step = 20.dp.toPx()
+            var x = step / 2
+            while (x < size.width) {
+                drawCircle(
+                    color = Color(0xFFC9A84C),
+                    radius = 3.dp.toPx(),
+                    center = Offset(x, midY)
+                )
+                drawLine(
+                    color = Color(0xFFC9A84C).copy(alpha = 0.5f),
+                    start = Offset(x - step / 2, midY),
+                    end = Offset(x + step / 2, midY),
+                    strokeWidth = 1.dp.toPx()
+                )
+                x += step
+            }
+        }
+    }
+}
+
+fun openXiaomiAutoStart(context: Context) {
+    try {
+        val intent = Intent().apply {
+            component = ComponentName(
+                "com.miui.securitycenter",
+                "com.miui.permcenter.autostart.AutoStartManagementActivity"
+            )
+        }
+        context.startActivity(intent)
+    } catch (e: Exception) {}
+}
+
+@SuppressLint("BatteryLife")
+suspend fun checkAndRequestPermissions(context: Context) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        if (!alarmManager.canScheduleExactAlarms()) {
+            context.startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM))
             return
         }
-        if (isXiaomiDevice) {
-            sendEffect(FullPrayerTimesEffect.RequestXiaomiAutoStart)
-        }
+    }
+
+    val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+    if (!powerManager.isIgnoringBatteryOptimizations(context.packageName)) {
+        context.startActivity(
+            Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                data = "package:${context.packageName}".toUri()
+            }
+        )
+        return
+    }
+
+    if (Build.MANUFACTURER.equals("Xiaomi", ignoreCase = true)) {
+        try {
+            val intent = Intent().apply {
+                component = ComponentName(
+                    "com.miui.securitycenter",
+                    "com.miui.permcenter.autostart.AutoStartManagementActivity"
+                )
+            }
+            context.startActivity(intent)
+        } catch (_: Exception) {}
     }
 }
