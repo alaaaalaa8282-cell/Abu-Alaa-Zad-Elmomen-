@@ -110,12 +110,7 @@ class AzanFullScreenActivity : ComponentActivity() {
 
         setContent {
             AzanFullScreenContent(prayerName = prayerName, onStop = {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-    setShowWhenLocked(false)
-    setTurnScreenOn(false)
-}
-window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-stopAzan()
+                stopAzan()
 moveTaskToBack(true)
 finish()
             })
@@ -132,15 +127,8 @@ finish()
     }
 
     private fun playAzan(prayerName: String) {
-        val intent = Intent(this, PrayerAlarmService::class.java).apply {
-            putExtra(Constants.PRAYER_NAME_KEY, prayerName)
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(intent)
-        } else {
-            startService(intent)
-        }
-    }
+    // PrayerAlarmService شغال أصلاً
+}
 
     private fun stopAzan() {
         startService(Intent(this, PrayerAlarmService::class.java).apply {
