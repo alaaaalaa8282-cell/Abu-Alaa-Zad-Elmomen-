@@ -220,7 +220,7 @@ class PrayerAlarmService : Service() {
             prepare()
             start()
             setOnCompletionListener {
-                isPlaying = false
+                PrayerAlarmService.isPlaying = false
                 if (DhikrService.isRunning) {
                     startService(Intent(this@PrayerAlarmService, DhikrService::class.java).apply {
                         action = DhikrService.ACTION_RESUME_FOR_AZAN
