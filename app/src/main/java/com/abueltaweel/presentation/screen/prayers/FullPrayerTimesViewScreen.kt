@@ -1,4 +1,4 @@
-```kotlin
+
 package com.abueltaweel.presentation.screen.prayers
 
 import android.Manifest
