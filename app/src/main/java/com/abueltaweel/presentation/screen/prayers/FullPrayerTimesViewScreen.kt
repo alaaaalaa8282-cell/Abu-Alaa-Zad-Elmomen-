@@ -55,6 +55,20 @@ import org.koin.androidx.compose.koinViewModel
 import kotlin.time.ExperimentalTime
 
 // ════════════════════════════════════════════════════════════════════════════
+//  MOSQUE COLORS — تعريف الألوان المستخدمة في التصميم الثيم الإسلامي للمؤذن
+// ════════════════════════════════════════════════════════════════════════════
+object MosqueColors {
+    val DarkBg      = Color(0xFF1E1E1E)
+    val Border      = Color(0xFF8B4513)
+    val Gold        = Color(0xFFC9A84C)
+    val Creamy      = Color(0xFFF5E6C0)
+    val Brown       = Color(0xFF3D1A00)
+    val LedBg       = Color(0xFF000000)
+    val LedGreen    = Color(0xFF00FF00)
+    val LedRed      = Color(0xFFFF0000)
+}
+
+// ════════════════════════════════════════════════════════════════════════════
 //  EQAMA OFFSETS — ثابتة مأخوذة من المؤذن الإلكتروني
 // ════════════════════════════════════════════════════════════════════════════
 object EqamaOffsets {
@@ -119,7 +133,7 @@ fun FullPrayerTimesViewScreen(
                 )
             FullPrayerTimesEffect.RequestXiaomiAutoStart -> openXiaomiAutoStart(context)
             FullPrayerTimesEffect.NavigateBack           -> navController.popBackStack()
-            else -> {} // لمعالجة الحالات الأخرى إن وجدت
+            else -> {}
         }
     }
     
@@ -210,7 +224,7 @@ fun FullPrayerTimesViewScreen(
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-//  COMPOSABLES  (كلها private)
+//  COMPOSABLES (مع تصحيح الكلمات والخصوصية والكومبوزابل)
 // ════════════════════════════════════════════════════════════════════════════
 @Composable
 private fun PrayerTableHeader() {
