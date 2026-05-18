@@ -9,6 +9,8 @@ import android.content.Intent
 import android.media.MediaPlayer
 import android.os.Build
 import android.os.PowerManager
+import android.telephony.PhoneStateListener
+import android.telephony.TelephonyManager
 import androidx.core.app.NotificationCompat
 import com.abueltaweel.R
 import com.abueltaweel.presentation.base.MainActivity
@@ -17,20 +19,24 @@ import kotlinx.coroutines.*
 private var pausedForAzan = false
 
 class DhikrService : Service() {
-
     private var mediaPlayer: MediaPlayer? = null
     private var wakeLock: PowerManager.WakeLock? = null
     private var scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
-
     private var dhikrResIds     = intArrayOf()
     private var dhikrTexts      = arrayOf<String>()
     private var intervalMinutes = 5
     private var volume          = 1f
     private var currentIndex    = 0
     private var running         = false
-
+    
     // NEW: متغير لحفظ الـ audioFocusRequest عشان نقدر نردها بعد الذكر
     private var audioFocusRequest: android.media.AudioFocusRequest? = null
+    
+    // NEW: للتعامل مع المكالمات
+    private var telephonyManager: TelephonyManager? = null
+    private var phoneStateListener: PhoneStateListener? = null
+    private var wasPlayingBeforeCall = false
+    private var pausedForCall = false
 
     override fun onBind(intent: Intent?) = null
 
@@ -41,22 +47,21 @@ class DhikrService : Service() {
         }
 
         if (intent?.action == ACTION_PAUSE_FOR_AZAN) {
-    pausedForAzan = true
-    mediaPlayer?.stop()
-    mediaPlayer?.release()
-    mediaPlayer = null
-    // تم إزالة المؤقت هنا لأننا نعتمد على ACTION_RESUME_FOR_AZAN من Activity
-    return START_STICKY
-}
+            pausedForAzan = true            mediaPlayer?.stop()
+            mediaPlayer?.release()
+            mediaPlayer = null
+            // تم إزالة المؤقت هنا لأننا نعتمد على ACTION_RESUME_FOR_AZAN من Activity
+            return START_STICKY
+        }
 
         if (intent?.action == ACTION_RESUME_FOR_AZAN) {
-    pausedForAzan = false
-    // إذا كانت الخدمة شغالة، ابدأ تشغيل الذكر الآن
-    if (running) {
-        playCurrentDhikr()
-    }
-    return START_STICKY
-}
+            pausedForAzan = false
+            // إذا كانت الخدمة شغالة، ابدأ تشغيل الذكر الآن
+            if (running) {
+                playCurrentDhikr()
+            }
+            return START_STICKY
+        }
 
         if (intent?.action == ACTION_UPDATE_VOLUME) {
             volume = intent.getFloatExtra(EXTRA_VOLUME, volume)
@@ -71,11 +76,16 @@ class DhikrService : Service() {
         currentIndex    = 0
         running         = true
         isRunning       = true
+        
         if (!scope.isActive) scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
-
+        
         acquireWakeLock()
         createChannel()
         startForeground(NOTIF_ID, buildNotification(currentIndex))
+        
+        // تسجيل listener للمكالمات
+        registerCallListener()
+        
         if (PrayerAlarmService.isPlaying) {
             scope.launch {
                 while (PrayerAlarmService.isPlaying) delay(5000)
@@ -87,7 +97,6 @@ class DhikrService : Service() {
 
         return START_STICKY
     }
-
     private suspend fun waitMinutes(n: Int) = delay(n * 60_000L)
 
     private fun toLogVolume(v: Float): Float {
@@ -118,8 +127,57 @@ class DhikrService : Service() {
         } catch (_: Exception) {}
     }
 
+    // NEW: تسجيل listener للمكالمات
+    private fun registerCallListener() {
+        try {
+            telephonyManager = getSystemService(TELEPHONY_SERVICE) as TelephonyManager
+            phoneStateListener = object : PhoneStateListener() {
+                override fun onCallStateChanged(state: Int, phoneNumber: String?) {
+                    when (state) {
+                        TelephonyManager.CALL_STATE_RINGING -> {
+                            // المكالمة بتدخل - وقف الذكر
+                            if (running && !pausedForAzan) {
+                                wasPlayingBeforeCall = true
+                                pausedForCall = true
+                                mediaPlayer?.pause()
+                                abandonAudioFocus()
+                            }
+                        }
+                        TelephonyManager.CALL_STATE_OFFHOOK -> {
+                            // المكالمة شغالة - وقف الذكر
+                            if (running && !pausedForAzan) {                                wasPlayingBeforeCall = true
+                                pausedForCall = true
+                                mediaPlayer?.pause()
+                                abandonAudioFocus()
+                            }
+                        }
+                        TelephonyManager.CALL_STATE_IDLE -> {
+                            // المكالمة خلصت - رجّع الذكر
+                            if (wasPlayingBeforeCall && running && !pausedForAzan) {
+                                pausedForCall = false
+                                wasPlayingBeforeCall = false
+                                playCurrentDhikr()
+                            }
+                        }
+                    }
+                }
+            }
+            telephonyManager?.listen(phoneStateListener, PhoneStateListener.LISTEN_CALL_STATE)
+        } catch (e: SecurityException) {}
+    }
+
+    // NEW: إلغاء تسجيل listener للمكالمات
+    private fun unregisterCallListener() {
+        try {
+            telephonyManager?.listen(phoneStateListener, PhoneStateListener.LISTEN_NONE)
+            phoneStateListener = null
+            telephonyManager = null
+        } catch (e: Exception) {}
+    }
+
     private fun playCurrentDhikr() {
         if (!running || dhikrResIds.isEmpty()) return
+        
         if (isInCall()) {
             scope.launch {
                 while (isInCall()) delay(5000)
@@ -128,16 +186,15 @@ class DhikrService : Service() {
             mediaPlayer?.pause()
             return
         }
+
         val resId  = dhikrResIds[currentIndex]
         val logVol = toLogVolume(volume)
-
         updateNotification(currentIndex)
 
         try {
             val audioManager = getSystemService(AUDIO_SERVICE) as android.media.AudioManager
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                val focusRequest = android.media.AudioFocusRequest.Builder(
-                    android.media.AudioManager.AUDIOFOCUS_GAIN
+                val focusRequest = android.media.AudioFocusRequest.Builder(                    android.media.AudioManager.AUDIOFOCUS_GAIN
                 )
                     .setAudioAttributes(
                         android.media.AudioAttributes.Builder()
@@ -159,25 +216,26 @@ class DhikrService : Service() {
                     android.media.AudioManager.AUDIOFOCUS_GAIN
                 )
             }
+
             mediaPlayer = MediaPlayer.create(this, resId)?.apply {
                 setVolume(logVol, logVol)
                 setWakeMode(this@DhikrService, PowerManager.PARTIAL_WAKE_LOCK)
                 setOnCompletionListener {
-    mediaPlayer?.release()
-    abandonAudioFocus()
-    scope.launch {
-        waitMinutes(intervalMinutes)
-        if (running) {
-            // FIX: التأكد من أن الأذان غير شغال قبل تشغيل الذكر
-            if (PrayerAlarmService.isPlaying) {
-                return@launch // لا تشغل الذكر، انتظر حتى يرسل النظام أمر الاستئناف
-            }
-            
-            currentIndex = (currentIndex + 1) % dhikrResIds.size
-            playCurrentDhikr()
-        }
-    }
-}
+                    mediaPlayer?.release()
+                    abandonAudioFocus()
+                    scope.launch {
+                        waitMinutes(intervalMinutes)
+                        if (running) {
+                            // FIX: التأكد من أن الأذان غير شغال قبل تشغيل الذكر
+                            if (PrayerAlarmService.isPlaying) {
+                                return@launch // لا تشغل الذكر، انتظر حتى يرسل النظام أمر الاستئناف
+                            }
+                            
+                            currentIndex = (currentIndex + 1) % dhikrResIds.size
+                            playCurrentDhikr()
+                        }
+                    }
+                }
                 setOnErrorListener { _, _, _ ->
                     scope.launch {
                         waitMinutes(intervalMinutes)
@@ -185,8 +243,7 @@ class DhikrService : Service() {
                             currentIndex = (currentIndex + 1) % dhikrResIds.size
                             playCurrentDhikr()
                         }
-                    }
-                    true
+                    }                    true
                 }
                 start()
             }
@@ -202,6 +259,9 @@ class DhikrService : Service() {
     }
 
     private fun stopDhikr() {
+        // إلغاء تسجيل listener للمكالمات
+        unregisterCallListener()
+        
         running   = false
         isRunning = false
         scope.cancel()
@@ -232,7 +292,6 @@ class DhikrService : Service() {
         } catch (_: Exception) {}
         wakeLock = null
     }
-
     private fun createChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val nm = getSystemService(NotificationManager::class.java)
@@ -256,6 +315,7 @@ class DhikrService : Service() {
             Intent(this, DhikrService::class.java).apply { action = ACTION_STOP },
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
+
         val openPi = PendingIntent.getActivity(
             this, 1,
             Intent(this, MainActivity::class.java).apply {
@@ -263,6 +323,7 @@ class DhikrService : Service() {
             },
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
+
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_azkar)
             .setContentTitle("أذكاري — ${index + 1}/${dhikrResIds.size}")
@@ -281,8 +342,10 @@ class DhikrService : Service() {
             nm.notify(NOTIF_ID, buildNotification(index))
         } catch (_: Exception) {}
     }
-
     override fun onDestroy() {
+        // إلغاء تسجيل listener للمكالمات
+        unregisterCallListener()
+        
         running   = false
         isRunning = false
         scope.cancel()
