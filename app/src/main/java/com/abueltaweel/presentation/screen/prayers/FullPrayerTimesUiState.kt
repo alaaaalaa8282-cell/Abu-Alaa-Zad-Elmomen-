@@ -13,7 +13,7 @@ data class FullPrayerTimesUiState(
     val prayerNotifications: List<PrayerNotificationUiState> = emptyList()
 ) {
     data class PrayerUiState(
-        val name: Prayer.PrayerName = Prayer.PrayerName.FAJR,  // تغيير من Int إلى Enum
+        val name: Prayer.PrayerName = Prayer.PrayerName.FAJR,  // ⚠️ غيّرها من Int إلى Enum
         val time: FormattedTime = FormattedTime(time = "00:00", isAm = false),
         val isUpComing: Boolean = false,
         val progress: Float = 100.0f,
@@ -29,7 +29,7 @@ data class FullPrayerTimesUiState(
     )
     
     data class PrayerNotificationUiState(
-        val name: Prayer.PrayerName = Prayer.PrayerName.FAJR,  // تغيير من Int إلى Enum
+        val name: Prayer.PrayerName = Prayer.PrayerName.FAJR,  // ⚠️ غيّرها من Int إلى Enum
         val isEnabled: Boolean = true
     )
 }
