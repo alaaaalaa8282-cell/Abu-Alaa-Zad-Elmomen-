@@ -26,10 +26,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
@@ -175,9 +175,15 @@ fun MosqueArchHeader() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(200.dp)
+            .height(260.dp)  // أكبر من قبل
             .background(MosqueColors.Brown)
     ) {
+        // نقوش على الخلفية البنية
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            drawBrownBackground(size)
+        }
+
+        // زخارف الكورنرات — أكبر
         CornerDecoration(modifier = Modifier.align(Alignment.TopStart))
         CornerDecoration(
             modifier = Modifier
@@ -185,15 +191,17 @@ fun MosqueArchHeader() {
                 .graphicsLayer { scaleX = -1f }
         )
 
+        // القوس الكريمي
         Canvas(modifier = Modifier.fillMaxSize()) {
             drawMosqueArch(size)
         }
 
+        // الدعاء جوا القوس
         Box(
             modifier = Modifier
-                .fillMaxWidth(0.62f)
+                .fillMaxWidth(0.60f)
                 .align(Alignment.Center)
-                .padding(top = 16.dp),
+                .padding(top = 30.dp),
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -202,65 +210,162 @@ fun MosqueArchHeader() {
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFFC9A84C),
                 textAlign = TextAlign.Center,
-                lineHeight = 18.sp
+                lineHeight = 20.sp
             )
         }
     }
 }
 
+// ── نقوش الخلفية البنية ───────────────────────────────────────────────────────
+fun DrawScope.drawBrownBackground(size: Size) {
+    val archWidth = size.width * 0.65f
+    val archLeft  = (size.width - archWidth) / 2f
+
+    // نقوش على الجانبين بس (خارج القوس)
+    val dotStep = 14.dp.toPx()
+    var dx = dotStep / 2
+    while (dx < size.width) {
+        // رسم النقاط على الجانبين فقط خارج منطقة القوس
+        if (dx < archLeft - 5.dp.toPx() || dx > archLeft + archWidth + 5.dp.toPx()) {
+            var dy = dotStep / 2
+            while (dy < size.height) {
+                drawCircle(
+                    color = Color(0xFFC9A84C).copy(alpha = 0.18f),
+                    radius = 2.dp.toPx(),
+                    center = Offset(dx, dy)
+                )
+                dy += dotStep
+            }
+        }
+        dx += dotStep
+    }
+
+    // خطوط أفقية زخرفية على الجانبين
+    val lineCount = 5
+    for (i in 0..lineCount) {
+        val y = size.height * i / lineCount.toFloat()
+        // يسار
+        drawLine(
+            color = Color(0xFFC9A84C).copy(alpha = 0.2f),
+            start = Offset(0f, y),
+            end = Offset(archLeft - 4.dp.toPx(), y),
+            strokeWidth = 0.5.dp.toPx()
+        )
+        // يمين
+        drawLine(
+            color = Color(0xFFC9A84C).copy(alpha = 0.2f),
+            start = Offset(archLeft + archWidth + 4.dp.toPx(), y),
+            end = Offset(size.width, y),
+            strokeWidth = 0.5.dp.toPx()
+        )
+    }
+}
+
+// ── رسم القوس ─────────────────────────────────────────────────────────────────
 fun DrawScope.drawMosqueArch(size: Size) {
     val archWidth  = size.width * 0.65f
     val archLeft   = (size.width - archWidth) / 2f
     val archRadius = archWidth / 2f
 
+    // الجزء المستطيل
     drawRect(
         color = Color(0xFFF5E6C0),
-        topLeft = Offset(archLeft, size.height * 0.45f),
-        size = Size(archWidth, size.height * 0.6f)
+        topLeft = Offset(archLeft, size.height * 0.35f),
+        size = Size(archWidth, size.height * 0.70f)
     )
+
+    // القبة
     drawArc(
         color = Color(0xFFF5E6C0),
         startAngle = 180f, sweepAngle = 180f, useCenter = true,
-        topLeft = Offset(archLeft, size.height * 0.45f - archRadius),
+        topLeft = Offset(archLeft, size.height * 0.35f - archRadius),
         size = Size(archWidth, archWidth)
     )
+
+    // حد ذهبي على القبة
     drawArc(
         color = Color(0xFFC9A84C),
         startAngle = 180f, sweepAngle = 180f, useCenter = false,
-        topLeft = Offset(archLeft, size.height * 0.45f - archRadius),
+        topLeft = Offset(archLeft, size.height * 0.35f - archRadius),
         size = Size(archWidth, archWidth),
         style = Stroke(width = 3.dp.toPx())
     )
-    drawLine(color = Color(0xFFC9A84C), start = Offset(archLeft, size.height * 0.45f), end = Offset(archLeft, size.height), strokeWidth = 3.dp.toPx())
-    drawLine(color = Color(0xFFC9A84C), start = Offset(archLeft + archWidth, size.height * 0.45f), end = Offset(archLeft + archWidth, size.height), strokeWidth = 3.dp.toPx())
+
+    // حد ذهبي ثاني داخلي
+    drawArc(
+        color = Color(0xFFC9A84C).copy(alpha = 0.4f),
+        startAngle = 180f, sweepAngle = 180f, useCenter = false,
+        topLeft = Offset(archLeft + 6.dp.toPx(), size.height * 0.35f - archRadius + 6.dp.toPx()),
+        size = Size(archWidth - 12.dp.toPx(), archWidth - 12.dp.toPx()),
+        style = Stroke(width = 1.dp.toPx())
+    )
+
+    // خطوط جانبية القوس
+    drawLine(color = Color(0xFFC9A84C), start = Offset(archLeft, size.height * 0.35f), end = Offset(archLeft, size.height), strokeWidth = 3.dp.toPx())
+    drawLine(color = Color(0xFFC9A84C), start = Offset(archLeft + archWidth, size.height * 0.35f), end = Offset(archLeft + archWidth, size.height), strokeWidth = 3.dp.toPx())
+
+    // خطوط جانبية داخلية
+    drawLine(color = Color(0xFFC9A84C).copy(alpha = 0.4f), start = Offset(archLeft + 6.dp.toPx(), size.height * 0.35f), end = Offset(archLeft + 6.dp.toPx(), size.height), strokeWidth = 1.dp.toPx())
+    drawLine(color = Color(0xFFC9A84C).copy(alpha = 0.4f), start = Offset(archLeft + archWidth - 6.dp.toPx(), size.height * 0.35f), end = Offset(archLeft + archWidth - 6.dp.toPx(), size.height), strokeWidth = 1.dp.toPx())
+
+    // نقاط ذهبية على حافة القبة
     val centerX = size.width / 2f
-    val centerY = size.height * 0.45f
-    for (i in 0..8) {
-        val angle = Math.PI * i / 8.0
+    val centerY = size.height * 0.35f
+    for (i in 0..10) {
+        val angle = Math.PI * i / 10.0
         val x = (centerX - archRadius * Math.cos(angle)).toFloat()
         val y = (centerY - archRadius * Math.sin(angle)).toFloat()
         drawCircle(color = Color(0xFFC9A84C), radius = 4.dp.toPx(), center = Offset(x, y))
     }
 }
 
-// ── زخرفة الكورنر ─────────────────────────────────────────────────────────────
+// ── زخرفة الكورنر — أكبر وأجمل ───────────────────────────────────────────────
 @Composable
 fun CornerDecoration(modifier: Modifier = Modifier) {
-    Canvas(modifier = modifier.size(70.dp)) {
+    Canvas(modifier = modifier.size(90.dp)) {
         val s = size.minDimension
-        for (i in 0..2) {
-            val inset = i * 6.dp.toPx()
+
+        // مربعات متداخلة
+        for (i in 0..3) {
+            val inset = i * 7.dp.toPx()
             drawRect(
-                color = Color(0xFFC9A84C).copy(alpha = 1f - i * 0.25f),
+                color = Color(0xFFC9A84C).copy(alpha = 1f - i * 0.2f),
                 topLeft = Offset(inset, inset),
                 size = Size(s - inset * 2, s - inset * 2),
                 style = Stroke(width = 1.5.dp.toPx())
             )
         }
-        drawLine(color = Color(0xFFC9A84C), start = Offset(0f, 0f), end = Offset(s * 0.5f, 0f), strokeWidth = 2.dp.toPx())
-        drawLine(color = Color(0xFFC9A84C), start = Offset(0f, 0f), end = Offset(0f, s * 0.5f), strokeWidth = 2.dp.toPx())
-        drawCircle(color = Color(0xFFC9A84C), radius = 6.dp.toPx(), center = Offset(s * 0.25f, s * 0.25f), style = Stroke(width = 1.5.dp.toPx()))
-        drawCircle(color = Color(0xFFC9A84C), radius = 2.dp.toPx(), center = Offset(s * 0.25f, s * 0.25f))
+
+        // خطوط الحافة
+        drawLine(color = Color(0xFFC9A84C), start = Offset(0f, 0f), end = Offset(s * 0.6f, 0f), strokeWidth = 2.5.dp.toPx())
+        drawLine(color = Color(0xFFC9A84C), start = Offset(0f, 0f), end = Offset(0f, s * 0.6f), strokeWidth = 2.5.dp.toPx())
+
+        // دائرة زخرفية
+        drawCircle(color = Color(0xFFC9A84C), radius = 8.dp.toPx(), center = Offset(s * 0.28f, s * 0.28f), style = Stroke(width = 1.5.dp.toPx()))
+        drawCircle(color = Color(0xFFC9A84C), radius = 3.dp.toPx(), center = Offset(s * 0.28f, s * 0.28f))
+
+        // نجمة صغيرة جوا الدائرة
+        val cx = s * 0.28f
+        val cy = s * 0.28f
+        val r  = 5.dp.toPx()
+        for (i in 0..3) {
+            val angle = Math.PI * i / 4.0
+            drawLine(
+                color = Color(0xFFC9A84C).copy(alpha = 0.7f),
+                start = Offset((cx - r * Math.cos(angle)).toFloat(), (cy - r * Math.sin(angle)).toFloat()),
+                end   = Offset((cx + r * Math.cos(angle)).toFloat(), (cy + r * Math.sin(angle)).toFloat()),
+                strokeWidth = 1.dp.toPx()
+            )
+        }
+
+        // زخرفة نباتية بسيطة — منحنيات
+        val path = Path().apply {
+            moveTo(s * 0.5f, 0f)
+            quadraticBezierTo(s * 0.65f, s * 0.2f, s * 0.5f, s * 0.35f)
+            moveTo(0f, s * 0.5f)
+            quadraticBezierTo(s * 0.2f, s * 0.65f, s * 0.35f, s * 0.5f)
+        }
+        drawPath(path, color = Color(0xFFC9A84C).copy(alpha = 0.5f), style = Stroke(width = 1.dp.toPx()))
     }
 }
 
@@ -287,28 +392,40 @@ fun IslamicDivider() {
                     strokeWidth = 1.5.dp.toPx()
                 )
             }
-            listOf(0.2f, 0.3f, 0.7f, 0.8f).forEach { pos ->
+            listOf(0.15f, 0.25f, 0.35f, 0.65f, 0.75f, 0.85f).forEach { pos ->
                 drawCircle(color = Color(0xFFC9A84C), radius = 2.dp.toPx(), center = Offset(size.width * pos, midY))
             }
         }
     }
 }
 
-// ── أعمدة ─────────────────────────────────────────────────────────────────────
+// ── أعمدة — أعرض ──────────────────────────────────────────────────────────────
 @Composable
 fun MosqueColumns() {
     Row(modifier = Modifier.fillMaxSize(), horizontalArrangement = Arrangement.SpaceBetween) {
         repeat(2) {
-            Canvas(modifier = Modifier.width(8.dp).fillMaxHeight()) {
-                for (i in 0..20) {
+            Canvas(modifier = Modifier.width(14.dp).fillMaxHeight()) {
+                // خلفية العمود
+                drawRect(color = Color(0xFF5A1A00).copy(alpha = 0.8f))
+                // خطوط أفقية
+                for (i in 0..30) {
+                    val y = size.height * i / 30f
                     drawLine(
-                        color = Color(0xFF8B4513).copy(alpha = 0.5f),
-                        start = Offset(0f, size.height * i / 20f),
-                        end = Offset(size.width, size.height * i / 20f),
+                        color = Color(0xFFC9A84C).copy(alpha = 0.3f),
+                        start = Offset(0f, y),
+                        end = Offset(size.width, y),
                         strokeWidth = 0.5.dp.toPx()
                     )
                 }
-                drawRect(color = Color(0xFF8B4513), style = Stroke(width = 1.dp.toPx()))
+                // حد ذهبي
+                drawRect(color = Color(0xFFC9A84C), style = Stroke(width = 1.dp.toPx()))
+                // خط ذهبي وسط العمود
+                drawLine(
+                    color = Color(0xFFC9A84C).copy(alpha = 0.5f),
+                    start = Offset(size.width / 2f, 0f),
+                    end = Offset(size.width / 2f, size.height),
+                    strokeWidth = 0.5.dp.toPx()
+                )
             }
         }
     }
@@ -323,13 +440,29 @@ fun BottomIslamicDecoration() {
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val midY = size.height / 2f
-            val step = 20.dp.toPx()
+            val step = 18.dp.toPx()
             var x = step / 2
             while (x < size.width) {
                 drawCircle(color = Color(0xFFC9A84C), radius = 3.dp.toPx(), center = Offset(x, midY))
                 drawLine(color = Color(0xFFC9A84C).copy(alpha = 0.5f), start = Offset(x - step / 2, midY), end = Offset(x + step / 2, midY), strokeWidth = 1.dp.toPx())
+                // نجمة صغيرة كل 3 نقاط
+                if ((x / step).toInt() % 3 == 1) {
+                    for (i in 0..3) {
+                        val angle = Math.PI * i / 4.0
+                        val r = 4.dp.toPx()
+                        drawLine(
+                            color = Color(0xFFC9A84C).copy(alpha = 0.6f),
+                            start = Offset((x - r * Math.cos(angle)).toFloat(), (midY - r * Math.sin(angle)).toFloat()),
+                            end = Offset((x + r * Math.cos(angle)).toFloat(), (midY + r * Math.sin(angle)).toFloat()),
+                            strokeWidth = 1.dp.toPx()
+                        )
+                    }
+                }
                 x += step
             }
+            // خطان أفقيان
+            drawLine(color = Color(0xFFC9A84C).copy(alpha = 0.4f), start = Offset(0f, midY - 8.dp.toPx()), end = Offset(size.width, midY - 8.dp.toPx()), strokeWidth = 0.5.dp.toPx())
+            drawLine(color = Color(0xFFC9A84C).copy(alpha = 0.4f), start = Offset(0f, midY + 8.dp.toPx()), end = Offset(size.width, midY + 8.dp.toPx()), strokeWidth = 0.5.dp.toPx())
         }
     }
 }
