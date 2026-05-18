@@ -46,6 +46,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.abueltaweel.R
+import com.abueltaweel.domain.entity.prayer.Prayer
 import com.abueltaweel.presentation.base.localizedString
 import com.abueltaweel.presentation.screen.prayers.component.NextPrayerCard
 import com.abueltaweel.presentation.utils.CollectEffect
@@ -181,13 +182,19 @@ fun FullPrayerTimesViewScreen(
 
                 // صفوف الصلوات
                 items(state.prayers) { prayer ->
-                    val arabicName  = prayer.name.getArabicName()
+                    val arabicName = when (prayer.name) {
+                        Prayer.PrayerName.FAJR    -> "الفجر"
+                        Prayer.PrayerName.ZUHR    -> "الظهر"
+                        Prayer.PrayerName.ASR     -> "العصر"
+                        Prayer.PrayerName.MAGHRIB -> "المغرب"
+                        Prayer.PrayerName.ISHA    -> "العشاء"
+                    }
                     val eqamaOffset = when (prayer.name) {
-                        com.abueltaweel.domain.entity.prayer.Prayer.PrayerName.FAJR    -> EqamaOffsets.FAJR
-                        com.abueltaweel.domain.entity.prayer.Prayer.PrayerName.ZUHR    -> EqamaOffsets.ZUHR
-                        com.abueltaweel.domain.entity.prayer.Prayer.PrayerName.ASR     -> EqamaOffsets.ASR
-                        com.abueltaweel.domain.entity.prayer.Prayer.PrayerName.MAGHRIB -> EqamaOffsets.MAGHRIB
-                        com.abueltaweel.domain.entity.prayer.Prayer.PrayerName.ISHA    -> EqamaOffsets.ISHA
+                        Prayer.PrayerName.FAJR    -> EqamaOffsets.FAJR
+                        Prayer.PrayerName.ZUHR    -> EqamaOffsets.ZUHR
+                        Prayer.PrayerName.ASR     -> EqamaOffsets.ASR
+                        Prayer.PrayerName.MAGHRIB -> EqamaOffsets.MAGHRIB
+                        Prayer.PrayerName.ISHA    -> EqamaOffsets.ISHA
                     }
                     PrayerRow(
                         prayerName            = arabicName,
