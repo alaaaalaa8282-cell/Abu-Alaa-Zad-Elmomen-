@@ -47,10 +47,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.abueltaweel.R
 import com.abueltaweel.domain.entity.prayer.Prayer
-import com.abueltaweel.presentation.base.localizedStringimport com.abueltaweel.presentation.screen.prayers.component.NextPrayerCard
+import com.abueltaweel.presentation.base.localizedString
+import com.abueltaweel.presentation.screen.prayers.component.NextPrayerCard
 import com.abueltaweel.presentation.utils.CollectEffect
-import org.koin.androidx.compose.koinViewModel
 import kotlin.time.ExperimentalTime
+
 
 // ════════════════════════════════════════════════════════════════════════════
 //  EQAMA OFFSETS
@@ -191,9 +192,9 @@ fun FullPrayerTimesViewScreen(
                         isAm                  = prayer.time.isAm,
                         isNextPrayer          = prayer.isUpComing,
                         isNotificationEnabled = prayer.isNotificationEnabled,
-                        onNotificationClick   = { enabled ->
-                            viewModel.onClickEnablePrayer(prayer.name, enabled)
-                        }
+                        onNotificationClick = { _, enabled ->
+                       viewModel.onClickEnablePrayer(prayer.name, enabled)
+                     }
                     )                }
                 item { IslamicDivider() }
                 item { BottomIslamicDecoration() }
@@ -390,7 +391,7 @@ private fun DrawScope.drawMosqueArch(size: Size) {
     }
 }
 
-@Composableprivate fun CornerDecoration(modifier: Modifier = Modifier) {
+  @Composableprivate fun CornerDecoration (modifier: Modifier = Modifier) {
     Canvas(modifier = modifier.size(70.dp)) {
         val s = size.minDimension
         for (i in 0..2) {
