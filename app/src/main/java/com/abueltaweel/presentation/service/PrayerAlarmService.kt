@@ -236,6 +236,7 @@ class PrayerAlarmService : Service() {
 
     override fun onDestroy() {
         if (::mediaPlayer.isInitialized) mediaPlayer.release()
+       isPlaying = false
         super.onDestroy()
     }
 }
