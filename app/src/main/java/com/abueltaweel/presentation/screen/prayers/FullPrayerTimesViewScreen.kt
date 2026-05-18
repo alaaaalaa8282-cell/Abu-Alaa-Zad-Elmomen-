@@ -1,4 +1,3 @@
-
 package com.abueltaweel.presentation.screen.prayers
 
 import android.Manifest
@@ -187,27 +186,8 @@ fun FullPrayerTimesViewScreen(
                 item { PrayerTableHeader() }
                 // صفوف الصلوات
                 items(state.prayers) { prayer ->
-                    val arabicName = when (prayer.name) {
-                        Prayer.PrayerName.FAJR    -> "الفجر"
-                        Prayer.PrayerName.ZUHR    -> "الظهر"
-                        Prayer.PrayerName.ASR     -> "العصر"
-                        Prayer.PrayerName.MAGHRIB -> "المغرب"
-                        Prayer.PrayerName.ISHA    -> "العشاء"
-                    }
-                    val eqamaOffset = when (prayer.name) {
-                        Prayer.PrayerName.FAJR    -> EqamaOffsets.FAJR
-                        Prayer.PrayerName.ZUHR    -> EqamaOffsets.ZUHR
-                        Prayer.PrayerName.ASR     -> EqamaOffsets.ASR
-                        Prayer.PrayerName.MAGHRIB -> EqamaOffsets.MAGHRIB
-                        Prayer.PrayerName.ISHA    -> EqamaOffsets.ISHA
-                    }
-                    
                     PrayerRow(
-                        prayerEnum            = prayer.name,
-                        prayerName            = arabicName,
-                        azanTime              = prayer.time.time,
-                        eqamaTime             = calcEqamaTime(prayer.time.time, eqamaOffset),
-                        isAm                  = prayer.time.isAm,
+                        prayer                = prayer.prayer, // نمرر كائن الصلاة الأصلي مباشرة
                         isNextPrayer          = prayer.isUpComing,
                         isNotificationEnabled = prayer.isNotificationEnabled,
                         onNotificationClick   = { selectedPrayer, enabled ->
@@ -224,7 +204,7 @@ fun FullPrayerTimesViewScreen(
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-//  COMPOSABLES (مع تصحيح الكلمات والخصوصية والكومبوزابل)
+//  COMPOSABLES (مكونات الشاشة بتصميمها المتقن والمدقق برمجياً)
 // ════════════════════════════════════════════════════════════════════════════
 @Composable
 private fun PrayerTableHeader() {
@@ -266,16 +246,27 @@ private fun PrayerTableHeader() {
 
 @Composable
 private fun PrayerRow(
-    prayerEnum           : Prayer.PrayerName,
-    prayerName           : String,
-    azanTime             : String,
-    eqamaTime            : String,
-    isAm                 : Boolean,
+    prayer               : Prayer,
     isNextPrayer         : Boolean,
     isNotificationEnabled: Boolean,
     onNotificationClick  : (Prayer.PrayerName, Boolean) -> Unit
 ) {
-    val amPmLabel = if (isAm) "صباحاً" else "مساءً"
+    val prayerArabicName = when (prayer.name) {
+        Prayer.PrayerName.FAJR    -> "الفجر"
+        Prayer.PrayerName.ZUHR    -> "الظهر"
+        Prayer.PrayerName.ASR     -> "العصر"
+        Prayer.PrayerName.MAGHRIB -> "المغرب"
+        Prayer.PrayerName.ISHA    -> "العشاء"
+    }
+    val eqamaOffset = when (prayer.name) {
+        Prayer.PrayerName.FAJR    -> EqamaOffsets.FAJR
+        Prayer.PrayerName.ZUHR    -> EqamaOffsets.ZUHR
+        Prayer.PrayerName.ASR     -> EqamaOffsets.ASR
+        Prayer.PrayerName.MAGHRIB -> EqamaOffsets.MAGHRIB
+        Prayer.PrayerName.ISHA    -> EqamaOffsets.ISHA
+    }
+    val amPmLabel = if (prayer.time.isAm) "صباحاً" else "مساءً"
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -289,7 +280,7 @@ private fun PrayerRow(
             modifier            = Modifier.weight(1f),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            LedDisplay(time = eqamaTime, color = MosqueColors.LedGreen)
+            LedDisplay(time = calcEqamaTime(prayer.time.time, eqamaOffset), color = MosqueColors.LedGreen)
             Spacer(Modifier.height(2.dp))
             Text(text = amPmLabel, fontSize = 9.sp, color = MosqueColors.Brown, textAlign = TextAlign.Center)
         }
@@ -307,7 +298,7 @@ private fun PrayerRow(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text       = prayerName,
+                    text       = prayerArabicName,
                     fontSize   = 20.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color      = MosqueColors.Brown,
@@ -320,7 +311,7 @@ private fun PrayerRow(
             }
             Spacer(Modifier.height(4.dp))
             IconButton(
-                onClick  = { onNotificationClick(prayerEnum, !isNotificationEnabled) },
+                onClick  = { onNotificationClick(prayer.name, !isNotificationEnabled) },
                 modifier = Modifier.size(28.dp)
             ) {
                 Icon(
@@ -339,7 +330,7 @@ private fun PrayerRow(
             modifier            = Modifier.weight(1f),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            LedDisplay(time = azanTime, color = MosqueColors.LedRed)
+            LedDisplay(time = prayer.time.time, color = MosqueColors.LedRed)
             Spacer(Modifier.height(2.dp))
             Text(text = amPmLabel, fontSize = 9.sp, color = MosqueColors.Brown, textAlign = TextAlign.Center)
         }
@@ -512,5 +503,3 @@ suspend fun checkAndRequestPermissions(context: Context) {
         } catch (_: Exception) {}
     }
 }
-
-```
