@@ -67,6 +67,14 @@ object EqamaOffsets {
 // ════════════════════════════════════════════════════════════════════════════
 //  HELPER — يحسب وقت الإقامة
 // ════════════════════════════════════════════════════════════════════════════
+private fun String.toArabicDigits(): String = this.map { c ->
+    when (c) {
+        '0' -> '٠'; '1' -> '١'; '2' -> '٢'; '3' -> '٣'; '4' -> '٤'
+        '5' -> '٥'; '6' -> '٦'; '7' -> '٧'; '8' -> '٨'; '9' -> '٩'
+        else -> c
+    }
+}.joinToString("")
+
 private fun calcEqamaTime(azanTime: String, offsetMinutes: Int): String {
     return try {
         val parts   = azanTime.split(":")
@@ -75,7 +83,7 @@ private fun calcEqamaTime(azanTime: String, offsetMinutes: Int): String {
         val total   = hours * 60 + minutes + offsetMinutes
         val h       = (total / 60) % 24
         val m       = total % 60
-        "%02d:%02d".format(h, m)
+        "%02d:%02d".format(h, m).toArabicDigits()
     } catch (e: Exception) {
         "--:--"
     }
@@ -337,7 +345,7 @@ private fun PrayerRow(
             modifier            = Modifier.weight(1f),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            LedDisplay(time = azanTime, color = MosqueColors.LedRed)
+            LedDisplay(time = azanTime.toArabicDigits(), color = MosqueColors.LedRed)
             Spacer(Modifier.height(2.dp))
             Text(text = amPmLabel, fontSize = 9.sp, color = MosqueColors.Brown, textAlign = TextAlign.Center)
         }
