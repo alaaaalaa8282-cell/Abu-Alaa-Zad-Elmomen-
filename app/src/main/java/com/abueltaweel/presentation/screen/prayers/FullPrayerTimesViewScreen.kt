@@ -1,5 +1,4 @@
 package com.abueltaweel.presentation.screen.prayers
-
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.AlarmManager
@@ -48,30 +47,18 @@ import androidx.navigation.NavController
 import com.abueltaweel.R
 import com.abueltaweel.domain.entity.prayer.Prayer
 import com.abueltaweel.presentation.base.localizedString
-import com.abueltaweel.presentation.screen.prayers.component.NextPrayerCard
-import com.abueltaweel.presentation.utils.CollectEffect
+import com.abueltaweel.presentation.screen.prayers.component.NextPrayerCardimport com.abueltaweel.presentation.utils.CollectEffect
 import org.koin.androidx.compose.koinViewModel
 import kotlin.time.ExperimentalTime
 
-// ════════════════════════════════════════════════════════════════════════════
-//  NOTE: MosqueColors معرّف في MosqueColors.kt
-//  تأكد إنك أضفت فيه: LedRed, LedGreen, LedBg
-// ════════════════════════════════════════════════════════════════════════════
-
-// ════════════════════════════════════════════════════════════════════════════
-//  EQAMA OFFSETS — ثابتة مأخوذة من المؤذن الإلكتروني
-// ════════════════════════════════════════════════════════════════════════════
 object EqamaOffsets {
-    const val FAJR    = 25  // دقيقة بعد الأذان
+    const val FAJR    = 25
     const val ZUHR    = 15
     const val ASR     = 15
     const val MAGHRIB = 12
     const val ISHA    = 20
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-//  HELPER — يحسب وقت الإقامة من وقت الأذان + الفارق
-// ════════════════════════════════════════════════════════════════════════════
 private fun calcEqamaTime(azanTime: String, offsetMinutes: Int): String {
     return try {
         val parts   = azanTime.split(":")
@@ -86,9 +73,6 @@ private fun calcEqamaTime(azanTime: String, offsetMinutes: Int): String {
     }
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-//  MAIN SCREEN
-// ════════════════════════════════════════════════════════════════════════════
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @SuppressLint("BatteryLife")
 @ExperimentalTime
@@ -100,20 +84,19 @@ fun FullPrayerTimesViewScreen(
     val state         by viewModel.screenState.collectAsStateWithLifecycle()
     val countdownTime by viewModel.countdownTime.collectAsStateWithLifecycle()
     val context       = LocalContext.current
-
+    
     val notificationLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (!granted)
             Toast.makeText(context, "Notification permission denied", Toast.LENGTH_SHORT).show()
     }
-
+    
     CollectEffect(viewModel.effect) { effect ->
         when (effect) {
             FullPrayerTimesEffect.RequestExactAlarm ->
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
-                    context.startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM))
-            FullPrayerTimesEffect.RequestNotificationPermission ->
+                    context.startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM))            FullPrayerTimesEffect.RequestNotificationPermission ->
                 notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             FullPrayerTimesEffect.RequestIgnoreBatteryOptimization ->
                 context.startActivity(
@@ -125,9 +108,9 @@ fun FullPrayerTimesViewScreen(
             FullPrayerTimesEffect.NavigateBack           -> navController.popBackStack()
         }
     }
-
+    
     LaunchedEffect(Unit) { viewModel.onScreenOpened() }
-
+    
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -147,7 +130,6 @@ fun FullPrayerTimesViewScreen(
                     .background(MosqueColors.Creamy)
             ) {
                 item { MosqueArchHeader() }
-
                 item {
                     Box(
                         modifier = Modifier
@@ -163,24 +145,17 @@ fun FullPrayerTimesViewScreen(
                             color         = MosqueColors.Gold,
                             letterSpacing = 2.sp
                         )
-                    }
-                }
-
+                    }                }
                 item { IslamicDivider() }
-
                 item {
                     NextPrayerCard(
                         state         = state,
                         countdownTime = countdownTime,
                     )
                 }
-
                 item { IslamicDivider() }
-
-                // رأس الجدول
                 item { PrayerTableHeader() }
-
-                // صفوف الصلوات
+                
                 items(state.prayers) { prayer ->
                     val arabicName = when (prayer.name) {
                         Prayer.PrayerName.FAJR    -> "الفجر"
@@ -196,6 +171,7 @@ fun FullPrayerTimesViewScreen(
                         Prayer.PrayerName.MAGHRIB -> EqamaOffsets.MAGHRIB
                         Prayer.PrayerName.ISHA    -> EqamaOffsets.ISHA
                     }
+                    
                     PrayerRow(
                         prayerName            = arabicName,
                         azanTime              = prayer.time.time,
@@ -203,28 +179,22 @@ fun FullPrayerTimesViewScreen(
                         isAm                  = prayer.time.isAm,
                         isNextPrayer          = prayer.isUpComing,
                         isNotificationEnabled = prayer.isNotificationEnabled,
-                        onNotificationClick   = { name, enabled ->
-                            viewModel.onClickEnablePrayer(name, enabled)
+                        onNotificationClick   = { _, enabled ->
+                            // FIX: Pass the Enum 'prayer.name' instead of the String 'name'
+                            viewModel.onClickEnablePrayer(prayer.name, enabled)
                         }
                     )
                 }
-
                 item { IslamicDivider() }
                 item { BottomIslamicDecoration() }
             }
-
             MosqueColumns()
         }
     }
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-//  COMPOSABLES  (كلها private)
-// ════════════════════════════════════════════════════════════════════════════
-
 @Composable
-private fun PrayerTableHeader() {
-    Row(
+private fun PrayerTableHeader() {    Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(MosqueColors.Brown.copy(alpha = 0.85f))
@@ -271,16 +241,13 @@ private fun PrayerRow(
     onNotificationClick  : (String, Boolean) -> Unit
 ) {
     val amPmLabel = if (isAm) "صباحاً" else "مساءً"
-
     Row(
         modifier = Modifier
-            .fillMaxWidth()
-            .background(if (isNextPrayer) MosqueColors.Brown.copy(alpha = 0.18f) else Color.Transparent)
+            .fillMaxWidth()            .background(if (isNextPrayer) MosqueColors.Brown.copy(alpha = 0.18f) else Color.Transparent)
             .then(if (isNextPrayer) Modifier.border(1.5.dp, MosqueColors.Gold) else Modifier)
             .padding(horizontal = 8.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // عمود الإقامة
         Column(
             modifier            = Modifier.weight(1f),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -289,8 +256,6 @@ private fun PrayerRow(
             Spacer(Modifier.height(2.dp))
             Text(text = amPmLabel, fontSize = 9.sp, color = MosqueColors.Brown, textAlign = TextAlign.Center)
         }
-
-        // عمود الاسم
         Column(
             modifier            = Modifier.weight(1.2f),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -313,7 +278,7 @@ private fun PrayerRow(
             }
             if (isNextPrayer) {
                 Spacer(Modifier.height(2.dp))
-                Text("◄", fontSize = 12.sp, color = MosqueColors.Gold)
+                Text("", fontSize = 12.sp, color = MosqueColors.Gold)
             }
             Spacer(Modifier.height(4.dp))
             IconButton(
@@ -326,13 +291,10 @@ private fun PrayerRow(
                     ),
                     contentDescription = null,
                     tint               = if (isNotificationEnabled) MosqueColors.Gold
-                                         else MosqueColors.Brown.copy(alpha = 0.4f),
-                    modifier           = Modifier.size(20.dp)
-                )
+                    else MosqueColors.Brown.copy(alpha = 0.4f),
+                    modifier           = Modifier.size(20.dp)                )
             }
         }
-
-        // عمود الأذان
         Column(
             modifier            = Modifier.weight(1f),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -342,7 +304,6 @@ private fun PrayerRow(
             Text(text = amPmLabel, fontSize = 9.sp, color = MosqueColors.Brown, textAlign = TextAlign.Center)
         }
     }
-
     Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(MosqueColors.Gold.copy(alpha = 0.25f)))
 }
 
@@ -380,8 +341,7 @@ private fun MosqueArchHeader() {
         Canvas(modifier = Modifier.fillMaxSize()) { drawMosqueArch(size) }
         Box(
             modifier = Modifier
-                .fillMaxWidth(0.62f)
-                .align(Alignment.Center)
+                .fillMaxWidth(0.62f)                .align(Alignment.Center)
                 .padding(top = 16.dp),
             contentAlignment = Alignment.Center
         ) {
@@ -430,8 +390,7 @@ private fun CornerDecoration(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun IslamicDivider() {
-    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 4.dp), contentAlignment = Alignment.Center) {
+private fun IslamicDivider() {    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 4.dp), contentAlignment = Alignment.Center) {
         Canvas(modifier = Modifier.fillMaxWidth().height(16.dp)) {
             val midY = size.height / 2f
             val midX = size.width / 2f
@@ -478,14 +437,9 @@ private fun BottomIslamicDecoration() {
     }
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-//  UTILITY
-// ════════════════════════════════════════════════════════════════════════════
-
 fun openXiaomiAutoStart(context: Context) {
     try {
-        context.startActivity(Intent().apply {
-            component = ComponentName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity")
+        context.startActivity(Intent().apply {            component = ComponentName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity")
         })
     } catch (e: Exception) {}
 }
