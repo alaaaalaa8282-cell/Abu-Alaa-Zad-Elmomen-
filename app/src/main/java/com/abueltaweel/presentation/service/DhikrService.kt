@@ -55,10 +55,10 @@ class DhikrService : Service() {
         }
 
         if (intent?.action == ACTION_RESUME_FOR_AZAN) {
-            pausedForAzan = false
-            // لا نستعيد الذكر المقطوع، نترك المؤقت يشغل الذكر التالي في وقته
-            return START_STICKY
-        }
+    pausedForAzan = false
+    if (running) scheduleNextDhikr()
+    return START_STICKY
+}
 
         if (intent?.action == ACTION_UPDATE_VOLUME) {
             volume = intent.getFloatExtra(EXTRA_VOLUME, volume)
