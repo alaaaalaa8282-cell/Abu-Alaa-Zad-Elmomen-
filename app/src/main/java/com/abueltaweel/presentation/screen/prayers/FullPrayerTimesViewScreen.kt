@@ -250,7 +250,7 @@ private fun PrayerTableHeader() {
     isAm                 : Boolean,
     isNextPrayer         : Boolean,
     isNotificationEnabled: Boolean,
-    onNotificationClick  : (Prayer.PrayerName, Boolean) -> Unit
+    onNotificationClick: (Prayer.PrayerName, Boolean) -> Unit
 ) {
     val amPmLabel = if (isAm) "صباحاً" else "مساءً"
     Row(
