@@ -53,10 +53,10 @@ import org.koin.androidx.compose.koinViewModel
 import kotlin.time.ExperimentalTime
 
 // ════════════════════════════════════════════════════════════════════════════
-//  EQAMA OFFSETS — ثابتة مأخوذة من المؤذن الإلكتروني
+//  EQAMA OFFSETS
 // ════════════════════════════════════════════════════════════════════════════
 object EqamaOffsets {
-    const val FAJR    = 25  // دقيقة بعد الأذان
+    const val FAJR    = 25
     const val ZUHR    = 15
     const val ASR     = 15
     const val MAGHRIB = 12
@@ -64,8 +64,8 @@ object EqamaOffsets {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-//  HELPER — يحسب وقت الإقامة من وقت الأذان + الفارق
-// ════════════════════════════════════════════════════════════════════════════
+//  HELPER
+// ═══════════════════════════════════════════════════════════════════════════
 private fun calcEqamaTime(azanTime: String, offsetMinutes: Int): String {
     return try {
         val parts   = azanTime.split(":")
@@ -164,9 +164,9 @@ fun FullPrayerTimesViewScreen(
                     )
                 }
                 item { IslamicDivider() }
-                // رأس الجدول
                 item { PrayerTableHeader() }
-                // صفوف الصلوات
+                
+                // FIX: استخدام الـ Enum بشكل صحيح
                 items(state.prayers) { prayer ->
                     val arabicName = when (prayer.name) {
                         Prayer.PrayerName.FAJR    -> "الفجر"
@@ -185,16 +185,17 @@ fun FullPrayerTimesViewScreen(
                     
                     PrayerRow(
                         prayerName            = arabicName,
+                        prayerEnum            = prayer.name, // تمرير الـ Enum
                         azanTime              = prayer.time.time,
                         eqamaTime             = calcEqamaTime(prayer.time.time, eqamaOffset),
                         isAm                  = prayer.time.isAm,
                         isNextPrayer          = prayer.isUpComing,
                         isNotificationEnabled = prayer.isNotificationEnabled,
-                        onNotificationClick   = { _, enabled ->
-                       viewModel.onClickEnablePrayer(prayer.name, enabled)  // استخدام prayer.name (الـ Enum)
-                     }
-                    )
-                }                item { IslamicDivider() }
+                        onNotificationClick   = { enabled ->
+                            viewModel.onClickEnablePrayer(prayer.name, enabled)
+                        }
+                    )                }
+                item { IslamicDivider() }
                 item { BottomIslamicDecoration() }
             }
             MosqueColumns()
@@ -203,7 +204,7 @@ fun FullPrayerTimesViewScreen(
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-//  COMPOSABLES  (كلها private)
+//  COMPOSABLES
 // ════════════════════════════════════════════════════════════════════════════
 @Composable
 private fun PrayerTableHeader() {
@@ -242,15 +243,17 @@ private fun PrayerTableHeader() {
         )
     }
 }
-
-@Composableprivate fun PrayerRow(
+// FIX: إضافة معامل prayerEnum وتعديل نوع onNotificationClick
+@Composable
+private fun PrayerRow(
     prayerName           : String,
+    prayerEnum           : Prayer.PrayerName, // الجديد
     azanTime             : String,
     eqamaTime            : String,
     isAm                 : Boolean,
     isNextPrayer         : Boolean,
     isNotificationEnabled: Boolean,
-    onNotificationClick  : (Prayer.PrayerName, Boolean) -> Unit
+    onNotificationClick  : (Boolean) -> Unit // تبسيط الـ Lambda
 ) {
     val amPmLabel = if (isAm) "صباحاً" else "مساءً"
     Row(
@@ -261,7 +264,6 @@ private fun PrayerTableHeader() {
             .padding(horizontal = 8.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // عمود الإقامة
         Column(
             modifier            = Modifier.weight(1f),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -270,7 +272,6 @@ private fun PrayerTableHeader() {
             Spacer(Modifier.height(2.dp))
             Text(text = amPmLabel, fontSize = 9.sp, color = MosqueColors.Brown, textAlign = TextAlign.Center)
         }
-        // عمود الاسم
         Column(
             modifier            = Modifier.weight(1.2f),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -291,12 +292,12 @@ private fun PrayerTableHeader() {
                     textAlign  = TextAlign.Center
                 )
             }
-            if (isNextPrayer) {
-                Spacer(Modifier.height(2.dp))                Text("◄", fontSize = 12.sp, color = MosqueColors.Gold)
+            if (isNextPrayer) {                Spacer(Modifier.height(2.dp))
+                Text("◄", fontSize = 12.sp, color = MosqueColors.Gold) // FIX: إكمال السطر
             }
             Spacer(Modifier.height(4.dp))
             IconButton(
-                onClick  = { /* لن يتم استخدام هذا لأننا نمرر الـ Enum من الأعلى */ },
+                onClick  = { onNotificationClick(!isNotificationEnabled) }, // FIX: استدعاء الـ Callback
                 modifier = Modifier.size(28.dp)
             ) {
                 Icon(
@@ -310,7 +311,6 @@ private fun PrayerTableHeader() {
                 )
             }
         }
-        // عمود الأذان
         Column(
             modifier            = Modifier.weight(1f),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -452,9 +452,6 @@ private fun BottomIslamicDecoration() {
     }
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-//  UTILITY
-// ════════════════════════════════════════════════════════════════════════════
 fun openXiaomiAutoStart(context: Context) {
     try {
         context.startActivity(Intent().apply {
