@@ -35,8 +35,7 @@ import com.abueltaweel.domain.entity.prayer.Prayer
 import com.abueltaweel.presentation.base.LocalAppLocale
 import com.abueltaweel.presentation.base.localizedString
 import com.abueltaweel.presentation.base.toLocalizedDigits
-import com.abueltaweel.presentation.screen.prayers.MosqueBrown
-import com.abueltaweel.presentation.screen.prayers.MosqueGold
+import com.abueltaweel.presentation.screen.prayers.MosqueColors
 
 @Composable
 fun PrayerItem(
@@ -51,9 +50,9 @@ fun PrayerItem(
     val amPm = if (isAm) localizedString(R.string.am) else localizedString(R.string.pm)
     val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
 
-    val rowBg      = if (isNextPrayer) Color(0xFFFFF3D0) else Color(0xFFF5E6C8)
-    val borderColor = if (isNextPrayer) MosqueGold else Color(0xFF8B6914)
-    val nameBg     = if (isNextPrayer) Color(0xFFC9A84C) else Color(0xFFB8860B)
+    val rowBg       = if (isNextPrayer) Color(0xFFFFF3D0) else Color(0xFFF5E6C8)
+    val borderColor = if (isNextPrayer) MosqueColors.Gold else Color(0xFF8B6914)
+    val nameBg      = if (isNextPrayer) MosqueColors.Gold else Color(0xFFB8860B)
     val borderWidth = if (isNextPrayer) 2.dp else 1.dp
 
     Box(
@@ -61,7 +60,6 @@ fun PrayerItem(
             .fillMaxWidth()
             .padding(horizontal = 10.dp, vertical = 4.dp)
     ) {
-        // الصف الرئيسي
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -72,7 +70,7 @@ fun PrayerItem(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // اسم الصلاة مع قوس صغير
+            // اسم الصلاة
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(6.dp))
@@ -81,17 +79,16 @@ fun PrayerItem(
                     .padding(horizontal = 14.dp, vertical = 6.dp),
                 contentAlignment = Alignment.Center
             ) {
-                // زخرفة داخل صندوق الاسم
-                Canvas(
-                    modifier = Modifier
-                        .matchParentSize()
-                ) {
-                    // نقاط زخرفية في الكورنرات
+                Canvas(modifier = Modifier.matchParentSize()) {
                     val r = 2.dp.toPx()
-                    drawCircle(color = Color(0xFF6B2A0A).copy(alpha = 0.5f), radius = r, center = Offset(r * 2, r * 2))
-                    drawCircle(color = Color(0xFF6B2A0A).copy(alpha = 0.5f), radius = r, center = Offset(size.width - r * 2, r * 2))
-                    drawCircle(color = Color(0xFF6B2A0A).copy(alpha = 0.5f), radius = r, center = Offset(r * 2, size.height - r * 2))
-                    drawCircle(color = Color(0xFF6B2A0A).copy(alpha = 0.5f), radius = r, center = Offset(size.width - r * 2, size.height - r * 2))
+                    listOf(
+                        Offset(r * 2, r * 2),
+                        Offset(size.width - r * 2, r * 2),
+                        Offset(r * 2, size.height - r * 2),
+                        Offset(size.width - r * 2, size.height - r * 2)
+                    ).forEach {
+                        drawCircle(color = Color(0xFF6B2A0A).copy(alpha = 0.5f), radius = r, center = it)
+                    }
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -115,9 +112,8 @@ fun PrayerItem(
                 }
             }
 
-            // صندوق الوقت بشكل LED
+            // الوقت
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // مساء / صباحاً
                 Text(
                     text = amPm,
                     fontSize = 11.sp,
@@ -125,7 +121,6 @@ fun PrayerItem(
                     modifier = Modifier.padding(end = 4.dp)
                 )
 
-                // الصندوق الأسود للوقت
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(6.dp))
@@ -146,7 +141,6 @@ fun PrayerItem(
 
                 Spacer(Modifier.width(8.dp))
 
-                // أيقونة الصوت
                 AnimatedContent(
                     targetState = isNotificationEnabled,
                     transitionSpec = {
@@ -160,7 +154,7 @@ fun PrayerItem(
                             else R.drawable.ic_volume_off
                         ),
                         contentDescription = null,
-                        tint = if (isNotificationEnabled) MosqueGold else Color(0xFF8B6914),
+                        tint = if (isNotificationEnabled) MosqueColors.Gold else Color(0xFF8B6914),
                         modifier = Modifier
                             .size(28.dp)
                             .clip(RoundedCornerShape(6.dp))
@@ -185,7 +179,7 @@ fun PrayerItem(
                     .width(4.dp)
                     .fillMaxHeight()
                     .clip(RoundedCornerShape(topStart = 6.dp, bottomStart = 6.dp))
-                    .background(MosqueGold)
+                    .background(MosqueColors.Gold)
             )
         }
     }
