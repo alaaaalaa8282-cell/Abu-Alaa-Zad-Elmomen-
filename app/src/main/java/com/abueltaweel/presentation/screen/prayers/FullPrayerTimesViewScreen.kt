@@ -53,18 +53,9 @@ import org.koin.androidx.compose.koinViewModel
 import kotlin.time.ExperimentalTime
 
 // ════════════════════════════════════════════════════════════════════════════
-//  COLORS
+//  NOTE: MosqueColors معرّف في MosqueColors.kt
+//  تأكد إنك أضفت فيه: LedRed, LedGreen, LedBg
 // ════════════════════════════════════════════════════════════════════════════
-object MosqueColors {
-    val DarkBg   = Color(0xFF1A0A00)
-    val Brown    = Color(0xFF5C2E00)
-    val Gold     = Color(0xFFC9A84C)
-    val Border   = Color(0xFF8B4513)
-    val Creamy   = Color(0xFFF5E6C0)
-    val LedRed   = Color(0xFFFF2200)
-    val LedGreen = Color(0xFF00FF44)
-    val LedBg    = Color(0xFF0A0A0A)
-}
 
 // ════════════════════════════════════════════════════════════════════════════
 //  EQAMA OFFSETS — ثابتة مأخوذة من المؤذن الإلكتروني
@@ -190,23 +181,23 @@ fun FullPrayerTimesViewScreen(
 
                 // صفوف الصلوات
                 items(state.prayers) { prayer ->
-                    val eqamaOffset = when (localizedString(prayer.name)) {
-                        "الفجر"  -> EqamaOffsets.FAJR
-                        "الظهر"  -> EqamaOffsets.ZUHR
-                        "العصر"  -> EqamaOffsets.ASR
-                        "المغرب" -> EqamaOffsets.MAGHRIB
-                        "العشاء" -> EqamaOffsets.ISHA
-                        else      -> 15
+                    val arabicName  = prayer.name.getArabicName()
+                    val eqamaOffset = when (prayer.name) {
+                        com.abueltaweel.domain.entity.prayer.Prayer.PrayerName.FAJR    -> EqamaOffsets.FAJR
+                        com.abueltaweel.domain.entity.prayer.Prayer.PrayerName.ZUHR    -> EqamaOffsets.ZUHR
+                        com.abueltaweel.domain.entity.prayer.Prayer.PrayerName.ASR     -> EqamaOffsets.ASR
+                        com.abueltaweel.domain.entity.prayer.Prayer.PrayerName.MAGHRIB -> EqamaOffsets.MAGHRIB
+                        com.abueltaweel.domain.entity.prayer.Prayer.PrayerName.ISHA    -> EqamaOffsets.ISHA
                     }
                     PrayerRow(
-                        prayerNameResource    = prayer.name,
+                        prayerName            = arabicName,
                         azanTime              = prayer.time.time,
                         eqamaTime             = calcEqamaTime(prayer.time.time, eqamaOffset),
                         isAm                  = prayer.time.isAm,
                         isNextPrayer          = prayer.isUpComing,
                         isNotificationEnabled = prayer.isNotificationEnabled,
-                        onNotificationClick   = { prayerName, enabled ->
-                            viewModel.onClickEnablePrayer(prayerName, enabled)
+                        onNotificationClick   = { name, enabled ->
+                            viewModel.onClickEnablePrayer(name, enabled)
                         }
                     )
                 }
@@ -264,13 +255,13 @@ private fun PrayerTableHeader() {
 
 @Composable
 private fun PrayerRow(
-    prayerNameResource   : Int,
+    prayerName           : String,
     azanTime             : String,
     eqamaTime            : String,
     isAm                 : Boolean,
     isNextPrayer         : Boolean,
     isNotificationEnabled: Boolean,
-    onNotificationClick  : (Int, Boolean) -> Unit
+    onNotificationClick  : (String, Boolean) -> Unit
 ) {
     val amPmLabel = if (isAm) "صباحاً" else "مساءً"
 
@@ -306,7 +297,7 @@ private fun PrayerRow(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text       = localizedString(prayerNameResource),
+                    text       = prayerName,
                     fontSize   = 20.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color      = MosqueColors.Brown,
@@ -319,12 +310,12 @@ private fun PrayerRow(
             }
             Spacer(Modifier.height(4.dp))
             IconButton(
-                onClick  = { onNotificationClick(prayerNameResource, !isNotificationEnabled) },
+                onClick  = { onNotificationClick(prayerName, !isNotificationEnabled) },
                 modifier = Modifier.size(28.dp)
             ) {
                 Icon(
                     painter            = painterResource(
-                        if (isNotificationEnabled) R.drawable.ic_sound_on else R.drawable.ic_sound_off
+                        if (isNotificationEnabled) R.drawable.ic_volume_on else R.drawable.ic_volume_off
                     ),
                     contentDescription = null,
                     tint               = if (isNotificationEnabled) MosqueColors.Gold
