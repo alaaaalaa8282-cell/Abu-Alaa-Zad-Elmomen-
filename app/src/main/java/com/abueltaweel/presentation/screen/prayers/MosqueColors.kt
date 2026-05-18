@@ -8,4 +8,7 @@ object MosqueColors {
     val Gold    = Color(0xFFC9A84C)
     val DarkBg  = Color(0xFF3D1A00)
     val Border  = Color(0xFF8B4513)
+    val LedRed   = Color(0xFFFF2200)
+    val LedGreen = Color(0xFF00FF44)
+    val LedBg    = Color(0xFF0A0A0A)
 }
