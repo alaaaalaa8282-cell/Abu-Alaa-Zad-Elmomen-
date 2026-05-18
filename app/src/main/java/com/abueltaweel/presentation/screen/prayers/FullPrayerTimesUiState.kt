@@ -1,6 +1,5 @@
 package com.abueltaweel.presentation.screen.prayers
 
-import androidx.annotation.StringRes
 import com.abueltaweel.domain.entity.prayer.Prayer
 import com.abueltaweel.presentation.utils.FormattedTime
 import kotlin.time.ExperimentalTime
@@ -14,8 +13,7 @@ data class FullPrayerTimesUiState(
     val prayerNotifications: List<PrayerNotificationUiState> = emptyList()
 ) {
     data class PrayerUiState(
-        // FIX: Changed from Int to Enum to match the View logic
-        val name: Prayer.PrayerName = Prayer.PrayerName.FAJR, 
+        val name: Prayer.PrayerName = Prayer.PrayerName.FAJR,
         val time: FormattedTime = FormattedTime(time = "00:00", isAm = false),
         val isUpComing: Boolean = false,
         val progress: Float = 100.0f,
