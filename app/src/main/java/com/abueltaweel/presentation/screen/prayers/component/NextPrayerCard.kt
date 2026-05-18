@@ -1,4 +1,3 @@
-```kotlin
 @file:OptIn(ExperimentalTime::class)
 
 package com.abueltaweel.presentation.screen.prayers.component
@@ -31,11 +30,11 @@ fun NextPrayerCard(
 ) {
     val nextPrayer = state.nextPrayer
     val prayerArabicName = when (nextPrayer.name) {
-        Prayer.PrayerName.FAJR -> "الفجر"
-        Prayer.PrayerName.ZUHR -> "الظهر"
-        Prayer.PrayerName.ASR -> "العصر"
+        Prayer.PrayerName.FAJR    -> "الفجر"
+        Prayer.PrayerName.ZUHR    -> "الظهر"
+        Prayer.PrayerName.ASR     -> "العصر"
         Prayer.PrayerName.MAGHRIB -> "المغرب"
-        Prayer.PrayerName.ISHA -> "العشاء"
+        Prayer.PrayerName.ISHA    -> "العشاء"
     }
 
     Box(
@@ -48,29 +47,27 @@ fun NextPrayerCard(
             .padding(16.dp),
         contentAlignment = Alignment.Center
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = "الصلاة القادمة: $prayerArabicName",
-                fontSize = 18.sp,
+                text       = "الصلاة القادمة: $prayerArabicName",
+                fontSize   = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = MosqueColors.Creamy,
-                textAlign = TextAlign.Center
+                color      = MosqueColors.Creamy,
+                textAlign  = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "الوقت المتبقي للأذان",
-                fontSize = 12.sp,
-                color = MosqueColors.Gold,
+                text      = "الوقت المتبقي للأذان",
+                fontSize  = 12.sp,
+                color     = MosqueColors.Gold,
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(8.dp))
             Row(
                 horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment     = Alignment.CenterVertically
             ) {
-                TimeBlock(time = countdownTime.hours, label = "ساعة")
+                TimeBlock(time = countdownTime.hours,   label = "ساعة")
                 Text(text = ":", color = MosqueColors.Gold, fontSize = 24.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 4.dp))
                 TimeBlock(time = countdownTime.minutes, label = "دقيقة")
                 Text(text = ":", color = MosqueColors.Gold, fontSize = 24.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 4.dp))
@@ -82,9 +79,7 @@ fun NextPrayerCard(
 
 @Composable
 private fun TimeBlock(time: String, label: String) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(4.dp))
@@ -93,25 +88,14 @@ private fun TimeBlock(time: String, label: String) {
                 .padding(horizontal = 8.dp, vertical = 4.dp)
         ) {
             Text(
-                text = time,
-                color = MosqueColors.LedRed,
-                fontSize = 22.sp,
+                text       = time,
+                color      = MosqueColors.LedRed,
+                fontSize   = 22.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = FontFamily.Monospace
             )
         }
         Spacer(modifier = Modifier.height(2.dp))
-        Text(
-            text = label,
-            color = MosqueColors.Creamy.copy(alpha = 0.8f),
-            fontSize = 9.sp
-        )
+        Text(text = label, color = MosqueColors.Creamy.copy(alpha = 0.8f), fontSize = 9.sp)
     }
 }
-
-```
-        )
-    }
-}
-
-```
