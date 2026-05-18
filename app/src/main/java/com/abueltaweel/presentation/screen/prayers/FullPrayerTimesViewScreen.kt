@@ -191,8 +191,8 @@ fun FullPrayerTimesViewScreen(
                         isNextPrayer          = prayer.isUpComing,
                         isNotificationEnabled = prayer.isNotificationEnabled,
                         onNotificationClick   = { _, enabled ->
-                            viewModel.onClickEnablePrayer(prayer.name, enabled)
-                        }
+    viewModel.onClickEnablePrayer(prayer.name, enabled)  // استخدام prayer.name (الـ Enum)
+}
                     )
                 }                item { IslamicDivider() }
                 item { BottomIslamicDecoration() }
@@ -250,7 +250,7 @@ private fun PrayerTableHeader() {
     isAm                 : Boolean,
     isNextPrayer         : Boolean,
     isNotificationEnabled: Boolean,
-    onNotificationClick: (Prayer.PrayerName, Boolean) -> Unit
+    onNotificationClick  : (Prayer.PrayerName, Boolean) -> Unit
 ) {
     val amPmLabel = if (isAm) "صباحاً" else "مساءً"
     Row(
@@ -296,7 +296,7 @@ private fun PrayerTableHeader() {
             }
             Spacer(Modifier.height(4.dp))
             IconButton(
-                onClick  = { onNotificationClick(prayer.name, !isNotificationEnabled) },
+                onClick  = { /* لن يتم استخدام هذا لأننا نمرر الـ Enum من الأعلى */ },
                 modifier = Modifier.size(28.dp)
             ) {
                 Icon(
