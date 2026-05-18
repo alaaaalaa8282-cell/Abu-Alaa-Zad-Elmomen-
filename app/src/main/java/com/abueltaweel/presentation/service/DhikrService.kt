@@ -41,27 +41,22 @@ class DhikrService : Service() {
         }
 
         if (intent?.action == ACTION_PAUSE_FOR_AZAN) {
-            pausedForAzan = true
-            // وقّف الذكر الحالي وحرّره — الذكر الجاي هيشتغل في وقته بعد الـ interval
-            mediaPlayer?.stop()
-            mediaPlayer?.release()
-            mediaPlayer = null
-            // شغّل الـ interval في coroutine مستقل
-            scope.launch {
-                waitMinutes(intervalMinutes)
-                if (running && !pausedForAzan) {
-                    currentIndex = (currentIndex + 1) % dhikrResIds.size
-                    playCurrentDhikr()
-                }
-            }
-            return START_STICKY
-        }
+    pausedForAzan = true
+    mediaPlayer?.stop()
+    mediaPlayer?.release()
+    mediaPlayer = null
+    // تم إزالة المؤقت هنا لأننا نعتمد على ACTION_RESUME_FOR_AZAN من Activity
+    return START_STICKY
+}
 
         if (intent?.action == ACTION_RESUME_FOR_AZAN) {
-            pausedForAzan = false
-            // مش بنعمل حاجة — الـ coroutine شغال وهيشغّل الذكر الجاي في وقته
-            return START_STICKY
-        }
+    pausedForAzan = false
+    // إذا كانت الخدمة شغالة، ابدأ تشغيل الذكر الآن
+    if (running) {
+        playCurrentDhikr()
+    }
+    return START_STICKY
+}
 
         if (intent?.action == ACTION_UPDATE_VOLUME) {
             volume = intent.getFloatExtra(EXTRA_VOLUME, volume)
@@ -168,17 +163,21 @@ class DhikrService : Service() {
                 setVolume(logVol, logVol)
                 setWakeMode(this@DhikrService, PowerManager.PARTIAL_WAKE_LOCK)
                 setOnCompletionListener {
-                    mediaPlayer?.release()
-                    // NEW: رجّع الأولوية الصوتية عشان اليوتيوب وغيره يرجع يشتغل
-                    abandonAudioFocus()
-                    scope.launch {
-                        waitMinutes(intervalMinutes)
-                        if (running) {
-                            currentIndex = (currentIndex + 1) % dhikrResIds.size
-                            playCurrentDhikr()
-                        }
-                    }
-                }
+    mediaPlayer?.release()
+    abandonAudioFocus()
+    scope.launch {
+        waitMinutes(intervalMinutes)
+        if (running) {
+            // FIX: التأكد من أن الأذان غير شغال قبل تشغيل الذكر
+            if (PrayerAlarmService.isPlaying) {
+                return@launch // لا تشغل الذكر، انتظر حتى يرسل النظام أمر الاستئناف
+            }
+            
+            currentIndex = (currentIndex + 1) % dhikrResIds.size
+            playCurrentDhikr()
+        }
+    }
+}
                 setOnErrorListener { _, _, _ ->
                     scope.launch {
                         waitMinutes(intervalMinutes)
