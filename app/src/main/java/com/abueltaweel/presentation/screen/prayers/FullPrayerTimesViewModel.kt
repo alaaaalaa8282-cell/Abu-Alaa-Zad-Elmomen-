@@ -1,4 +1,3 @@
-
 @file:OptIn(ExperimentalTime::class)
 
 package com.abueltaweel.presentation.screen.prayers
@@ -322,4 +321,5 @@ class FullPrayerTimesViewModel(
 }
 
 ```
+
 
