@@ -1,3 +1,4 @@
+```kotlin
 @file:OptIn(ExperimentalTime::class)
 
 package com.abueltaweel.presentation.screen.prayers
@@ -16,7 +17,6 @@ import com.abueltaweel.domain.repository.prayer.PrayerRepository
 import com.abueltaweel.domain.repository.settings.SettingsRepository
 import com.abueltaweel.domain.usecase.PrayerSchedulingUseCase
 import com.abueltaweel.presentation.base.BaseViewModel
-import com.abueltaweel.presentation.screen.prayers.component.toPrayerName
 import com.abueltaweel.presentation.utils.convertMillisToHMS
 import com.abueltaweel.presentation.utils.getTimeDifference
 import com.abueltaweel.presentation.utils.isIgnoringBatteryOptimizations
@@ -80,8 +80,11 @@ class FullPrayerTimesViewModel(
                 }
         }
     }
+
     fun onScreenOpened() {
+        // يمكن إضافة أي منطق عند فتح الشاشة هنا
     }
+
     private fun getDailyPrayers() {
         tryToCall(
             block = ::getDailyPrayersBlock,
@@ -155,7 +158,6 @@ class FullPrayerTimesViewModel(
                 prayers = updatedList,
                 nextPrayer = nextUi
             )
-
         }
         val nextInstantMillis = prayer.time.toEpochMilliseconds()
         startCountdown(nextInstantMillis)
@@ -182,7 +184,6 @@ class FullPrayerTimesViewModel(
         }
     }
 
-
     private fun updateCountdownUi(time: Triple<String, String, String>) {
         updateState { current ->
             current.copy(
@@ -208,7 +209,8 @@ class FullPrayerTimesViewModel(
             notificationsRepository.observeAll().collect { map ->
                 updateState { current ->
                     val updatedPrayers = current.prayers.map { prayer ->
-                        val prayerName = prayer.name.toPrayerName()
+                        // هنا نستخدم prayer.name مباشرة لأنه Enum ولا يحتاج استدعاء لـ toPrayerName()
+                        val prayerName = prayer.name 
                         prayer.copy(
                             isNotificationEnabled = map[prayerName] ?: false
                         )
@@ -281,6 +283,17 @@ class FullPrayerTimesViewModel(
                 )
             },
             onSuccess = {
+                // تحديث حالة التنبيهات محلياً فوراً لتحسين تجربة المستخدم وسلاسة الواجهة
+                updateState { current ->
+                    val updatedPrayers = current.prayers.map { prayer ->
+                        if (prayer.name == prayerName) {
+                            prayer.copy(isNotificationEnabled = isEnabled)
+                        } else {
+                            prayer
+                        }
+                    }
+                    current.copy(prayers = updatedPrayers)
+                }
             },
             onError = {}
         )
@@ -288,7 +301,6 @@ class FullPrayerTimesViewModel(
 
     private fun checkPermissionsBeforeEnable() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-
             sendEffect(FullPrayerTimesEffect.RequestNotificationPermission)
             return
         }
@@ -307,4 +319,7 @@ class FullPrayerTimesViewModel(
             sendEffect(FullPrayerTimesEffect.RequestXiaomiAutoStart)
         }
     }
-    }
+}
+
+```
+
