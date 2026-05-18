@@ -200,7 +200,7 @@ fun MosqueArchHeader() {
                 text = "اللهم اغفر للمرحوم\nمحمد عبد العظيم طرفايه\nوارحمه وعافه واعف عنه\nواجعل قبره روضة من رياض الجنة\nواغفر له ذنوبه وزد حسناته",
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFFF5E6C0),
+                color = Color(0xFFC9A84C),
                 textAlign = TextAlign.Center,
                 lineHeight = 18.sp
             )
