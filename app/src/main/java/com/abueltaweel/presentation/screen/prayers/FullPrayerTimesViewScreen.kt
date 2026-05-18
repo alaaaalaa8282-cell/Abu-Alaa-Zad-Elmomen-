@@ -116,8 +116,13 @@ fun FullPrayerTimesViewScreen(
                         data = "package:${context.packageName}".toUri()
                     }
                 )
-            FullPrayerTimesEffect.RequestXiaomiAutoStart -> openXiaomiAutoStart(context)
-            FullPrayerTimesEffect.NavigateBack           -> navController.popBackStack()
+            FullPrayerTimesEffect.RequestXiaomiAutoStart        -> openXiaomiAutoStart(context)
+            FullPrayerTimesEffect.ShowBatteryOptimizationDialog -> context.startActivity(
+                Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                    data = "package:${context.packageName}".toUri()
+                }
+            )
+            FullPrayerTimesEffect.NavigateBack                  -> navController.popBackStack()
         }
     }
 
