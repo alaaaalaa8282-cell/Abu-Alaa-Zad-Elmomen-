@@ -20,20 +20,24 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -44,12 +48,55 @@ import androidx.navigation.NavController
 import com.abueltaweel.R
 import com.abueltaweel.presentation.base.localizedString
 import com.abueltaweel.presentation.screen.prayers.component.NextPrayerCard
-import com.abueltaweel.presentation.screen.prayers.component.PrayerItem
-import com.abueltaweel.presentation.screen.prayers.component.PrayerTimesCardFull
 import com.abueltaweel.presentation.utils.CollectEffect
 import org.koin.androidx.compose.koinViewModel
 import kotlin.time.ExperimentalTime
 
+// ════════════════════════════════════════════════════════════════════════════
+//  COLORS
+// ════════════════════════════════════════════════════════════════════════════
+object MosqueColors {
+    val DarkBg   = Color(0xFF1A0A00)
+    val Brown    = Color(0xFF5C2E00)
+    val Gold     = Color(0xFFC9A84C)
+    val Border   = Color(0xFF8B4513)
+    val Creamy   = Color(0xFFF5E6C0)
+    val LedRed   = Color(0xFFFF2200)
+    val LedGreen = Color(0xFF00FF44)
+    val LedBg    = Color(0xFF0A0A0A)
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  EQAMA OFFSETS — ثابتة مأخوذة من المؤذن الإلكتروني
+// ════════════════════════════════════════════════════════════════════════════
+object EqamaOffsets {
+    const val FAJR    = 25  // دقيقة بعد الأذان
+    const val ZUHR    = 15
+    const val ASR     = 15
+    const val MAGHRIB = 12
+    const val ISHA    = 20
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  HELPER — يحسب وقت الإقامة من وقت الأذان + الفارق
+// ════════════════════════════════════════════════════════════════════════════
+private fun calcEqamaTime(azanTime: String, offsetMinutes: Int): String {
+    return try {
+        val parts   = azanTime.split(":")
+        val hours   = parts[0].trim().toInt()
+        val minutes = parts[1].trim().toInt()
+        val total   = hours * 60 + minutes + offsetMinutes
+        val h       = (total / 60) % 24
+        val m       = total % 60
+        "%02d:%02d".format(h, m)
+    } catch (e: Exception) {
+        "--:--"
+    }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  MAIN SCREEN
+// ════════════════════════════════════════════════════════════════════════════
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @SuppressLint("BatteryLife")
 @ExperimentalTime
@@ -58,46 +105,36 @@ fun FullPrayerTimesViewScreen(
     navController: NavController,
     viewModel: FullPrayerTimesViewModel = koinViewModel()
 ) {
-    val state by viewModel.screenState.collectAsStateWithLifecycle()
+    val state         by viewModel.screenState.collectAsStateWithLifecycle()
     val countdownTime by viewModel.countdownTime.collectAsStateWithLifecycle()
-    val context = LocalContext.current
+    val context       = LocalContext.current
+
     val notificationLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted ->
-        if (!granted) {
+        if (!granted)
             Toast.makeText(context, "Notification permission denied", Toast.LENGTH_SHORT).show()
-        }
     }
 
     CollectEffect(viewModel.effect) { effect ->
         when (effect) {
-            FullPrayerTimesEffect.RequestExactAlarm -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            FullPrayerTimesEffect.RequestExactAlarm ->
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
                     context.startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM))
-                }
-            }
-            FullPrayerTimesEffect.RequestNotificationPermission -> {
+            FullPrayerTimesEffect.RequestNotificationPermission ->
                 notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-            }
-            FullPrayerTimesEffect.RequestIgnoreBatteryOptimization -> {
+            FullPrayerTimesEffect.RequestIgnoreBatteryOptimization ->
                 context.startActivity(
                     Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
                         data = "package:${context.packageName}".toUri()
                     }
                 )
-            }
-            FullPrayerTimesEffect.RequestXiaomiAutoStart -> {
-                openXiaomiAutoStart(context)
-            }
-            FullPrayerTimesEffect.NavigateBack -> {
-                navController.popBackStack()
-            }
+            FullPrayerTimesEffect.RequestXiaomiAutoStart -> openXiaomiAutoStart(context)
+            FullPrayerTimesEffect.NavigateBack           -> navController.popBackStack()
         }
     }
 
-    LaunchedEffect(Unit) {
-        viewModel.onScreenOpened()
-    }
+    LaunchedEffect(Unit) { viewModel.onScreenOpened() }
 
     Box(
         modifier = Modifier
@@ -117,20 +154,8 @@ fun FullPrayerTimesViewScreen(
                     .fillMaxSize()
                     .background(MosqueColors.Creamy)
             ) {
-                // ── القوس ─────────────────────────────────────────────────────
                 item { MosqueArchHeader() }
 
-                // ── كارد الأوقات من الشاشة الرئيسية ──────────────────────────
-                item {
-                    PrayerTimesCardFull(
-                        state = state,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 8.dp)
-                    )
-                }
-
-                // ── عنوان ─────────────────────────────────────────────────────
                 item {
                     Box(
                         modifier = Modifier
@@ -140,10 +165,10 @@ fun FullPrayerTimesViewScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = localizedString(R.string.prayer_times),
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MosqueColors.Gold,
+                            text          = localizedString(R.string.prayer_times),
+                            fontSize      = 18.sp,
+                            fontWeight    = FontWeight.Bold,
+                            color         = MosqueColors.Gold,
                             letterSpacing = 2.sp
                         )
                     }
@@ -151,25 +176,36 @@ fun FullPrayerTimesViewScreen(
 
                 item { IslamicDivider() }
 
-                // ── الصلاة القادمة ─────────────────────────────────────────────
                 item {
                     NextPrayerCard(
-                        state = state,
+                        state         = state,
                         countdownTime = countdownTime,
                     )
                 }
 
                 item { IslamicDivider() }
 
-                // ── الصلوات ───────────────────────────────────────────────────
-                items(state.prayers) {
-                    PrayerItem(
-                        prayerNameResource = it.name,
-                        prayerTime = it.time.time,
-                        isAm = it.time.isAm,
-                        isNextPrayer = it.isUpComing,
-                        isNotificationEnabled = it.isNotificationEnabled,
-                        onNotificationClick = { prayerName, enabled ->
+                // رأس الجدول
+                item { PrayerTableHeader() }
+
+                // صفوف الصلوات
+                items(state.prayers) { prayer ->
+                    val eqamaOffset = when (localizedString(prayer.name)) {
+                        "الفجر"  -> EqamaOffsets.FAJR
+                        "الظهر"  -> EqamaOffsets.ZUHR
+                        "العصر"  -> EqamaOffsets.ASR
+                        "المغرب" -> EqamaOffsets.MAGHRIB
+                        "العشاء" -> EqamaOffsets.ISHA
+                        else      -> 15
+                    }
+                    PrayerRow(
+                        prayerNameResource    = prayer.name,
+                        azanTime              = prayer.time.time,
+                        eqamaTime             = calcEqamaTime(prayer.time.time, eqamaOffset),
+                        isAm                  = prayer.time.isAm,
+                        isNextPrayer          = prayer.isUpComing,
+                        isNotificationEnabled = prayer.isNotificationEnabled,
+                        onNotificationClick   = { prayerName, enabled ->
                             viewModel.onClickEnablePrayer(prayerName, enabled)
                         }
                     )
@@ -184,188 +220,275 @@ fun FullPrayerTimesViewScreen(
     }
 }
 
-// ── قوس المحراب ───────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════════
+//  COMPOSABLES  (كلها private)
+// ════════════════════════════════════════════════════════════════════════════
+
 @Composable
-fun MosqueArchHeader() {
+private fun PrayerTableHeader() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MosqueColors.Brown.copy(alpha = 0.85f))
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text       = "EQAMA\nالإقامة",
+            modifier   = Modifier.weight(1f),
+            textAlign  = TextAlign.Center,
+            fontSize   = 11.sp,
+            fontWeight = FontWeight.Bold,
+            color      = MosqueColors.Gold,
+            lineHeight = 15.sp
+        )
+        Text(
+            text       = "الصلاة",
+            modifier   = Modifier.weight(1.2f),
+            textAlign  = TextAlign.Center,
+            fontSize   = 13.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color      = MosqueColors.Creamy
+        )
+        Text(
+            text       = "AZAN\nالأذان",
+            modifier   = Modifier.weight(1f),
+            textAlign  = TextAlign.Center,
+            fontSize   = 11.sp,
+            fontWeight = FontWeight.Bold,
+            color      = MosqueColors.Gold,
+            lineHeight = 15.sp
+        )
+    }
+}
+
+@Composable
+private fun PrayerRow(
+    prayerNameResource   : Int,
+    azanTime             : String,
+    eqamaTime            : String,
+    isAm                 : Boolean,
+    isNextPrayer         : Boolean,
+    isNotificationEnabled: Boolean,
+    onNotificationClick  : (Int, Boolean) -> Unit
+) {
+    val amPmLabel = if (isAm) "صباحاً" else "مساءً"
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(if (isNextPrayer) MosqueColors.Brown.copy(alpha = 0.18f) else Color.Transparent)
+            .then(if (isNextPrayer) Modifier.border(1.5.dp, MosqueColors.Gold) else Modifier)
+            .padding(horizontal = 8.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // عمود الإقامة
+        Column(
+            modifier            = Modifier.weight(1f),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            LedDisplay(time = eqamaTime, color = MosqueColors.LedGreen)
+            Spacer(Modifier.height(2.dp))
+            Text(text = amPmLabel, fontSize = 9.sp, color = MosqueColors.Brown, textAlign = TextAlign.Center)
+        }
+
+        // عمود الاسم
+        Column(
+            modifier            = Modifier.weight(1.2f),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(MosqueColors.Gold.copy(alpha = 0.25f))
+                    .border(1.dp, MosqueColors.Gold, RoundedCornerShape(6.dp))
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text       = localizedString(prayerNameResource),
+                    fontSize   = 20.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color      = MosqueColors.Brown,
+                    textAlign  = TextAlign.Center
+                )
+            }
+            if (isNextPrayer) {
+                Spacer(Modifier.height(2.dp))
+                Text("◄", fontSize = 12.sp, color = MosqueColors.Gold)
+            }
+            Spacer(Modifier.height(4.dp))
+            IconButton(
+                onClick  = { onNotificationClick(prayerNameResource, !isNotificationEnabled) },
+                modifier = Modifier.size(28.dp)
+            ) {
+                Icon(
+                    painter            = painterResource(
+                        if (isNotificationEnabled) R.drawable.ic_sound_on else R.drawable.ic_sound_off
+                    ),
+                    contentDescription = null,
+                    tint               = if (isNotificationEnabled) MosqueColors.Gold
+                                         else MosqueColors.Brown.copy(alpha = 0.4f),
+                    modifier           = Modifier.size(20.dp)
+                )
+            }
+        }
+
+        // عمود الأذان
+        Column(
+            modifier            = Modifier.weight(1f),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            LedDisplay(time = azanTime, color = MosqueColors.LedRed)
+            Spacer(Modifier.height(2.dp))
+            Text(text = amPmLabel, fontSize = 9.sp, color = MosqueColors.Brown, textAlign = TextAlign.Center)
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(MosqueColors.Gold.copy(alpha = 0.25f)))
+}
+
+@Composable
+private fun LedDisplay(time: String, color: Color) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(4.dp))
+            .background(MosqueColors.LedBg)
+            .border(1.dp, color.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
+            .padding(horizontal = 10.dp, vertical = 5.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text          = time,
+            fontSize      = 20.sp,
+            fontWeight    = FontWeight.Bold,
+            color         = color,
+            letterSpacing = 2.sp,
+            fontFamily    = FontFamily.Monospace
+        )
+    }
+}
+
+@Composable
+private fun MosqueArchHeader() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(200.dp)
             .background(MosqueColors.Brown)
     ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            drawBrownBackground(size)
-        }
-
         CornerDecoration(modifier = Modifier.align(Alignment.TopStart))
-        CornerDecoration(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .graphicsLayer { scaleX = -1f }
-        )
-
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            drawMosqueArch(size)
-        }
-
+        CornerDecoration(modifier = Modifier.align(Alignment.TopEnd).graphicsLayer { scaleX = -1f })
+        Canvas(modifier = Modifier.fillMaxSize()) { drawMosqueArch(size) }
         Box(
             modifier = Modifier
-                .fillMaxWidth(0.60f)
+                .fillMaxWidth(0.62f)
                 .align(Alignment.Center)
-                .padding(top = 30.dp),
+                .padding(top = 16.dp),
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "اللهم اغفر للمرحوم\nمحمد عبد العظيم طرفايه\nوارحمه وعافه واعف عنه\nواجعل قبره روضة من رياض الجنة\nواغفر له ذنوبه وزد حسناته",
-                fontSize = 11.sp,
+                text       = "اللهم اغفر للمرحوم\nمحمد عبد العظيم طرفايه\nوارحمه وعافه واعف عنه\nواجعل قبره روضة من رياض الجنة\nواغفر له ذنوبه وزد حسناته",
+                fontSize   = 11.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFFC9A84C),
-                textAlign = TextAlign.Center,
+                color      = Color(0xFF3D1A00),
+                textAlign  = TextAlign.Center,
                 lineHeight = 18.sp
             )
         }
     }
 }
 
-// ── نقوش الخلفية البنية ───────────────────────────────────────────────────────
-fun DrawScope.drawBrownBackground(size: Size) {
-    val archWidth = size.width * 0.65f
-    val archLeft  = (size.width - archWidth) / 2f
-    val dotStep   = 14.dp.toPx()
-    var dx = dotStep / 2
-    while (dx < size.width) {
-        if (dx < archLeft - 5.dp.toPx() || dx > archLeft + archWidth + 5.dp.toPx()) {
-            var dy = dotStep / 2
-            while (dy < size.height) {
-                drawCircle(color = Color(0xFFC9A84C).copy(alpha = 0.18f), radius = 2.dp.toPx(), center = Offset(dx, dy))
-                dy += dotStep
-            }
-        }
-        dx += dotStep
-    }
-    val lineCount = 5
-    for (i in 0..lineCount) {
-        val y = size.height * i / lineCount.toFloat()
-        drawLine(color = Color(0xFFC9A84C).copy(alpha = 0.2f), start = Offset(0f, y), end = Offset(archLeft - 4.dp.toPx(), y), strokeWidth = 0.5.dp.toPx())
-        drawLine(color = Color(0xFFC9A84C).copy(alpha = 0.2f), start = Offset(archLeft + archWidth + 4.dp.toPx(), y), end = Offset(size.width, y), strokeWidth = 0.5.dp.toPx())
-    }
-}
-
-// ── رسم القوس ─────────────────────────────────────────────────────────────────
-fun DrawScope.drawMosqueArch(size: Size) {
+private fun DrawScope.drawMosqueArch(size: Size) {
     val archWidth  = size.width * 0.65f
     val archLeft   = (size.width - archWidth) / 2f
     val archRadius = archWidth / 2f
-
-    drawRect(color = Color(0xFFF5E6C0), topLeft = Offset(archLeft, size.height * 0.25f), size = Size(archWidth, size.height * 0.80f))
-    drawArc(color = Color(0xFFF5E6C0), startAngle = 180f, sweepAngle = 180f, useCenter = true, topLeft = Offset(archLeft, size.height * 0.25f - archRadius), size = Size(archWidth, archWidth))
-    drawArc(color = Color(0xFFC9A84C), startAngle = 180f, sweepAngle = 180f, useCenter = false, topLeft = Offset(archLeft, size.height * 0.25f - archRadius), size = Size(archWidth, archWidth), style = Stroke(width = 3.dp.toPx()))
-    drawArc(color = Color(0xFFC9A84C).copy(alpha = 0.4f), startAngle = 180f, sweepAngle = 180f, useCenter = false, topLeft = Offset(archLeft + 6.dp.toPx(), size.height * 0.25f - archRadius + 6.dp.toPx()), size = Size(archWidth - 12.dp.toPx(), archWidth - 12.dp.toPx()), style = Stroke(width = 1.dp.toPx()))
-    drawLine(color = Color(0xFFC9A84C), start = Offset(archLeft, size.height * 0.25f), end = Offset(archLeft, size.height), strokeWidth = 3.dp.toPx())
-    drawLine(color = Color(0xFFC9A84C), start = Offset(archLeft + archWidth, size.height * 0.25f), end = Offset(archLeft + archWidth, size.height), strokeWidth = 3.dp.toPx())
-    drawLine(color = Color(0xFFC9A84C).copy(alpha = 0.4f), start = Offset(archLeft + 6.dp.toPx(), size.height * 0.25f), end = Offset(archLeft + 6.dp.toPx(), size.height), strokeWidth = 1.dp.toPx())
-    drawLine(color = Color(0xFFC9A84C).copy(alpha = 0.4f), start = Offset(archLeft + archWidth - 6.dp.toPx(), size.height * 0.25f), end = Offset(archLeft + archWidth - 6.dp.toPx(), size.height), strokeWidth = 1.dp.toPx())
+    drawRect(color = Color(0xFFF5E6C0), topLeft = Offset(archLeft, size.height * 0.45f), size = Size(archWidth, size.height * 0.6f))
+    drawArc(color = Color(0xFFF5E6C0), startAngle = 180f, sweepAngle = 180f, useCenter = true, topLeft = Offset(archLeft, size.height * 0.45f - archRadius), size = Size(archWidth, archWidth))
+    drawArc(color = Color(0xFFC9A84C), startAngle = 180f, sweepAngle = 180f, useCenter = false, topLeft = Offset(archLeft, size.height * 0.45f - archRadius), size = Size(archWidth, archWidth), style = Stroke(width = 3.dp.toPx()))
+    drawLine(color = Color(0xFFC9A84C), start = Offset(archLeft, size.height * 0.45f), end = Offset(archLeft, size.height), strokeWidth = 3.dp.toPx())
+    drawLine(color = Color(0xFFC9A84C), start = Offset(archLeft + archWidth, size.height * 0.45f), end = Offset(archLeft + archWidth, size.height), strokeWidth = 3.dp.toPx())
     val centerX = size.width / 2f
-    val centerY = size.height * 0.25f
-    for (i in 0..10) {
-        val angle = Math.PI * i / 10.0
-        val x = (centerX - archRadius * Math.cos(angle)).toFloat()
-        val y = (centerY - archRadius * Math.sin(angle)).toFloat()
-        drawCircle(color = Color(0xFFC9A84C), radius = 4.dp.toPx(), center = Offset(x, y))
+    val centerY = size.height * 0.45f
+    for (i in 0..8) {
+        val angle = Math.PI * i / 8.0
+        drawCircle(color = Color(0xFFC9A84C), radius = 4.dp.toPx(), center = Offset((centerX - archRadius * Math.cos(angle)).toFloat(), (centerY - archRadius * Math.sin(angle)).toFloat()))
     }
 }
 
-// ── زخرفة الكورنر ─────────────────────────────────────────────────────────────
 @Composable
-fun CornerDecoration(modifier: Modifier = Modifier) {
-    Canvas(modifier = modifier.size(90.dp)) {
+private fun CornerDecoration(modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier.size(70.dp)) {
         val s = size.minDimension
-        for (i in 0..3) {
-            val inset = i * 7.dp.toPx()
-            drawRect(color = Color(0xFFC9A84C).copy(alpha = 1f - i * 0.2f), topLeft = Offset(inset, inset), size = Size(s - inset * 2, s - inset * 2), style = Stroke(width = 1.5.dp.toPx()))
+        for (i in 0..2) {
+            val inset = i * 6.dp.toPx()
+            drawRect(color = Color(0xFFC9A84C).copy(alpha = 1f - i * 0.25f), topLeft = Offset(inset, inset), size = Size(s - inset * 2, s - inset * 2), style = Stroke(width = 1.5.dp.toPx()))
         }
-        drawLine(color = Color(0xFFC9A84C), start = Offset(0f, 0f), end = Offset(s * 0.6f, 0f), strokeWidth = 2.5.dp.toPx())
-        drawLine(color = Color(0xFFC9A84C), start = Offset(0f, 0f), end = Offset(0f, s * 0.6f), strokeWidth = 2.5.dp.toPx())
-        drawCircle(color = Color(0xFFC9A84C), radius = 8.dp.toPx(), center = Offset(s * 0.28f, s * 0.28f), style = Stroke(width = 1.5.dp.toPx()))
-        drawCircle(color = Color(0xFFC9A84C), radius = 3.dp.toPx(), center = Offset(s * 0.28f, s * 0.28f))
-        val cx = s * 0.28f; val cy = s * 0.28f; val r = 5.dp.toPx()
-        for (i in 0..3) {
-            val angle = Math.PI * i / 4.0
-            drawLine(color = Color(0xFFC9A84C).copy(alpha = 0.7f), start = Offset((cx - r * Math.cos(angle)).toFloat(), (cy - r * Math.sin(angle)).toFloat()), end = Offset((cx + r * Math.cos(angle)).toFloat(), (cy + r * Math.sin(angle)).toFloat()), strokeWidth = 1.dp.toPx())
-        }
-        val path = Path().apply {
-            moveTo(s * 0.5f, 0f); quadraticBezierTo(s * 0.65f, s * 0.2f, s * 0.5f, s * 0.35f)
-            moveTo(0f, s * 0.5f); quadraticBezierTo(s * 0.2f, s * 0.65f, s * 0.35f, s * 0.5f)
-        }
-        drawPath(path, color = Color(0xFFC9A84C).copy(alpha = 0.5f), style = Stroke(width = 1.dp.toPx()))
+        drawLine(color = Color(0xFFC9A84C), start = Offset(0f, 0f), end = Offset(s * 0.5f, 0f), strokeWidth = 2.dp.toPx())
+        drawLine(color = Color(0xFFC9A84C), start = Offset(0f, 0f), end = Offset(0f, s * 0.5f), strokeWidth = 2.dp.toPx())
+        drawCircle(color = Color(0xFFC9A84C), radius = 6.dp.toPx(), center = Offset(s * 0.25f, s * 0.25f), style = Stroke(width = 1.5.dp.toPx()))
+        drawCircle(color = Color(0xFFC9A84C), radius = 2.dp.toPx(), center = Offset(s * 0.25f, s * 0.25f))
     }
 }
 
-// ── فاصل إسلامي ───────────────────────────────────────────────────────────────
 @Composable
-fun IslamicDivider() {
+private fun IslamicDivider() {
     Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 4.dp), contentAlignment = Alignment.Center) {
         Canvas(modifier = Modifier.fillMaxWidth().height(16.dp)) {
-            val midY = size.height / 2f; val midX = size.width / 2f
+            val midY = size.height / 2f
+            val midX = size.width / 2f
             drawLine(color = Color(0xFFC9A84C), start = Offset(0f, midY), end = Offset(size.width, midY), strokeWidth = 1.dp.toPx())
             val starR = 5.dp.toPx()
             for (i in 0..3) {
                 val angle = Math.PI * i / 4.0
                 drawLine(color = Color(0xFFC9A84C), start = Offset((midX - starR * Math.cos(angle)).toFloat(), (midY - starR * Math.sin(angle)).toFloat()), end = Offset((midX + starR * Math.cos(angle)).toFloat(), (midY + starR * Math.sin(angle)).toFloat()), strokeWidth = 1.5.dp.toPx())
             }
-            listOf(0.15f, 0.25f, 0.35f, 0.65f, 0.75f, 0.85f).forEach { pos ->
+            listOf(0.2f, 0.3f, 0.7f, 0.8f).forEach { pos ->
                 drawCircle(color = Color(0xFFC9A84C), radius = 2.dp.toPx(), center = Offset(size.width * pos, midY))
             }
         }
     }
 }
 
-// ── أعمدة ─────────────────────────────────────────────────────────────────────
 @Composable
-fun MosqueColumns() {
+private fun MosqueColumns() {
     Row(modifier = Modifier.fillMaxSize(), horizontalArrangement = Arrangement.SpaceBetween) {
         repeat(2) {
-            Canvas(modifier = Modifier.width(14.dp).fillMaxHeight()) {
-                drawRect(color = Color(0xFF5A1A00).copy(alpha = 0.8f))
-                for (i in 0..30) {
-                    drawLine(color = Color(0xFFC9A84C).copy(alpha = 0.3f), start = Offset(0f, size.height * i / 30f), end = Offset(size.width, size.height * i / 30f), strokeWidth = 0.5.dp.toPx())
+            Canvas(modifier = Modifier.width(8.dp).fillMaxHeight()) {
+                for (i in 0..20) {
+                    drawLine(color = Color(0xFF8B4513).copy(alpha = 0.5f), start = Offset(0f, size.height * i / 20f), end = Offset(size.width, size.height * i / 20f), strokeWidth = 0.5.dp.toPx())
                 }
-                drawRect(color = Color(0xFFC9A84C), style = Stroke(width = 1.dp.toPx()))
-                drawLine(color = Color(0xFFC9A84C).copy(alpha = 0.5f), start = Offset(size.width / 2f, 0f), end = Offset(size.width / 2f, size.height), strokeWidth = 0.5.dp.toPx())
+                drawRect(color = Color(0xFF8B4513), style = Stroke(width = 1.dp.toPx()))
             }
         }
     }
 }
 
-// ── زخرفة سفلية ───────────────────────────────────────────────────────────────
 @Composable
-fun BottomIslamicDecoration() {
+private fun BottomIslamicDecoration() {
     Box(modifier = Modifier.fillMaxWidth().height(40.dp).background(MosqueColors.Brown), contentAlignment = Alignment.Center) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val midY = size.height / 2f; val step = 18.dp.toPx(); var x = step / 2
+            val midY = size.height / 2f
+            val step = 20.dp.toPx()
+            var x    = step / 2
             while (x < size.width) {
                 drawCircle(color = Color(0xFFC9A84C), radius = 3.dp.toPx(), center = Offset(x, midY))
                 drawLine(color = Color(0xFFC9A84C).copy(alpha = 0.5f), start = Offset(x - step / 2, midY), end = Offset(x + step / 2, midY), strokeWidth = 1.dp.toPx())
-                if ((x / step).toInt() % 3 == 1) {
-                    for (i in 0..3) {
-                        val angle = Math.PI * i / 4.0; val r = 4.dp.toPx()
-                        drawLine(color = Color(0xFFC9A84C).copy(alpha = 0.6f), start = Offset((x - r * Math.cos(angle)).toFloat(), (midY - r * Math.sin(angle)).toFloat()), end = Offset((x + r * Math.cos(angle)).toFloat(), (midY + r * Math.sin(angle)).toFloat()), strokeWidth = 1.dp.toPx())
-                    }
-                }
                 x += step
             }
-            drawLine(color = Color(0xFFC9A84C).copy(alpha = 0.4f), start = Offset(0f, midY - 8.dp.toPx()), end = Offset(size.width, midY - 8.dp.toPx()), strokeWidth = 0.5.dp.toPx())
-            drawLine(color = Color(0xFFC9A84C).copy(alpha = 0.4f), start = Offset(0f, midY + 8.dp.toPx()), end = Offset(size.width, midY + 8.dp.toPx()), strokeWidth = 0.5.dp.toPx())
         }
     }
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+//  UTILITY
+// ════════════════════════════════════════════════════════════════════════════
+
 fun openXiaomiAutoStart(context: Context) {
     try {
-        val intent = Intent().apply {
+        context.startActivity(Intent().apply {
             component = ComponentName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity")
-        }
-        context.startActivity(intent)
+        })
     } catch (e: Exception) {}
 }
 
@@ -385,8 +508,9 @@ suspend fun checkAndRequestPermissions(context: Context) {
     }
     if (Build.MANUFACTURER.equals("Xiaomi", ignoreCase = true)) {
         try {
-            val intent = Intent().apply { component = ComponentName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity") }
-            context.startActivity(intent)
+            context.startActivity(Intent().apply {
+                component = ComponentName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity")
+            })
         } catch (_: Exception) {}
     }
 }
