@@ -175,7 +175,7 @@ fun MosqueArchHeader() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(260.dp)  // أكبر من قبل
+            .height(200.dp)  // أكبر من قبل
             .background(MosqueColors.Brown)
     ) {
         // نقوش على الخلفية البنية
@@ -201,7 +201,7 @@ fun MosqueArchHeader() {
             modifier = Modifier
                 .fillMaxWidth(0.60f)
                 .align(Alignment.Center)
-                .padding(top = 30.dp),
+                .padding(top = 25.dp),
             contentAlignment = Alignment.Center
         ) {
             Text(
