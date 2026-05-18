@@ -1,4 +1,6 @@
 ```kotlin
+@file:OptIn(ExperimentalTime::class)
+
 package com.abueltaweel.presentation.screen.prayers.component
 
 import androidx.compose.foundation.background
@@ -19,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import com.abueltaweel.domain.entity.prayer.Prayer
 import com.abueltaweel.presentation.screen.prayers.FullPrayerTimesUiState
 import com.abueltaweel.presentation.screen.prayers.MosqueColors
+import kotlin.time.ExperimentalTime
 
 @Composable
 fun NextPrayerCard(
@@ -27,7 +30,6 @@ fun NextPrayerCard(
     modifier: Modifier = Modifier
 ) {
     val nextPrayer = state.nextPrayer
-    // تم تحديث المقارنة لتكون مع نوع Enum مباشرة بدلاً من المقارنة مع أرقام Int
     val prayerArabicName = when (nextPrayer.name) {
         Prayer.PrayerName.FAJR -> "الفجر"
         Prayer.PrayerName.ZUHR -> "الظهر"
@@ -103,6 +105,11 @@ private fun TimeBlock(time: String, label: String) {
             text = label,
             color = MosqueColors.Creamy.copy(alpha = 0.8f),
             fontSize = 9.sp
+        )
+    }
+}
+
+```
         )
     }
 }
