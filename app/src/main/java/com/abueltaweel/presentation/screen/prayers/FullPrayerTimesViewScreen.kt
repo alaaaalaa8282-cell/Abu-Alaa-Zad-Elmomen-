@@ -192,9 +192,9 @@ fun FullPrayerTimesViewScreen(
                         isAm                  = prayer.time.isAm,
                         isNextPrayer          = prayer.isUpComing,
                         isNotificationEnabled = prayer.isNotificationEnabled,
-                        onNotificationClick = { _, enabled ->
-                       viewModel.onClickEnablePrayer(prayer.name, enabled)
-                     }
+                        onNotificationClick   = { name, enabled ->
+                       viewModel.onClickEnablePrayer(name, enabled)
+                        }
                     )                }
                 item { IslamicDivider() }
                 item { BottomIslamicDecoration() }
