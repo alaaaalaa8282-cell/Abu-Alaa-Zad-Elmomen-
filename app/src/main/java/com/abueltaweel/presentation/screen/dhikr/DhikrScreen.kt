@@ -76,13 +76,13 @@ fun DhikrScreen(viewModel: DhikrViewModel = koinViewModel()) {
                     colors = TimePickerDefaults.colors(
                         clockDialColor = Color(0xFFF5F0E8),
                         clockDialSelectedContentColor = Color.Black,
-                        clockDialUnselectedContentColor = 0xFF3D1A00,
+                        clockDialUnselectedContentColor = Color.Black,
                         selectorColor = Color(0xFFC9A84C),
                         periodSelectorSelectedContainerColor = Color(0xFFC9A84C),
                         timeSelectorSelectedContainerColor = Color(0xFFC9A84C),
                         timeSelectorUnselectedContainerColor = Color(0xFFF5F0E8),
                         timeSelectorSelectedContentColor = Color.Black,
-                        timeSelectorUnselectedContentColor = 0xFF3D1A00
+                        timeSelectorUnselectedContentColor = Color.Black
                     )
                 )
             },
@@ -112,12 +112,12 @@ fun DhikrScreen(viewModel: DhikrViewModel = koinViewModel()) {
                     colors = TimePickerDefaults.colors(
                         clockDialColor = Color(0xFFF5F0E8),
                         clockDialSelectedContentColor = Color.Black,
-                        clockDialUnselectedContentColor = 0xFF3D1A00,
+                        clockDialUnselectedContentColor = Color.Black,
                         selectorColor = Color(0xFFC9A84C),
                         timeSelectorSelectedContainerColor = Color(0xFFC9A84C),
                         timeSelectorUnselectedContainerColor = Color(0xFFF5F0E8),
                         timeSelectorSelectedContentColor = Color.Black,
-                        timeSelectorUnselectedContentColor = 0xFF3D1A00
+                        timeSelectorUnselectedContentColor = Color.Black
                     )
                 )
             },
@@ -148,7 +148,7 @@ fun DhikrScreen(viewModel: DhikrViewModel = koinViewModel()) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(painterResource(R.drawable.ic_tasbih), null, tint = Color(0xFFC9A84C), modifier = Modifier.size(48.dp))
                 Spacer(Modifier.height(8.dp))
-                Text("أذكاري", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = 0xFF3D1A00)
+                Text("أذكاري", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.Black)
                 Text("تُشغِّل الأذكار بالتسلسل ثم تعيد من الأول", fontSize = 13.sp, color = Color(0xFF8B6914))
             }
         }
@@ -181,7 +181,7 @@ fun DhikrScreen(viewModel: DhikrViewModel = koinViewModel()) {
                         }
                         Spacer(Modifier.width(10.dp))
                     }
-                    Text(item.textAr, color = if (selected) Color(0xFFC9A84C) else 0xFF3D1A00, fontSize = 16.sp,
+                    Text(item.textAr, color = if (selected) Color(0xFFC9A84C) else Color.Black, fontSize = 16.sp,
                         fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
                 }
             }
@@ -195,7 +195,7 @@ fun DhikrScreen(viewModel: DhikrViewModel = koinViewModel()) {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Column {
-                        Text("تكرار الذكر المحدد فقط", color = 0xFF3D1A00, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+                        Text("تكرار الذكر المحدد فقط", color = Color.Black, fontSize = 15.sp, fontWeight = FontWeight.Medium)
                         Text(
                             if (state.repeatSingle) "يكرر: ${state.selectedDhikr.textAr}" else "يشغل كل الأذكار بالتسلسل",
                             color = Color(0xFF8B6914), fontSize = 12.sp
@@ -257,7 +257,7 @@ fun DhikrScreen(viewModel: DhikrViewModel = koinViewModel()) {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("تشغيل تلقائي يومي", color = 0xFF3D1A00, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+                    Text("تشغيل تلقائي يومي", color = Color.Black, fontSize = 15.sp, fontWeight = FontWeight.Medium)
                     Switch(
                         checked = state.autoEnabled,
                         onCheckedChange = { viewModel.setAutoEnabled(it, context) },
@@ -279,7 +279,7 @@ fun DhikrScreen(viewModel: DhikrViewModel = koinViewModel()) {
                                 Text("بداية", color = Color(0xFFC9A84C), fontSize = 12.sp)
                                 Text(
                                     "%d:%02d %s".format(if (state.startHour % 12 == 0) 12 else state.startHour % 12, state.startMinute, if (state.startHour < 12) "ص" else "م"), 
-                                    color = 0xFF3D1A00, fontSize = 18.sp, fontWeight = FontWeight.Bold
+                                    color = Color.Black, fontSize = 18.sp, fontWeight = FontWeight.Bold
                                 )
                             }
                         }
@@ -294,7 +294,7 @@ fun DhikrScreen(viewModel: DhikrViewModel = koinViewModel()) {
                                 Text("نهاية", color = Color(0xFFC9A84C), fontSize = 12.sp)
                                 Text(
                                   text = "%d:%02d %s".format(if (state.stopHour % 12 == 0) 12 else state.stopHour % 12, state.stopMinute, if (state.stopHour < 12) "ص" else "م"),
-                                  color = 0xFF3D1A00, fontSize = 18.sp, fontWeight = FontWeight.Bold
+                                  color = Color.Black, fontSize = 18.sp, fontWeight = FontWeight.Bold
                                  )
                                 
                             }
