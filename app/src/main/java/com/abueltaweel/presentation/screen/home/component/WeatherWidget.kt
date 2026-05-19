@@ -1,4 +1,4 @@
-herepackage com.abueltaweel.presentation.screen.home.component
+package com.abueltaweel.presentation.screen.home.component
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -36,113 +36,96 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.URL
 
-// ─── ثوابت الكاش ─────────────────────────────────────────────────────────────
-
-private const val PREFS_NAME        = "weather_cache"
-private const val KEY_TEMP          = "temp"
-private const val KEY_DESC          = "desc"
-private const val KEY_WIND          = "wind"
-private const val KEY_TIMESTAMP     = "timestamp"
-private const val KEY_LAST_UPDATED  = "last_updated"
-
-/** بنجيب من النت بس لو فات أكتر من 30 دقيقة من آخر تحديث */
+private const val PREFS_NAME       = "weather_cache"
+private const val KEY_TEMP         = "temp"
+private const val KEY_DESC         = "desc"
+private const val KEY_WIND         = "wind"
+private const val KEY_TIMESTAMP    = "timestamp"
+private const val KEY_LAST_UPDATED = "last_updated"
 private const val CACHE_DURATION_MS = 30 * 60 * 1000L
 
-// ─── Model ───────────────────────────────────────────────────────────────────
-
 private data class WeatherData(
-    val temperature : Int,
-    val description : String,
-    val windSpeed   : Int,
-    val lastUpdated : String = ""   // وقت آخر تحديث للعرض
+    val temperature: Int,
+    val description: String,
+    val windSpeed: Int,
+    val lastUpdated: String = ""
 )
 
-// ─── SharedPreferences helpers ───────────────────────────────────────────────
+private fun weatherCodeToArabic(code: Int): String = when (code) {
+    0          -> "صافٍ"
+    1, 2       -> "غائم جزئياً"
+    3          -> "غائم"
+    45, 48     -> "ضباب"
+    51, 53, 55,
+    56, 57     -> "رذاذ"
+    61, 63, 65,
+    66, 67     -> "مطر"
+    71, 73, 75,
+    77         -> "ثلج"
+    80, 81, 82 -> "زخات مطر"
+    85, 86     -> "زخات ثلج"
+    95, 96, 99 -> "عاصفة رعدية"
+    else       -> "—"
+}
 
-private fun saveWeatherToCache(context: Context, data: WeatherData) {
-    val now = System.currentTimeMillis()
-    // وقت مقروء بالعربي مثلاً "٢:٣٠ م"
+private fun saveWeather(context: Context, data: WeatherData) {
     val cal = java.util.Calendar.getInstance()
-    val h   = cal.get(java.util.Calendar.HOUR_OF_DAY)
-    val m   = cal.get(java.util.Calendar.MINUTE)
+    val h = cal.get(java.util.Calendar.HOUR_OF_DAY)
+    val m = cal.get(java.util.Calendar.MINUTE)
     val amPm = if (h < 12) "ص" else "م"
     val displayHour = if (h % 12 == 0) 12 else h % 12
     val timeStr = "$displayHour:${m.toString().padStart(2, '0')} $amPm"
-
-    context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        .edit()
+    context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
         .putInt(KEY_TEMP, data.temperature)
         .putString(KEY_DESC, data.description)
         .putInt(KEY_WIND, data.windSpeed)
-        .putLong(KEY_TIMESTAMP, now)
+        .putLong(KEY_TIMESTAMP, System.currentTimeMillis())
         .putString(KEY_LAST_UPDATED, timeStr)
         .apply()
 }
 
-private fun loadWeatherFromCache(context: Context): WeatherData? {
+private fun loadWeather(context: Context): WeatherData? {
     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    val desc  = prefs.getString(KEY_DESC, null) ?: return null   // مفيش كاش أصلاً
+    val desc = prefs.getString(KEY_DESC, null) ?: return null
     return WeatherData(
         temperature = prefs.getInt(KEY_TEMP, 0),
         description = desc,
-        windSpeed   = prefs.getInt(KEY_WIND, 0),
+        windSpeed = prefs.getInt(KEY_WIND, 0),
         lastUpdated = prefs.getString(KEY_LAST_UPDATED, "") ?: ""
     )
 }
 
 private fun isCacheExpired(context: Context): Boolean {
-    val prefs     = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    val lastFetch = prefs.getLong(KEY_TIMESTAMP, 0L)
-    return System.currentTimeMillis() - lastFetch > CACHE_DURATION_MS
+    val last = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        .getLong(KEY_TIMESTAMP, 0L)
+    return System.currentTimeMillis() - last > CACHE_DURATION_MS
 }
 
-// ─── Network ─────────────────────────────────────────────────────────────────
-
-private fun weatherCodeToArabic(code: Int): String = when (code) {
-    0          -> "صافٍ ☀️"
-    1, 2       -> "غائم جزئياً ⛅"
-    3          -> "غائم 🌥️"
-    45, 48     -> "ضباب 🌫️"
-    51, 53, 55,
-    56, 57     -> "رذاذ 🌦️"
-    61, 63, 65,
-    66, 67     -> "مطر 🌧️"
-    71, 73, 75,
-    77         -> "ثلج ❄️"
-    80, 81, 82 -> "زخات مطر 🌦️"
-    85, 86     -> "زخات ثلج ❄️"
-    95, 96, 99 -> "عاصفة رعدية ⛈️"
-    else       -> "—"
-}
-
-private suspend fun fetchWeatherFromNetwork(lat: Double, lon: Double): WeatherData? =
+private suspend fun fetchFromNetwork(lat: Double, lon: Double): WeatherData? =
     withContext(Dispatchers.IO) {
         try {
-            val url     = "https://api.open-meteo.com/v1/forecast" +
-                          "?latitude=$lat&longitude=$lon&current_weather=true"
-            val json    = URL(url).readText()
+            val url = "https://api.open-meteo.com/v1/forecast" +
+                    "?latitude=$lat&longitude=$lon&current_weather=true"
+            val json = URL(url).readText()
             val current = JSONObject(json).getJSONObject("current_weather")
             WeatherData(
                 temperature = current.getDouble("temperature").toInt(),
                 description = weatherCodeToArabic(current.getInt("weathercode")),
-                windSpeed   = current.getDouble("windspeed").toInt()
+                windSpeed = current.getDouble("windspeed").toInt()
             )
         } catch (e: Exception) {
-            null     // لو فشل النت نرجع null ونكمل بالكاش
+            null
         }
     }
-
-// ─── Composable ──────────────────────────────────────────────────────────────
 
 @SuppressLint("MissingPermission")
 @Composable
 fun WeatherWidget(modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    var weather by remember { mutableStateOf(loadWeatherFromCache(context)) }  // ← يعرض الكاش فوراً
-    val scope   = rememberCoroutineScope()
+    var weather by remember { mutableStateOf(loadWeather(context)) }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
-        // لو الكاش لسه جديد (أقل من 30 دقيقة) → مش بنكلم النت خالص
         if (!isCacheExpired(context)) return@LaunchedEffect
 
         val granted =
@@ -160,17 +143,15 @@ fun WeatherWidget(modifier: Modifier = Modifier) {
             .addOnSuccessListener { location ->
                 location ?: return@addOnSuccessListener
                 scope.launch {
-                    val fresh = fetchWeatherFromNetwork(location.latitude, location.longitude)
+                    val fresh = fetchFromNetwork(location.latitude, location.longitude)
                     if (fresh != null) {
-                        saveWeatherToCache(context, fresh)          // ← نحفظ في الكاش
-                        weather = loadWeatherFromCache(context)     // ← نحدث العرض بالوقت
+                        saveWeather(context, fresh)
+                        weather = loadWeather(context)
                     }
-                    // لو fresh == null → نكمل بيانات الكاش الموجودة (weather مش بتتغير)
                 }
             }
     }
 
-    // لو مفيش كاش خالص (أول تشغيل + مفيش نت) → مش بنعرض حاجة
     val w = weather ?: return
 
     Box(
@@ -182,34 +163,34 @@ fun WeatherWidget(modifier: Modifier = Modifier) {
             .padding(horizontal = 16.dp, vertical = 10.dp)
     ) {
         Row(
-            modifier              = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment     = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
                 Text(
-                    text       = "${w.temperature}°C",
-                    fontSize   = 22.sp,
+                    text = "${w.temperature}°C",
+                    fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
-                    color      = Color(0xFFE2B96F)
+                    color = Color(0xFFE2B96F)
                 )
                 Text(
-                    text     = w.description,
+                    text = w.description,
                     fontSize = 13.sp,
-                    color    = Color(0xFF6B5A4E)
+                    color = Color(0xFF6B5A4E)
                 )
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text     = "💨 ${w.windSpeed} km/h",
+                    text = "${w.windSpeed} km/h",
                     fontSize = 12.sp,
-                    color    = Color(0xFF6B5A4E)
+                    color = Color(0xFF6B5A4E)
                 )
                 if (w.lastUpdated.isNotEmpty()) {
                     Text(
-                        text     = "آخر تحديث ${w.lastUpdated}",
+                        text = "آخر تحديث ${w.lastUpdated}",
                         fontSize = 10.sp,
-                        color    = Color(0xFF9E8E84)
+                        color = Color(0xFF9E8E84)
                     )
                 }
             }
