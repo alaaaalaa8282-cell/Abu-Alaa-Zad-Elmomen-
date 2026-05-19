@@ -128,6 +128,10 @@ fun HomeScreen(
                 state = state,
             )
         }
+      
+        // ─── بطاقة الطقس ─────────────────────────────────────────────────────
+        item { WeatherWidget() }
+       
         item {
             PrayerTimesCard(
                 modifier = Modifier.padding(horizontal = 16.dp),
