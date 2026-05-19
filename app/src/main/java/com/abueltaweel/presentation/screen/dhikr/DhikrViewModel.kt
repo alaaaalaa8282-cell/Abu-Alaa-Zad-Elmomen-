@@ -36,8 +36,8 @@ data class DhikrUiState(
 
 val allDhikrs = listOf(
     DhikrItem(1, "الحمد لله",                 R.raw.alhamdo_lelah),
-    DhikrItem(2, "اللهم لك الحمد",            R.raw.allahom_lk_alhamd),
-    DhikrItem(3, "آية الأحزاب",               R.raw.ayah_elahzab),
+    DhikrItem(2, "آية الأحزاب",               R.raw.ayah_elahzab),
+    DhikrItem(3, "اللهم لك الحمد",            R.raw.allahom_lk_alhamd),
     DhikrItem(4, "لا حول ولا قوة إلا بالله",  R.raw.lahawla_wlaqowat),
     DhikrItem(5, "الصلاة على النبي",           R.raw.nozaker_salt_ala_habib),
     DhikrItem(6, "ربنا اغفر لي",              R.raw.rbna_ighfer_li),
@@ -45,6 +45,7 @@ val allDhikrs = listOf(
     DhikrItem(8, "الله أكبر",          R.raw.allah_akbar),
     DhikrItem(9, "أستغفر الله",        R.raw.astaghfer_allah),
     DhikrItem(10, "لا إله إلا الله",   R.raw.la_ilah_ela_allah),
+
 )
 
 private const val PREFS_NAME      = "dhikr_prefs"
