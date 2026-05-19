@@ -4,7 +4,7 @@ import androidx.compose.ui.graphics.Color
 
 object MosqueColors {
     val Creamy   = Color(0xFFF5E6C0)   // خلفية كريمية فاتحة
-    val Brown    = Color(0xFF8B5E00)   // بني ذهبي بدل البني الداكن
+    val Brown    = Color(0xFFEDE0C4)   // بني ذهبي بدل البني الداكن
     val Gold     = Color(0xFFC9A84C)   // ذهبي — ثابت
     val DarkBg   = Color(0xFFF5F0E8)   // خلفية فاتحة بيج بدل الداكنة
     val Border   = Color(0xFFC9A84C)   // حدود ذهبية
