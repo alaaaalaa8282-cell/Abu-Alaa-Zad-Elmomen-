@@ -146,6 +146,7 @@ fun setRepeatSingle(repeat: Boolean) {
             }
         )
         _uiState.value = state.copy(isRunning = true)
+  prefs.edit().putBoolean("dhikr_was_running", true).apply()
     }
 
     fun stop(context: Context) {
@@ -155,6 +156,7 @@ fun setRepeatSingle(repeat: Boolean) {
             }
         )
         _uiState.value = _uiState.value.copy(isRunning = false)
+  prefs.edit().putBoolean("dhikr_was_running", false).apply()
     }
 
     // ─── جدولة الأذكار ───
