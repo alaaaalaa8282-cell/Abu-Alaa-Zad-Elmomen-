@@ -36,12 +36,12 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.URL
 
-private const val PREFS_NAME       = "weather_cache"
-private const val KEY_TEMP         = "temp"
-private const val KEY_DESC         = "desc"
-private const val KEY_WIND         = "wind"
-private const val KEY_TIMESTAMP    = "timestamp"
-private const val KEY_LAST_UPDATED = "last_updated"
+private const val PREFS_NAME        = "weather_cache"
+private const val KEY_TEMP          = "temp"
+private const val KEY_DESC          = "desc"
+private const val KEY_WIND          = "wind"
+private const val KEY_TIMESTAMP     = "timestamp"
+private const val KEY_LAST_UPDATED  = "last_updated"
 private const val CACHE_DURATION_MS = 30 * 60 * 1000L
 
 private data class WeatherData(
@@ -90,7 +90,7 @@ private fun loadWeather(context: Context): WeatherData? {
     return WeatherData(
         temperature = prefs.getInt(KEY_TEMP, 0),
         description = desc,
-        windSpeed = prefs.getInt(KEY_WIND, 0),
+        windSpeed   = prefs.getInt(KEY_WIND, 0),
         lastUpdated = prefs.getString(KEY_LAST_UPDATED, "") ?: ""
     )
 }
@@ -111,22 +111,37 @@ private suspend fun fetchFromNetwork(lat: Double, lon: Double): WeatherData? =
             WeatherData(
                 temperature = current.getDouble("temperature").toInt(),
                 description = weatherCodeToArabic(current.getInt("weathercode")),
-                windSpeed = current.getDouble("windspeed").toInt()
+                windSpeed   = current.getDouble("windspeed").toInt()
             )
         } catch (e: Exception) {
             null
         }
     }
 
+// حالة داخلية للـ Widget
+private sealed class WeatherUiState {
+    object Loading : WeatherUiState()
+    object NoPermission : WeatherUiState()
+    data class Success(val data: WeatherData) : WeatherUiState()
+}
+
 @SuppressLint("MissingPermission")
 @Composable
 fun WeatherWidget(modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    var weather by remember { mutableStateOf(loadWeather(context)) }
-    val scope = rememberCoroutineScope()
+    val scope   = rememberCoroutineScope()
+
+    var uiState by remember {
+        val cached = loadWeather(context)
+        mutableStateOf(
+            if (cached != null) WeatherUiState.Success(cached)
+            else WeatherUiState.Loading
+        )
+    }
 
     LaunchedEffect(Unit) {
-        if (!isCacheExpired(context)) return@LaunchedEffect
+        // لو عندنا cache صالح مش محتاجين نجيب من النت
+        if (uiState is WeatherUiState.Success && !isCacheExpired(context)) return@LaunchedEffect
 
         val granted =
             ContextCompat.checkSelfPermission(
@@ -136,24 +151,107 @@ fun WeatherWidget(modifier: Modifier = Modifier) {
                 context, Manifest.permission.ACCESS_COARSE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
 
-        if (!granted) return@LaunchedEffect
+        if (!granted) {
+            uiState = WeatherUiState.NoPermission
+            return@LaunchedEffect
+        }
 
         LocationServices.getFusedLocationProviderClient(context)
             .lastLocation
             .addOnSuccessListener { location ->
-                location ?: return@addOnSuccessListener
+                location ?: run {
+                    uiState = WeatherUiState.NoPermission
+                    return@addOnSuccessListener
+                }
                 scope.launch {
                     val fresh = fetchFromNetwork(location.latitude, location.longitude)
                     if (fresh != null) {
                         saveWeather(context, fresh)
-                        weather = loadWeather(context)
+                        uiState = WeatherUiState.Success(fresh.copy(
+                            lastUpdated = loadWeather(context)?.lastUpdated ?: ""
+                        ))
+                    } else if (uiState is WeatherUiState.Loading) {
+                        // فشل الجلب ومفيش cache → اخفي الـ Widget
+                        uiState = WeatherUiState.NoPermission
                     }
+                }
+            }
+            .addOnFailureListener {
+                if (uiState is WeatherUiState.Loading) {
+                    uiState = WeatherUiState.NoPermission
                 }
             }
     }
 
-    val w = weather ?: return
+    when (val state = uiState) {
+        is WeatherUiState.Loading -> {
+            // Placeholder بنفس شكل الـ Widget
+            WeatherContainer(modifier = modifier) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "جاري تحميل الطقس...",
+                        fontSize = 13.sp,
+                        color = Color(0xFF9E8E84)
+                    )
+                }
+            }
+        }
 
+        is WeatherUiState.NoPermission -> {
+            // لا تعرض شيء لو مفيش إذن أو فشل الجلب
+        }
+
+        is WeatherUiState.Success -> {
+            val w = state.data
+            WeatherContainer(modifier = modifier) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "${w.temperature}°C",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFE2B96F)
+                        )
+                        Text(
+                            text = w.description,
+                            fontSize = 13.sp,
+                            color = Color(0xFF6B5A4E)
+                        )
+                    }
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = "${w.windSpeed} km/h",
+                            fontSize = 12.sp,
+                            color = Color(0xFF6B5A4E)
+                        )
+                        if (w.lastUpdated.isNotEmpty()) {
+                            Text(
+                                text = "آخر تحديث ${w.lastUpdated}",
+                                fontSize = 10.sp,
+                                color = Color(0xFF9E8E84)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Container مشترك لتجنب تكرار الـ styling
+@Composable
+private fun WeatherContainer(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -162,38 +260,6 @@ fun WeatherWidget(modifier: Modifier = Modifier) {
             .background(Color(0xFFF2EBE0))
             .padding(horizontal = 16.dp, vertical = 10.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    text = "${w.temperature}°C",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFFE2B96F)
-                )
-                Text(
-                    text = w.description,
-                    fontSize = 13.sp,
-                    color = Color(0xFF6B5A4E)
-                )
-            }
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = "${w.windSpeed} km/h",
-                    fontSize = 12.sp,
-                    color = Color(0xFF6B5A4E)
-                )
-                if (w.lastUpdated.isNotEmpty()) {
-                    Text(
-                        text = "آخر تحديث ${w.lastUpdated}",
-                        fontSize = 10.sp,
-                        color = Color(0xFF9E8E84)
-                    )
-                }
-            }
-        }
+        content()
     }
 }
