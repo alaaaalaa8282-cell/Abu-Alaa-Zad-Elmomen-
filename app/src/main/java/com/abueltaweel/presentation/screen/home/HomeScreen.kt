@@ -130,7 +130,13 @@ fun HomeScreen(
             )
         }
      // ─── بطاقة الطقس ─────────────────────────────────────────────────────
-        item { WeatherWidget() }
+        item {
+    WeatherWidget(
+        modifier = Modifier.padding(horizontal = 16.dp),
+        lat = state.latitude,   // مرر من الـ state
+        lon = state.longitude
+    )
+}
        
         item {
             PrayerTimesCard(
