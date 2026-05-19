@@ -9,11 +9,11 @@ val lightThemeColors: MehrabColors
         ),
         primary = Primary(
             primary = Color(0xFF000000),
-            onPrimary = Color(0xFFEFE5D0),
+            onPrimary = Color(0xFFFDF6E8),
             shadePrimary = Color(0xFF0E1017),
         ), surfaces = Surfaces(
             surface = Color(0xFFF5EDD8),
-            surfaceLow = Color(0xFFEFE5D0),
+            surfaceLow = Color(0xFFFDF6E8),
             surfaceHigh = Color(0xFFEDE0C4)
         ),
         secondary = Secondary(
