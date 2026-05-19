@@ -6,7 +6,7 @@ object MosqueColors {
     val Creamy   = Color(0xFFF5E6C0)   // خلفية كريمية فاتحة
     val Brown    = Color(0xFFF5F0E8)   // بني ذهبي بدل البني الداكن
     val Gold     = Color(0xFF8B6914)   // ذهبي — ثابت
-    val DarkBg   = Color(0xFFAA9888)   // خلفية فاتحة بيج بدل الداكنة
+    val DarkBg   = Color(0xFF9E7B4A)   // خلفية فاتحة بيج بدل الداكنة
     val Border   = Color(0xFFC9A84C)   // حدود ذهبية
     val LedRed   = Color(0xFFFF2200)   // أرقام LED حمراء — ثابتة
     val LedGreen = Color(0xFF00FF44)   // أرقام LED خضراء — ثابتة
