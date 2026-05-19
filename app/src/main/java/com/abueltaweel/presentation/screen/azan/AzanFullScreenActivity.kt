@@ -119,8 +119,7 @@ class AzanFullScreenActivity : ComponentActivity() {
                 }
                 window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
                 stopAzan()
-                moveTaskToBack(true)
-                finish()
+                finishAndRemoveTask()
             })
         }
     }
