@@ -43,6 +43,7 @@ import com.abueltaweel.presentation.screen.home.component.HomeAppBar
 import com.abueltaweel.presentation.screen.home.component.PrayerTimesCard
 import com.abueltaweel.presentation.utils.CollectEffect
 import org.koin.androidx.compose.koinViewModel
+import com.abueltaweel.presentation.screen.home.component.WeatherWidget
 
 @Composable
 fun HomeScreen(
