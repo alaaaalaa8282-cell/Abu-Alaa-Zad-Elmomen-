@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Looper
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,7 +30,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -118,7 +123,6 @@ private suspend fun fetchFromNetwork(lat: Double, lon: Double): WeatherData? =
         }
     }
 
-// حالة داخلية للـ Widget
 private sealed class WeatherUiState {
     object Loading : WeatherUiState()
     object NoPermission : WeatherUiState()
@@ -140,7 +144,6 @@ fun WeatherWidget(modifier: Modifier = Modifier) {
     }
 
     LaunchedEffect(Unit) {
-        // لو عندنا cache صالح مش محتاجين نجيب من النت
         if (uiState is WeatherUiState.Success && !isCacheExpired(context)) return@LaunchedEffect
 
         val granted =
@@ -156,36 +159,57 @@ fun WeatherWidget(modifier: Modifier = Modifier) {
             return@LaunchedEffect
         }
 
-        LocationServices.getFusedLocationProviderClient(context)
-            .lastLocation
-            .addOnSuccessListener { location ->
-                location ?: run {
-                    uiState = WeatherUiState.NoPermission
-                    return@addOnSuccessListener
-                }
+        val fusedClient = LocationServices.getFusedLocationProviderClient(context)
+
+        // أولاً جرب lastLocation
+        fusedClient.lastLocation.addOnSuccessListener { location ->
+            if (location != null) {
                 scope.launch {
                     val fresh = fetchFromNetwork(location.latitude, location.longitude)
                     if (fresh != null) {
                         saveWeather(context, fresh)
-                        uiState = WeatherUiState.Success(fresh.copy(
-                            lastUpdated = loadWeather(context)?.lastUpdated ?: ""
-                        ))
-                    } else if (uiState is WeatherUiState.Loading) {
-                        // فشل الجلب ومفيش cache → اخفي الـ Widget
-                        uiState = WeatherUiState.NoPermission
+                        uiState = WeatherUiState.Success(
+                            fresh.copy(lastUpdated = loadWeather(context)?.lastUpdated ?: "")
+                        )
                     }
                 }
-            }
-            .addOnFailureListener {
-                if (uiState is WeatherUiState.Loading) {
-                    uiState = WeatherUiState.NoPermission
+            } else {
+                // lastLocation فاضي — اطلب location جديد لمرة واحدة
+                val request = LocationRequest.Builder(
+                    Priority.PRIORITY_BALANCED_POWER_ACCURACY, 5000L
+                ).setMaxUpdates(1).build()
+
+                val callback = object : LocationCallback() {
+                    override fun onLocationResult(result: LocationResult) {
+                        fusedClient.removeLocationUpdates(this)
+                        val loc = result.lastLocation ?: return
+                        scope.launch {
+                            val fresh = fetchFromNetwork(loc.latitude, loc.longitude)
+                            if (fresh != null) {
+                                saveWeather(context, fresh)
+                                uiState = WeatherUiState.Success(
+                                    fresh.copy(lastUpdated = loadWeather(context)?.lastUpdated ?: "")
+                                )
+                            } else {
+                                if (uiState is WeatherUiState.Loading)
+                                    uiState = WeatherUiState.NoPermission
+                            }
+                        }
+                    }
                 }
+
+                fusedClient.requestLocationUpdates(
+                    request, callback, Looper.getMainLooper()
+                )
             }
+        }.addOnFailureListener {
+            if (uiState is WeatherUiState.Loading)
+                uiState = WeatherUiState.NoPermission
+        }
     }
 
     when (val state = uiState) {
         is WeatherUiState.Loading -> {
-            // Placeholder بنفس شكل الـ Widget
             WeatherContainer(modifier = modifier) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -201,9 +225,7 @@ fun WeatherWidget(modifier: Modifier = Modifier) {
             }
         }
 
-        is WeatherUiState.NoPermission -> {
-            // لا تعرض شيء لو مفيش إذن أو فشل الجلب
-        }
+        is WeatherUiState.NoPermission -> { /* اخفي الـ Widget بصمت */ }
 
         is WeatherUiState.Success -> {
             val w = state.data
@@ -246,7 +268,6 @@ fun WeatherWidget(modifier: Modifier = Modifier) {
     }
 }
 
-// Container مشترك لتجنب تكرار الـ styling
 @Composable
 private fun WeatherContainer(
     modifier: Modifier = Modifier,
