@@ -3,7 +3,7 @@ package com.abueltaweel.presentation.screen.prayers
 import androidx.compose.ui.graphics.Color
 
 object MosqueColors {
-    val Creamy   = Color(0xFFF5F0E8) // خلفية كريمية فاتحة
+    val Creamy   = Color(0xFFFFF5E6C0) // خلفية كريمية فاتحة
     val Brown    = Color(0xFFFFF5ECD8) // بني بدل البني الداكن
     val Gold     = Color(0xFFC9A84C)   // ذهبي — ثابت
     val DarkBg   = Color(0xFFFFF5F0E8) // خلفية بيج بدل الداكنة
