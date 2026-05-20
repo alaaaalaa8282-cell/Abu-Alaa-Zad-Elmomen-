@@ -13,9 +13,8 @@ data class HomeUiState(
     data class LocationUiState(
         val country: String = "",
         val city: String = "",
-        val latitude: Double = 0.0,
-        val longitude: Double = 0.0,
-    )
+
+        )
 
     data class PrayerUiState(
         @param:StringRes
@@ -23,7 +22,7 @@ data class HomeUiState(
         val time: String = "00 : 00 : 00",
         val isUpComing: Boolean = false,
         val icon: Int = 0,
-        val isAm: Boolean = false
+        val isAm : Boolean = false
     )
 
     data class TimeUiState(
