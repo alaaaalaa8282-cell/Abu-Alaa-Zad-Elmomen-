@@ -85,8 +85,6 @@ class HomeViewModel(
                 location = HomeUiState.LocationUiState(
                     country = location.country,
                     city = location.state
-                     latitude = location.latitude,   // ← أضف
-                longitude = location.longitude  // ← 
                 )
             )
         }
