@@ -164,7 +164,7 @@ class FullPrayerTimesViewModel(
 
     private fun startCountdown(nextPrayerMillis: Long) {
         countdownJob?.cancel()
-        countdownJob = viewModelScope.launch(Dispatchers.IO) {
+        countdownJob = viewModelScope.launch {
             while (true) {
                 val diff = getTimeDifference(nextPrayerMillis)
                 if (diff <= 0) {
