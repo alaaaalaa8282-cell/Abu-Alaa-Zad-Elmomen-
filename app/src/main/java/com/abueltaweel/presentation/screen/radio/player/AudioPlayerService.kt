@@ -62,7 +62,6 @@ class AudioPlayerService : Service() {
 
         playerController.setOnErrorListener { e ->
             stopForeground(STOP_FOREGROUND_REMOVE)
-            stopSelf()
         }
 
         return START_NOT_STICKY
